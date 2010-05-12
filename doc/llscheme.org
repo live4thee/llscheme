@@ -1,0 +1,53 @@
+#+TITLE: Implementing a Toy Scheme Compiler with LLVM
+#+STARTUP: showall
+
+* Basic Requirement
+  Compile input Scheme code (a subset of R5RS) into LLVM assembly.
+  For example, the Scheme code =(define (foo a b) (+ a b)= will be
+  translated to the following:
+
+#+BEGIN_SRC emacs-lisp
+  define i32 @foo(i32 %a, i32 %b) {
+  entry:
+    %tmp = add i32 %a, %b
+    ret i32 %tmp
+  }
+#+END_SRC
+
+  Two notes:
+  - Scheme has unlimited precision numbers, we assuming all integers
+    are 32bit integers.
+  - In Scheme, functions can be shadowed, meaning that `+' might be
+    programmed to do anything else besides arithmetic addition.  We
+    need a symbol table to trace this.
+
+* Work-flow
+#+BEGIN_EXAMPLE
+      lexer   parser
+  .scm -> Token -> AST -> LLVM IR -> LLVM Assembly
+      (1)      (2)    (3)
+#+END_EXAMPLE
+
+  Our work are focused on three phases labelled above, especially the
+  first two. Make sure you understand the following terminology before
+  jumping to coding!
+  - Lexical Scoping
+  - Side Effect
+  - Static Single Assignment
+  - Continuation Passing Style
+  - Foreign Function Interface
+
+* Steps
+** The first milestone (pure mathematics):
+  - Pure 32bit arithmetic (parentheses and +, -, *, /)
+  - `if' control primitive, and test expression. (>, =, <)
+  - Function definition (plus define, now Turing complete?)
+  - Lambdas (plus lambda)
+
+** The second milestone (become really useful):
+  - String (plus "hello world!")
+  - I/O and setq (plus side effect)
+
+* References
+  - LLVM Tutorial, http://llvm.org/docs/tutorial/index.html
+  - Scheme -> LLVM, http://www.ida.liu.se/~tobnu/scheme2llvm/
