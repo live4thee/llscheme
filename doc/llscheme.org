@@ -6,13 +6,13 @@
   For example, the Scheme code =(define (foo a b) (+ a b)= will be
   translated to the following:
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_EXAMPLE
   define i32 @foo(i32 %a, i32 %b) {
   entry:
     %tmp = add i32 %a, %b
     ret i32 %tmp
   }
-#+END_SRC
+#+END_EXAMPLE
 
   Two notes:
   - Scheme has unlimited precision numbers, we assuming all integers
@@ -28,7 +28,7 @@
       (1)      (2)    (3)
 #+END_EXAMPLE
 
-  Our work are focused on three phases labelled above, especially the
+  Our work are focused on three phases labeled above, especially the
   first two. Make sure you understand the following terminology before
   jumping to coding!
   - Lexical Scoping
