@@ -1,4 +1,5 @@
-// Copyright (C) 2010 David Lee <live4thee@gmail.com>
+// Copyright (C) 2010 David Lee <live4thee@gmail.com>,
+//                    Qing He <qing.x.he@gmail.com>
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -23,14 +24,20 @@
 
 class Scanner {
 public:
-  Scanner(const std::string& input);
+  virtual ~Scanner() {};
+
+  virtual char curChar(void) const = 0;
+  virtual void consume(void) = 0;
+  virtual void match(char x) = 0;
+};
+
+class StringScanner: public Scanner {
+public:
+  StringScanner(const std::string& input);
 
   char curChar(void) const;
   void consume(void);
   void match(char x);
-
-  virtual Token nextToken(void) = 0;
-  virtual const char* getTokenName(int tokenType) const = 0;
 
 private:
   const std::string _input;

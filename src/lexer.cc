@@ -22,13 +22,9 @@
 #include "lexer.hh"
 #include "error.hh"
 
-Lexer::Lexer(const std::string& input):
-  Scanner(input) {}
-
 const char* Lexer::getTokenName(int tokenType) const {
   return tokenNames[tokenType];
 }
-
 
 Token Lexer::nextToken(void) {
   char ch;

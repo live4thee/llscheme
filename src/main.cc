@@ -25,13 +25,17 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  Lexer lexer = Lexer(argv[1]);
-  Token token = lexer.nextToken();
+  Scanner *scanner = new StringScanner(argv[1]);
+  Lexer *lexer = new Lexer(scanner);
+  Token token = lexer->nextToken();
 
   while (token.type != EOF_TYPE) {
     std::cout << token.type << ", " << token.text << std::endl;
-    token = lexer.nextToken();
+    token = lexer->nextToken();
   }
+
+  delete scanner;
+  delete lexer;
 
   return 0;
 }

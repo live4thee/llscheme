@@ -1,4 +1,5 @@
-// Copyright (C) 2010 David Lee <live4thee@gmail.com>
+// Copyright (C) 2010 David Lee <live4thee@gmail.com>,
+//                    Qing He <qing.x.he@gmail.com>
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,21 +19,20 @@
 #include "scanner.hh"
 #include "error.hh"
 
-Scanner::Scanner(const std::string& input):
+StringScanner::StringScanner(const std::string& input):
   _input(input), _length(input.length()), _index(0) {}
 
-char Scanner::curChar(void) const {
+char StringScanner::curChar(void) const {
   if (_index < _length)
     return _input.at(_index);
   return -1;
 }
 
-void Scanner::consume(void) {
+void StringScanner::consume(void) {
   _index++;
 }
 
-
-void Scanner::match(char x) {
+void StringScanner::match(char x) {
   const char ch = curChar();
   if (x == ch) consume();
   else throw Error(std::string("expecting ") + x + "; found " + ch);

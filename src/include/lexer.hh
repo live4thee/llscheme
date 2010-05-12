@@ -24,9 +24,9 @@
 
 enum tokenType {EOF_TYPE = 1, LPAREN, ID, NUMBER, COMMA, RPAREN};
 
-class Lexer:public Scanner {
+class Lexer {
 public:
-  Lexer(const std::string& input);
+  Lexer(Scanner *s) { scanner = s; }
 
   const char* getTokenName(int tokenType) const;
   Token nextToken(void);
@@ -43,6 +43,11 @@ private:
   bool isDigit(int radix = 10);
 
   static const char* tokenNames[];
+
+  Scanner *scanner;
+  char curChar(void) { return scanner->curChar(); }
+  void consume(void) { return scanner->consume(); }
+
 };
 
 #endif
