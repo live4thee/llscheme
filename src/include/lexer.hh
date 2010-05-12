@@ -16,17 +16,17 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 //
 
-#ifndef LISTLEXER_HXX_
-#define LISTLEXER_HXX_
+#ifndef LEXER_HH_
+#define LEXER_HH_
 
 #include <string>
-#include "lexer.hxx"
+#include "scanner.hh"
 
 enum tokenType {EOF_TYPE = 1, LPAREN, ID, NUMBER, COMMA, RPAREN};
 
-class ListLexer:public Lexer {
+class Lexer:public Scanner {
 public:
-  ListLexer(const std::string& input);
+  Lexer(const std::string& input);
 
   const char* getTokenName(int tokenType) const;
   Token nextToken(void);

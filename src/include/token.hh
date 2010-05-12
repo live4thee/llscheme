@@ -15,20 +15,18 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 //
 
-#ifndef ERROR_HXX_
-#define ERROR_HXX_
+#ifndef TOKEN_HH_
+#define TOKEN_HH_
 
 #include <string>
-#include <exception>
 
-class Error: public std::exception {
+class Token {
 public:
-  Error(const std::string& msg);
-  virtual ~Error() throw ();
-  const char* what() const throw();
+  Token(int ty, const std::string& txt);
+  Token operator=(const Token& token);
 
-private:
-  const std::string _msg;
+  int type;
+  std::string text;
 };
 
 #endif

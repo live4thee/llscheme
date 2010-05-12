@@ -15,13 +15,25 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 //
 
+#include "scanner.hh"
 #include "error.hh"
 
-Error::Error(const std::string& msg):
-  _msg(msg) {}
+Scanner::Scanner(const std::string& input):
+  _input(input), _length(input.length()), _index(0) {}
 
-Error::~Error() throw () {}
+char Scanner::curChar(void) const {
+  if (_index < _length)
+    return _input.at(_index);
+  return -1;
+}
 
-const char* Error::what() const throw () {
-  return _msg.c_str();
+void Scanner::consume(void) {
+  _index++;
+}
+
+
+void Scanner::match(char x) {
+  const char ch = curChar();
+  if (x == ch) consume();
+  else throw Error(std::string("expecting ") + x + "; found " + ch);
 }

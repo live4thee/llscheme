@@ -15,15 +15,15 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 //
 
-#ifndef LEXER_HXX_
-#define LEXER_HXX_
+#ifndef SCANNER_HH_
+#define SCANNER_HH_
 
 #include <string>
-#include "token.hxx"
+#include "token.hh"
 
-class Lexer {
+class Scanner {
 public:
-  Lexer(const std::string& input);
+  Scanner(const std::string& input);
 
   char curChar(void) const;
   void consume(void);

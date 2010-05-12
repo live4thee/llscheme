@@ -16,7 +16,7 @@
 //
 
 #include <iostream>
-#include "listlexer.hxx"
+#include "lexer.hh"
 
 int main(int argc, char* argv[])
 {
@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  ListLexer lexer = ListLexer(argv[1]);
+  Lexer lexer = Lexer(argv[1]);
   Token token = lexer.nextToken();
 
   while (token.type != EOF_TYPE) {

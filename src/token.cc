@@ -15,7 +15,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 //
 
-#include "token.hxx"
+#include "token.hh"
 
 Token::Token(int ty, const std::string& txt):
   type(ty), text(txt) {}
