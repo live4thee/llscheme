@@ -85,6 +85,9 @@ Token Lexer::getSimpleNumber(void) {
     consume();
   } while (isDigit());
   
+  if (!isDelimiter())
+    throw Error(std::string("invalid number ") + curChar());
+
   return Token(NUMBER, number);
 }
 
