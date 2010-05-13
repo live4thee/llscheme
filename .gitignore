@@ -1,0 +1,16 @@
+.*
+*.o
+*.o.*
+tags
+TAGS
+!.gitignore
+
+patches
+series
+
+cscope.*
+ncscope.*
+
+*.orig
+*~
+\#*#
