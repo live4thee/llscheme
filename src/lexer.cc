@@ -18,6 +18,8 @@
 
 #include <algorithm>
 #include <iostream>
+#include <sstream>
+#include <cctype>
 
 #include "lexer.hh"
 #include "error.hh"
@@ -88,8 +90,7 @@ Token Lexer::getSimpleNumber(void) {
 
 bool Lexer::isLetter(void) {
   const char ch = curChar();
-  return ((ch >= 'a' && ch <= 'z') ||
-	  (ch >= 'A' && ch <= 'Z'));
+  return std::isalpha(ch);
 }
 
 bool Lexer::isSpecialInitial(void) {
@@ -132,10 +133,17 @@ bool Lexer::isDelimiter(void) {
   return (s != delimiters + N);
 }
 
-bool Lexer::isDigit(int radix) {
+bool Lexer::isDigit(radixType rdx) {
   const char ch = curChar();
 
-  return (ch >= '0' && ch <= '9');
+  switch (rdx) {
+  case RDX_DEC: return std::isdigit(ch);
+  case RDX_HEX: return std::isxdigit(ch);
+  }
+
+  std::stringstream ss;
+  ss << rdx;
+  throw Error(std::string("invalid radix: ") + ss.str());
 }
 
 const char* Lexer::tokenNames[] = {

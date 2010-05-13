@@ -1,7 +1,7 @@
 SOURCE := $(wildcard *.cc)
 OBJECT := $(SOURCE:.cc=.o)
 
-CXXFLAGS += -W -Wall -I./include
+CXXFLAGS += -W -Wall -Werror -I./include
 
 TARGET := mylexer
 

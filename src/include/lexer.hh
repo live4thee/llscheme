@@ -22,7 +22,8 @@
 #include <string>
 #include "scanner.hh"
 
-enum tokenType {EOF_TYPE = 1, LPAREN, ID, NUMBER, COMMA, RPAREN};
+typedef enum {EOF_TYPE = 1, LPAREN, ID, NUMBER, COMMA, RPAREN} tokenType;
+typedef enum {RDX_DEC, RDX_HEX} radixType;
 
 class Lexer {
 public:
@@ -40,7 +41,7 @@ private:
   bool isSpecialInitial(void);
   bool isSubsequent(void);
   bool isDelimiter(void);
-  bool isDigit(int radix = 10);
+  bool isDigit(radixType rdx=RDX_DEC);
 
   static const char* tokenNames[];
 
