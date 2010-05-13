@@ -1,4 +1,5 @@
-// Copyright (C) 2010 David Lee <live4thee@gmail.com>
+// Copyright (C) 2010 David Lee <live4thee@gmail.com>,
+//                    Qing He <qing.x.he@gmail.com>
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -14,6 +15,9 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 //
+
+#include <algorithm>
+#include <iostream>
 
 #include "listlexer.hxx"
 #include "error.hxx"
@@ -38,8 +42,12 @@ Token ListLexer::nextToken(void) {
       consume(); return Token(LPAREN, "(");
     case ')':
       consume(); return Token(RPAREN, ")");
+    case '+':
+    case '-':
+      return getPeculiarIdentifier();
     default:
-      if (isLetter()) return getNameToken();
+      if (isDigit()) return getSimpleNumber();
+      if (isInitial()) return getIdentifier();
       throw Error(std::string("invalid character: ") + ch);
     }
   }
@@ -47,14 +55,39 @@ Token ListLexer::nextToken(void) {
   return Token(EOF_TYPE, "<EOF>");
 }
 
-Token ListLexer::getNameToken(void) {
-  std::string name = "";
+Token ListLexer::getIdentifier(void) {
+  std::string id = "";
   do {
-    name += curChar();
+    id += curChar();
     consume();
-  } while (isLetter());
+  } while (isSubsequent());
 
-  return Token(NAME, name);
+  return Token(ID, id);
+}
+
+Token ListLexer::getPeculiarIdentifier(void) {
+  std::string id = "";
+  const char ch = curChar();
+  
+  // N.B. r5rs states that peculiar identifier -> + | - | ...
+  // does ... means literal "..." ?? If yes, need to add
+  id += ch;
+  consume();
+  if (!isDelimiter())
+    throw Error(std::string("invalid identifier start with ") + ch);
+
+  return Token(ID, id);
+}
+
+Token ListLexer::getSimpleNumber(void) {
+  std::string number = "";
+  
+  do {
+    number += curChar();
+    consume();
+  } while (isDigit());
+  
+  return Token(NUMBER, number);
 }
 
 bool ListLexer::isLetter(void) {
@@ -63,6 +96,52 @@ bool ListLexer::isLetter(void) {
 	  (ch >= 'A' && ch <= 'Z'));
 }
 
+bool ListLexer::isSpecialInitial(void) {
+  const char ch = curChar();
+  static const char special[] = {
+    '!', '$', '%', '&', '*', '/', ':', '<', '=',
+    '>', '?', '^', '_', '~'
+  };
+  const int N = sizeof(special) / sizeof(char);
+  const char *s;
+
+  s = std::find(special, special + N, ch);
+  return (s != special + N);
+}
+
+bool ListLexer::isInitial(void) {
+  return isLetter() || isSpecialInitial();
+}
+
+bool ListLexer::isSubsequent(void) {
+  const char ch = curChar();
+
+  if (ch >= '0' && ch <= '9')
+    return true;
+  else if (ch == '+' || ch == '-' || ch == '.' || ch == '@')
+    return true;
+
+  return isInitial();
+}
+
+bool ListLexer::isDelimiter(void) {
+  const char ch = curChar();
+  static const char delimiters[] = {
+    ' ', '\t', '\r', '\n', '(', ')', '"', ';'
+  };
+  const int N = sizeof(delimiters) / sizeof(char);
+  const char *s;
+
+  s = std::find(delimiters, delimiters + N, ch);
+  return (s != delimiters + N);
+}
+
+bool ListLexer::isDigit(int radix) {
+  const char ch = curChar();
+
+  return (ch >= '0' && ch <= '9');
+}
+
 const char* ListLexer::tokenNames[] = {
-  "n/a", "<EOF>", "LPAREN", "NAME", "COMMA", "RPAREN"
+  "n/a", "<EOF>", "LPAREN", "ID", "NUMBER", "COMMA", "RPAREN"
 };

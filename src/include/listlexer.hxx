@@ -1,4 +1,5 @@
-// Copyright (C) 2010 David Lee <live4thee@gmail.com>
+// Copyright (C) 2010 David Lee <live4thee@gmail.com>,
+//                    Qing He <qing.x.he@gmail.com>
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -21,7 +22,7 @@
 #include <string>
 #include "lexer.hxx"
 
-enum tokenType {EOF_TYPE = 1, LPAREN, NAME, COMMA, RPAREN};
+enum tokenType {EOF_TYPE = 1, LPAREN, ID, NUMBER, COMMA, RPAREN};
 
 class ListLexer:public Lexer {
 public:
@@ -31,8 +32,15 @@ public:
   Token nextToken(void);
 
 private:
-  Token getNameToken(void);
+  Token getIdentifier(void);
+  Token getPeculiarIdentifier(void);
+  Token getSimpleNumber(void);
   bool isLetter(void);
+  bool isInitial(void);
+  bool isSpecialInitial(void);
+  bool isSubsequent(void);
+  bool isDelimiter(void);
+  bool isDigit(int radix = 10);
 
   static const char* tokenNames[];
 };
