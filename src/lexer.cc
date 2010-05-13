@@ -24,6 +24,15 @@
 #include "lexer.hh"
 #include "error.hh"
 
+// TODO:
+//   * customizable configs: strict standards or allow extension.
+//     e.g. identifiers '123abc' '..@' allowed?
+//   * detach public and private interfaces so updating the private
+//     part doesn't cause a global recompiliation
+//   * review how <delimiters> works
+//   * scanner read ahead and better error message
+//   * more readable lexer?
+
 const char* Lexer::getTokenName(int tokenType) const {
   return tokenNames[tokenType];
 }
@@ -40,9 +49,19 @@ Token Lexer::nextToken(void) {
       consume(); return Token(LPAREN, "(");
     case ')':
       consume(); return Token(RPAREN, ")");
+    case '\'':
+      consume(); return Token(QUOTE, "'");
     case '+':
     case '-':
       return getPeculiarIdentifier();
+    case '.':
+      return getPeriod();
+    case ';':
+      skipComment(); continue;
+    case '"':
+      return getString();
+    case '#':
+      return getPoundSpecial();
     default:
       if (isDigit()) return getSimpleNumber();
       if (isInitial()) return getIdentifier();
@@ -59,6 +78,8 @@ Token Lexer::getIdentifier(void) {
     id += curChar();
     consume();
   } while (isSubsequent());
+  if (!isDelimiter())
+    throw Error(std::string("invalid identifier syntax ") + curChar());
 
   return Token(ID, id);
 }
@@ -66,9 +87,7 @@ Token Lexer::getIdentifier(void) {
 Token Lexer::getPeculiarIdentifier(void) {
   std::string id = "";
   const char ch = curChar();
-  
-  // N.B. r5rs states that peculiar identifier -> + | - | ...
-  // does ... means literal "..." ?? If yes, need to add
+
   id += ch;
   consume();
   if (!isDelimiter())
@@ -79,16 +98,73 @@ Token Lexer::getPeculiarIdentifier(void) {
 
 Token Lexer::getSimpleNumber(void) {
   std::string number = "";
-  
+
+  // TODO: handling real number with '.'
   do {
     number += curChar();
     consume();
   } while (isDigit());
-  
+
   if (!isDelimiter())
     throw Error(std::string("invalid number ") + curChar());
 
   return Token(NUMBER, number);
+}
+
+Token Lexer::getPeriod(void) {
+  consume();
+  if (isDelimiter())
+    return Token(PERIOD, ".");
+
+  if (curChar() == '.') {
+    consume();
+    if (curChar() == '.') {
+      consume();
+      if (isDelimiter())
+        return Token(ID, "...");
+    }
+  }
+
+  throw Error(std::string("invalid token starting with ."));
+}
+
+void Lexer::skipComment(void) {
+  do {
+    consume();
+  } while(curChar() != '\r' && curChar() != '\n');
+  consume();
+}
+
+Token Lexer::getString(void) {
+  std::string str = "";
+
+  // TODO: multi line string, \"
+  consume();
+  while (curChar() != '"') {
+    str += curChar();
+    consume();
+  }
+  consume();
+
+  return Token(STRING, str);
+}
+
+Token Lexer::getPoundSpecial()
+{
+  std::string special = "#";
+
+  consume();
+  switch(curChar()) {
+  case 't':
+  case 'f':
+    special += curChar();
+    consume();
+    if (!isDelimiter())
+      throw Error(std::string("invalid special # " + curChar()));
+    return Token(BOOL, special);
+  default:
+    throw Error(std::string("invalid special #" + curChar()));
+  }
 }
 
 bool Lexer::isLetter(void) {
@@ -116,7 +192,7 @@ bool Lexer::isInitial(void) {
 bool Lexer::isSubsequent(void) {
   const char ch = curChar();
 
-  if (ch >= '0' && ch <= '9')
+  if (std::isdigit(ch))
     return true;
   else if (ch == '+' || ch == '-' || ch == '.' || ch == '@')
     return true;
@@ -127,7 +203,7 @@ bool Lexer::isSubsequent(void) {
 bool Lexer::isDelimiter(void) {
   const char ch = curChar();
   static const char delimiters[] = {
-    ' ', '\t', '\r', '\n', '(', ')', '"', ';'
+    '\t', '\n', '\r', ' ', '"', '(', ')', ';'
   };
   const int N = sizeof(delimiters) / sizeof(char);
   const char *s;
@@ -150,5 +226,6 @@ bool Lexer::isDigit(radixType rdx) {
 }
 
 const char* Lexer::tokenNames[] = {
-  "n/a", "<EOF>", "LPAREN", "ID", "NUMBER", "COMMA", "RPAREN"
+  "n/a", "<EOF>", "LPAREN", "ID", "NUMBER", "COMMA", "RPAREN",
+  "PERIOD", "STRING", "BOOL", "QUOTE"
 };
