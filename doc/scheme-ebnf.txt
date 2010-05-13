@@ -1,0 +1,23 @@
+                     A simplified EBNF for Scheme
+                     ============================
+
+form         ::= constant | symbol | special-form | application
+
+constant     ::= numeric-constant | boolean-constant | string-constant
+
+symbol       ::= name
+
+name         ::= letter { letter | digit | "-" | "!" | "?" }
+
+special-form ::= if-form | define-form | lambda-form
+
+if-form      ::= "(" "if" form form [ form ] ")"
+define-form  ::= "(" "define" name form ")"
+lambda-form  ::= "(" "lambda" "(" { name } ["." name] ")" { form } ")"
+
+application  ::= "(" form { form } ")"
+
+
+Reference
+~~~~~~~~~
+http://www.ugrad.cs.ubc.ca/~cs126/Handouts/scheme-ebnf.ps
