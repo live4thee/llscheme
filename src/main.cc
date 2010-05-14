@@ -16,16 +16,15 @@
 //
 
 #include <iostream>
+#include <sstream>
 #include "lexer.hh"
 
-int main(int argc, char* argv[])
+int main(void)
 {
-  if (argc < 2) {
-    std::cerr << "extra parameter required!" << std::endl;
-    return -1;
-  }
+  std::stringstream ss;
+  ss << std::cin.rdbuf();
 
-  Scanner *scanner = new StringScanner(argv[1]);
+  Scanner *scanner = new StringScanner(ss.str());
   Lexer *lexer = new Lexer(scanner);
   Token token = lexer->nextToken();
 

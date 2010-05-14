@@ -22,7 +22,7 @@
 #include <string>
 #include "scanner.hh"
 
-typedef enum {EOF_TYPE = 1, LPAREN, ID, NUMBER, COMMA, RPAREN,
+typedef enum {EOF_TYPE = 1, LPAREN, ID, NUMBER, RPAREN,
               PERIOD, STRING, BOOL, QUOTE} tokenType;
 typedef enum {RDX_DEC, RDX_HEX} radixType;
 

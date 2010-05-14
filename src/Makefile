@@ -1,9 +1,15 @@
 SOURCE := $(wildcard *.cc)
 OBJECT := $(SOURCE:.cc=.o)
 
+ifdef DEBUG
+CXXFLAGS += -ggdb
+else
+CXXFLAGS += -O2
+endif
+
 CXXFLAGS += -W -Wall -Werror -I./include
 
-TARGET := mylexer
+TARGET := llscheme
 
 all: $(TARGET)
 

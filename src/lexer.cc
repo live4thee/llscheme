@@ -43,8 +43,6 @@ Token Lexer::nextToken(void) {
     switch (ch) {
     case ' ': case '\t': case '\n': case '\r':
       consume(); continue;
-    case ',':
-      consume(); return Token(COMMA, ",");
     case '(':
       consume(); return Token(LPAREN, "(");
     case ')':
@@ -226,6 +224,6 @@ bool Lexer::isDigit(radixType rdx) {
 }
 
 const char* Lexer::tokenNames[] = {
-  "n/a", "<EOF>", "LPAREN", "ID", "NUMBER", "COMMA", "RPAREN",
+  "n/a", "<EOF>", "LPAREN", "ID", "NUMBER", "RPAREN",
   "PERIOD", "STRING", "BOOL", "QUOTE"
 };
