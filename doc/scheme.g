@@ -9,8 +9,8 @@ DIGIT	:	'0'..'9'+;
 
 symbol	:	LETTER ( LETTER | DIGIT | '-' | '!' | '?' )*;
 
-spform	:	if | define | lambda;
-if	:	'(' 'if' form form form? ')';
+spform	:	ifexp | define | lambda;
+ifexp	:	'(' 'if' form form form? ')';
 define	:	'(' 'define' symbol form ')';
 lambda	:	'(' 'lambda' '(' args ')' form? ')';
 
