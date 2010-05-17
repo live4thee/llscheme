@@ -29,7 +29,7 @@ Parser::Parser(Lexer* input, int k) {
   }
 }
 
-Parser::  ~Parser() {
+Parser::~Parser() {
 }
 
 void Parser::consume(void) {
@@ -37,6 +37,7 @@ void Parser::consume(void) {
   c_index = (c_index + 1) % n_lookahead;
 }
 
+// 1 <= idx <= k
 const Token& Parser::peekToken(int idx) const {
   int t = (c_index + idx - 1) % n_lookahead;
   return lookahead[t];
@@ -51,4 +52,102 @@ void Parser::match(int tkType) {
   else throw Error(std::string(std::string("expecting ") +
 			       input->getTokenName(tkType) +
 			       "; found " + peekToken(1).text));
+}
+
+void Parser::form(void)
+{
+  int tk1 = peekTokenType(1);
+
+  switch (tk1) {
+  case BOOL:
+  case STRING:
+  case NUMBER:
+    match(tk1);			// parsed a constant
+    return;
+  }
+
+  if (tk1 == LPAREN) {		// start with '('
+    int tk2 = peekTokenType(2);
+    if (tk2 == ID) {
+      const Token& tk = peekToken(2);
+      if (tk.text == "if") ifexp();
+      else if (tk.text == "define") define();
+      else if (tk.text == "lambda") lambda();
+    } else apply();
+  } else if (tk1 == QUOTE)	// parsed a quote
+    quote();
+  else match(ID);		// a simbol
+}
+
+void Parser::ifexp(void)
+{
+  match(LPAREN);
+  match(ID);			// text = `if'
+  form();			// cond
+  form();			// then
+
+  int tk1 = peekTokenType(1);
+  if (tk1 != RPAREN)
+    form();			// optional else
+
+  match(RPAREN);
+}
+
+void Parser::define(void)
+{
+  match(LPAREN);
+  match(ID);			// text = `define'
+  match(ID);			// function name
+  form();
+  match(RPAREN);
+}
+
+void Parser::lambda(void)
+{
+  match(LPAREN);
+  match(ID);			// text = `lambda'
+  match(LPAREN);
+  args();
+  match(RPAREN);
+
+  int tk1 = peekTokenType(1);
+  if (tk1 != RPAREN)		// function body
+    form();
+
+  match(RPAREN);
+}
+
+void Parser::args(void)
+{
+  int tk;
+
+  match(ID);
+  for (tk = peekTokenType(1); tk != DOT;)
+    match(ID);
+
+  if (tk == RPAREN)
+    match(RPAREN);
+  else {
+    match(DOT);
+    match(ID);
+    match(RPAREN);
+  }
+}
+
+void Parser::quote(void)
+{
+  match(QUOTE);
+  form();
+}
+
+void Parser::apply(void)
+{
+  match(LPAREN);
+  form();
+
+  int tk1 = peekTokenType(1);
+  if (tk1 != RPAREN)
+    form();
+
+  match(RPAREN);
 }

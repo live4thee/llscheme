@@ -53,7 +53,7 @@ Token Lexer::nextToken(void) {
     case '-':
       return getPeculiarIdentifier();
     case '.':
-      return getPeriod();
+      return getDot();
     case ';':
       skipComment(); continue;
     case '"':
@@ -109,10 +109,10 @@ Token Lexer::getSimpleNumber(void) {
   return Token(NUMBER, number);
 }
 
-Token Lexer::getPeriod(void) {
+Token Lexer::getDot(void) {
   consume();
   if (isDelimiter())
-    return Token(PERIOD, ".");
+    return Token(DOT, ".");
 
   if (curChar() == '.') {
     consume();
@@ -225,5 +225,5 @@ bool Lexer::isDigit(radixType rdx) {
 
 const char* Lexer::tokenNames[] = {
   "n/a", "<EOF>", "LPAREN", "ID", "NUMBER", "RPAREN",
-  "PERIOD", "STRING", "BOOL", "QUOTE"
+  "DOT", "STRING", "BOOL", "QUOTE"
 };

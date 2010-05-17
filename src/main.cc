@@ -17,7 +17,7 @@
 
 #include <iostream>
 #include <sstream>
-#include "lexer.hh"
+#include "parser.hh"
 
 int main(void)
 {
@@ -26,15 +26,22 @@ int main(void)
 
   Scanner *scanner = new StringScanner(ss.str());
   Lexer *lexer = new Lexer(scanner);
+  Parser parser = Parser(lexer, 4);
+
+#if 0
   Token token = lexer->nextToken();
 
   while (token.type != EOF_TYPE) {
     std::cout << token.type << ", " << token.text << std::endl;
     token = lexer->nextToken();
   }
+#endif
 
-  delete scanner;
+  // parser a sexp
+  parser.form();
+
   delete lexer;
+  delete scanner;
 
   return 0;
 }

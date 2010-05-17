@@ -23,7 +23,7 @@
 #include "scanner.hh"
 
 typedef enum {EOF_TYPE = 1, LPAREN, ID, NUMBER, RPAREN,
-              PERIOD, STRING, BOOL, QUOTE} tokenType;
+              DOT, STRING, BOOL, QUOTE} tokenType;
 typedef enum {RDX_DEC, RDX_HEX} radixType;
 
 class Lexer {
@@ -37,7 +37,7 @@ private:
   Token getIdentifier(void);
   Token getPeculiarIdentifier(void);
   Token getSimpleNumber(void);
-  Token getPeriod(void);
+  Token getDot(void);
   Token getPoundSpecial(void);
   Token getString(void);
   bool isLetter(void);
