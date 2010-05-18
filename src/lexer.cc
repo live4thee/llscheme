@@ -112,7 +112,7 @@ Token Lexer::getSimpleNumber(void) {
 Token Lexer::getDot(void) {
   consume();
   if (isDelimiter())
-    return Token(DOT, ".");
+    return Token(PERIOD, ".");
 
   if (curChar() == '.') {
     consume();
@@ -225,5 +225,5 @@ bool Lexer::isDigit(radixType rdx) {
 
 const char* Lexer::tokenNames[] = {
   "n/a", "<EOF>", "LPAREN", "ID", "NUMBER", "RPAREN",
-  "DOT", "STRING", "BOOL", "QUOTE"
+  "PERIOD", "STRING", "BOOL", "QUOTE"
 };

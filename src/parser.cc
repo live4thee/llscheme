@@ -122,13 +122,13 @@ void Parser::args(void)
   int tk;
 
   match(ID);
-  for (tk = peekTokenType(1); tk != DOT;)
+  for (tk = peekTokenType(1); tk != PERIOD;)
     match(ID);
 
   if (tk == RPAREN)
     match(RPAREN);
   else {
-    match(DOT);
+    match(PERIOD);
     match(ID);
     match(RPAREN);
   }
