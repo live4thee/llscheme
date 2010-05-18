@@ -38,7 +38,9 @@ int main(void)
 #endif
 
   // parser a sexp
-  parser.form();
+  while (parser.peekTokenType(1) != EOF_TYPE) {
+    parser.form();
+  }
 
   delete lexer;
   delete scanner;
