@@ -15,6 +15,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 //
 
+#include <iostream>
 #include "parser.hh"
 #include "error.hh"
 
@@ -33,6 +34,9 @@ Parser::~Parser() {
 }
 
 void Parser::consume(void) {
+#ifdef DEBUG
+  std::cerr << "consumed `" << lookahead[c_index].text << "'" << std::endl;
+#endif
   lookahead[c_index] = input->nextToken();
   c_index = (c_index + 1) % n_lookahead;
 }
@@ -62,6 +66,7 @@ void Parser::form(void)
   case BOOL:
   case STRING:
   case NUMBER:
+  case ID:
     match(tk1);			// parsed a constant
     return;
   }
@@ -70,13 +75,20 @@ void Parser::form(void)
     int tk2 = peekTokenType(2);
     if (tk2 == ID) {
       const Token& tk = peekToken(2);
-      if (tk.text == "if") ifexp();
-      else if (tk.text == "define") define();
-      else if (tk.text == "lambda") lambda();
-    } else apply();
-  } else if (tk1 == QUOTE)	// parsed a quote
+      if (tk.text == "if") {
+	ifexp(); return;
+      } else if (tk.text == "define") {
+	define(); return;
+      } else if (tk.text == "lambda") {
+	lambda(); return;
+      }
+    }
+
+    apply();
+  } else if (tk1 == QUOTE) {	// parsed a quote
     quote();
-  else match(ID);		// a simbol
+  } else throw Error(std::string("unexpected token: ") +
+		     input->getTokenName(tk1));
 }
 
 void Parser::ifexp(void)
@@ -106,32 +118,30 @@ void Parser::lambda(void)
 {
   match(LPAREN);
   match(ID);			// text = `lambda'
-  match(LPAREN);
+
+  match(LPAREN);		// function args
   args();
   match(RPAREN);
 
-  int tk1 = peekTokenType(1);
-  if (tk1 != RPAREN)		// function body
-    form();
+  form();			// function body
 
   match(RPAREN);
 }
 
+// Args can be empty, list or dotted list.
+// args ::= ID* ('.' ID)?
 void Parser::args(void)
 {
   int tk;
 
-  match(ID);
-  for (tk = peekTokenType(1); tk != PERIOD;)
+  while ((tk = peekTokenType(1)) == ID)
     match(ID);
 
   if (tk == RPAREN)
-    match(RPAREN);
-  else {
-    match(PERIOD);
-    match(ID);
-    match(RPAREN);
-  }
+    return;
+
+  match(PERIOD);		// dotted params
+  match(ID);
 }
 
 void Parser::quote(void)
@@ -142,11 +152,13 @@ void Parser::quote(void)
 
 void Parser::apply(void)
 {
+  int tk;
+
   match(LPAREN);
   form();
 
-  int tk1 = peekTokenType(1);
-  if (tk1 != RPAREN)
+  // optional arguments
+  while ((tk = peekTokenType(1)) != RPAREN)
     form();
 
   match(RPAREN);

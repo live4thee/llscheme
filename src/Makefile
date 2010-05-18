@@ -2,7 +2,7 @@ SOURCE := $(wildcard *.cc)
 OBJECT := $(SOURCE:.cc=.o)
 
 ifdef DEBUG
-CXXFLAGS += -ggdb
+CXXFLAGS += -ggdb -DDEBUG
 else
 CXXFLAGS += -O2
 endif
