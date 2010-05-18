@@ -179,7 +179,7 @@ bool Lexer::isSpecialInitial(void) {
   const int N = sizeof(special) / sizeof(char);
   const char *s;
 
-  s = std::find(special, special + N, ch);
+  for(s = special; s < special + N && *s != ch; s++);
   return (s != special + N);
 }
 
@@ -206,7 +206,7 @@ bool Lexer::isDelimiter(void) {
   const int N = sizeof(delimiters) / sizeof(char);
   const char *s;
 
-  s = std::find(delimiters, delimiters + N, ch);
+  for(s = delimiters; s < delimiters + N && *s != ch; s++);
   return (s != delimiters + N);
 }
 
