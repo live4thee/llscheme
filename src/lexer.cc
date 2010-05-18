@@ -111,7 +111,7 @@ Token Lexer::getSimpleNumber(void) {
 Token Lexer::getDot(void) {
   consume();
   if (isDelimiter())
-    return Token(DOT, ".");
+    return Token(PERIOD, ".");
 
   if (curChar() == '.') {
     consume();
@@ -178,7 +178,7 @@ bool Lexer::isSpecialInitial(void) {
   const int N = sizeof(special) / sizeof(char);
   const char *s;
 
-  s = std::find(special, special + N, ch);
+  for(s = special; s < special + N && *s != ch; s++);
   return (s != special + N);
 }
 
@@ -205,7 +205,7 @@ bool Lexer::isDelimiter(void) {
   const int N = sizeof(delimiters) / sizeof(char);
   const char *s;
 
-  s = std::find(delimiters, delimiters + N, ch);
+  for(s = delimiters; s < delimiters + N && *s != ch; s++);
   return (s != delimiters + N);
 }
 
@@ -224,5 +224,5 @@ bool Lexer::isDigit(radixType rdx) {
 
 const char* Lexer::tokenNames[] = {
   "n/a", "<EOF>", "LPAREN", "ID", "NUMBER", "RPAREN",
-  "DOT", "STRING", "BOOL", "QUOTE"
+  "PERIOD", "STRING", "BOOL", "QUOTE"
 };

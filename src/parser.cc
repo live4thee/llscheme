@@ -140,7 +140,7 @@ void Parser::args(void)
   if (tk == RPAREN)
     return;
 
-  match(DOT);			// dotted params
+  match(PERIOD);		// dotted params
   match(ID);
 }
 
