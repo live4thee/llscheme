@@ -75,8 +75,9 @@ void Parser::form(void)
     int tk2 = peekTokenType(2);
     if (tk2 == ID) {
       const Token& tk = peekToken(2);
-      if (tk.text == "if") ifexp();
-      else if (tk.text == "define") {
+      if (tk.text == "if") {
+	ifexp(); return;
+      } else if (tk.text == "define") {
 	define(); return;
       } else if (tk.text == "lambda") {
 	lambda(); return;
