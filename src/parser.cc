@@ -105,11 +105,24 @@ void Parser::ifexp(void)
   match(RPAREN);
 }
 
+// (define (foo x) ...)
+// (define foo ...)
 void Parser::define(void)
 {
+  int tk3 = peekTokenType(3);
+
   match(LPAREN);
   match(ID);			// text = `define'
-  match(ID);			// function name
+
+  if (tk3 == LPAREN) {
+    match(LPAREN);
+    match(ID);			// function name
+    args();
+    match(RPAREN);
+  } else {
+    match(ID);			// function name
+  }
+
   form();
   match(RPAREN);
 }

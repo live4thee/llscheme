@@ -11,6 +11,18 @@
     (+ (square x)
        (square y))))
 
+;; define syntactic sugar
+(define (sum-of-square x y)
+  (+ (square x)
+     (square y)))
+
+;; `varargs' Function
+(define (foo . lst)
+  (length lst))
+
+(define (foo a . lst)
+  (+ a (length lst)))
+
 ;; `if' expression
 (define abs
   (lambda (x)
