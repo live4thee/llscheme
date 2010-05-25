@@ -29,3 +29,8 @@
     (if (>= x 0)
 	x
 	(- x))))
+
+;; quote
+'(define foo 2)	;; should pass
+'(define 2 3)	;; should pass, too.
+'()		;; shoud pass

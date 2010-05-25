@@ -159,8 +159,30 @@ void Parser::args(void)
 
 void Parser::quote(void)
 {
+  int tk, cnt;
+
   match(QUOTE);
-  form();
+
+  tk = peekTokenType(1);	// quoted an atom
+  if (tk != LPAREN && tk != RPAREN) {
+    match(tk);
+    return;
+  }
+
+  if (tk == RPAREN)
+    throw Error(std::string("unexpeced `)'"));
+
+  cnt = 1;			// number of unmatched LPAREN
+  match(LPAREN);
+  while (cnt > 0) {		// quoted a list
+    tk = peekTokenType(1);
+
+    if (tk == RPAREN) --cnt;
+    else if (tk == LPAREN) ++cnt;
+    else if (tk == EOF_TYPE) match(RPAREN);
+
+    match(tk);
+  }
 }
 
 void Parser::apply(void)
