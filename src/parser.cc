@@ -81,6 +81,8 @@ void Parser::form(void)
 	define(); return;
       } else if (tk.text == "lambda") {
 	lambda(); return;
+      } else if (tk.text == "quote") {
+	match(LPAREN); quote(); match(RPAREN); return;
       }
     }
 
@@ -161,7 +163,9 @@ void Parser::quote(void)
 {
   int tk, cnt;
 
-  match(QUOTE);
+  /* It's a little bit weird here since we donot have a preprocessor. */
+  if (peekToken(1).text == "quote") match(ID);
+  else match(QUOTE);
 
   tk = peekTokenType(1);	// quoted an atom
   if (tk != LPAREN && tk != RPAREN) {

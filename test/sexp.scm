@@ -34,3 +34,7 @@
 '(define foo 2)	;; should pass
 '(define 2 3)	;; should pass, too.
 '()		;; shoud pass
+
+(quote (define foo 2))
+(quote (define 2 3))
+(quote (quote (abc)))
