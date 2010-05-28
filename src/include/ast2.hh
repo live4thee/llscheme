@@ -1,5 +1,5 @@
-// Copyright (C) 2010 David Lee <live4thee@gmail.com>
 // Copyright (C) 2010 Qing He <qing.x.he@gmail.com>
+// Copyright (C) 2010 David Lee <live4thee@gmail.com>
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -24,12 +24,14 @@
 // We need some type identification system similar to RTTI...
 
 enum ASTType {
-  NumberAST, SymbolAST, SExprAST,
+  NumberAST, SymbolAST, SExprAST, UnknownAST
 };
 
 class ASTNode {
+protected:
   enum ASTType type;
 public:
+  ASTNode(enum ASTType _t = UnknownAST) :type(_t) {}
   virtual enum ASTType getType() { return type; }
   virtual ~ASTNode() {}
 };
@@ -38,7 +40,14 @@ class NumberASTNode :public ASTNode {
   int val;
 public:
   NumberASTNode(int _v)
-    :val(_v), type(NumberAST) {}
+    :ASTNode(NumberAST), val(_v) {}
+};
+
+class SymbolASTNode :public ASTNode {
+  std::string symbol;
+public:
+  SymbolASTNode(const std::string &_s)
+    :ASTNode(SymbolAST), symbol(_s) {}
 };
 
 class SExprASTNode :public ASTNode {
@@ -46,14 +55,14 @@ class SExprASTNode :public ASTNode {
   ASTNode *rest;
 public:
   SExprASTNode()
-    :rest(NULL), type(SExprASTNode) {}
+    :ASTNode(SExprAST), rest(0) {}
 
   void addArgument(ASTNode *arg) {
     exp.push_back(arg);
   }
 
   void setRest(ASTNode *r) {
-    reset = r;
+    rest = r;
   }
 
   int numArgument() {
