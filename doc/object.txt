@@ -1,0 +1,31 @@
+llscheme objects
+
+It all starts from a simple question: considering the procedure call in a
+compiled scheme program, what should we pass as arguments?
+
+We can pass numbers for numbers, address for variables, strings for strings,
+even address for functions, however, what if we come to lists: e.g.
+  (cons '(a b c) '(d e f))
+even complicated, what if there is inner structure?
+  (cons '(a (b (c d e) f) (g h)) '(i))
+
+
+It shows that we need an `object' type that has the same representative capability
+as the syntax tree (this is not surprising since scheme expressions and
+data can trasform to each other)
+
+So why bother the split between ast and object?
+In fact, we can very well merge these two concepts: what comes out from the
+parser is data, when it's evaluated, it's handled as an expression, the eval
+can be either explicitly or implicitly. For example, the arguments of a procedure
+call is implicitly evaluated, as the following example:
+  (+ 1 2)     ; returns 3
+  (+ '1 '2)   ; returns 3 as well because implicit evaluation
+  (+ ''1 ''2) ; error!
+
+Note that these implict evals should only happen at compile time, so they won't
+require the existence of runtime eval operator.
+
+Another derived decision is that the object type needs an ABI, since they are used
+as well by the llvm IR! Thus C++ class is not an option any more.
+

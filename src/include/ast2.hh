@@ -21,6 +21,10 @@
 
 #include <vector>
 
+// TODO: rename to ls_object as the internal data representation as well as
+//       the AST representation
+// TODO: rewrite in C to has an ABI
+
 // We need some type identification system similar to RTTI...
 
 enum ASTType {

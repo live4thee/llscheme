@@ -38,3 +38,7 @@
 (quote (define foo 2))
 (quote (define 2 3))
 (quote (quote (abc)))
+
+(+ '1 '2)  ;; should return 3 as well
+;; we need a unit test that can test failure for the following
+; (+ ''1 ''2)  ;; should fail
