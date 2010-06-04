@@ -15,7 +15,7 @@ all: $(TARGET)
 
 .PHONY: clean
 clean:
-	$(RM) $(TARGET) $(OBJECT)
+	$(RM) $(TARGET) $(OBJECT) *~ include/*~ \#* include/\#*
 
 $(TARGET): $(OBJECT)
 	$(CXX) $(CXXFLAGS) $^ -o $@
