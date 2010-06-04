@@ -1,5 +1,8 @@
-// Copyright (C) 2010 Qing He <qing.x.he@gmail.com>
-// Copyright (C) 2010 David Lee <live4thee@gmail.com>
+// -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 2; -*-
+//
+// Copyright (C)
+//         2010 Qing He <qing.x.he@gmail.com>
+//         2010 David Lee <live4thee@gmail.com>
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -20,15 +23,12 @@
 #define AST2_HH_
 
 #include <vector>
-
-// TODO: rename to ls_object as the internal data representation as well as
-//       the AST representation
-// TODO: rewrite in C to has an ABI
+#include <string>
 
 // We need some type identification system similar to RTTI...
 
 enum ASTType {
-  NumberAST, SymbolAST, SExprAST, UnknownAST
+  NumberAST, BooleanAST, SymbolAST, StringAST, SExprAST, UnknownAST
 };
 
 class ASTNode {
@@ -41,17 +41,29 @@ public:
 };
 
 class NumberASTNode :public ASTNode {
-  int val;
 public:
-  NumberASTNode(int _v)
-    :ASTNode(NumberAST), val(_v) {}
+  int val;
+  NumberASTNode(const std::string &_s);
+};
+
+class BooleanASTNode :public ASTNode {
+public:
+  int boolean;
+  BooleanASTNode(const std::string &_s);
 };
 
 class SymbolASTNode :public ASTNode {
-  std::string symbol;
 public:
+  std::string symbol;
   SymbolASTNode(const std::string &_s)
     :ASTNode(SymbolAST), symbol(_s) {}
+};
+
+class StringASTNode :public ASTNode {
+public:
+  std::string str;
+  StringASTNode(const std::string &_s)
+    :ASTNode(StringAST), str(_s) {}
 };
 
 class SExprASTNode :public ASTNode {
@@ -90,7 +102,3 @@ public:
   }
 };
 #endif
-
-// Local Variables:
-// c-basic-offset: 2
-// End:

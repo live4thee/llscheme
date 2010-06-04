@@ -1,8 +1,8 @@
 // -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 2; -*-
 //
 // Copyright (C)
-//         2010 David Lee <live4thee@gmail.com>
 //         2010 Qing He <qing.x.he@gmail.com>
+//         2010 David Lee <live4thee@gmail.com>
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,40 +19,20 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 //
 
-#include <iostream>
-#include <sstream>
-#include "parser.hh"
+#include <cstdlib>
 #include "ast2.hh"
 
-int main(void)
+NumberASTNode::NumberASTNode(const std::string &_s)
+  :ASTNode(NumberAST)
 {
-  std::stringstream ss;
-  ss << std::cin.rdbuf();
+  val = std::atoi(_s.c_str());
+}
 
-  Scanner *scanner = new StringScanner(ss.str());
-  Lexer *lexer = new Lexer(scanner);
-  Parser parser = Parser(lexer, 4);
-  SExprASTNode *ast = new SExprASTNode();
-
-#if 0
-  Token token = lexer->nextToken();
-
-  while (token.type != EOF_TYPE) {
-    std::cout << token.type << ", " << token.text << std::endl;
-    token = lexer->nextToken();
-  }
-#endif
-
-  ast->addArgument(new SymbolASTNode("begin"));
-
-  // parser a sexp
-  while (parser.peekTokenType(1) != EOF_TYPE) {
-    ast->addArgument(parser.exp());
-  }
-
-  delete ast;
-  delete lexer;
-  delete scanner;
-
-  return 0;
+BooleanASTNode::BooleanASTNode(const std::string &_s)
+  :ASTNode(BooleanAST)
+{
+  if (_s == "#t")
+    boolean = 1;
+  else
+    boolean = 0;
 }
