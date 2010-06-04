@@ -26,7 +26,7 @@
 
 int main(void)
 {
-  std::stringstream ss;
+  std::stringstream ss, ss1;
   ss << std::cin.rdbuf();
 
   Scanner *scanner = new StringScanner(ss.str());
@@ -49,6 +49,9 @@ int main(void)
   while (parser.peekTokenType(1) != EOF_TYPE) {
     ast->addArgument(parser.exp());
   }
+
+  ast->finePrint(ss1);
+  std::cout << ss1.rdbuf() << "\n";
 
   delete ast;
   delete lexer;

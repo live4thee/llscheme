@@ -36,3 +36,46 @@ BooleanASTNode::BooleanASTNode(const std::string &_s)
   else
     boolean = 0;
 }
+
+// TODO: line breaking with proper column setting
+
+void NumberASTNode::finePrint(std::stringstream &ss) {
+  ss << val;
+}
+
+void BooleanASTNode::finePrint(std::stringstream &ss) {
+  if (boolean)
+    ss << "#t";
+  else
+    ss << "#f";
+}
+
+void SymbolASTNode::finePrint(std::stringstream &ss) {
+  ss << symbol;
+}
+
+void StringASTNode::finePrint(std::stringstream &ss) {
+  ss << '"' << str << '"';
+}
+
+void SExprASTNode::finePrint(std::stringstream &ss) {
+  int size = exp.size();
+  int i;
+  ss << '(';
+
+  if (size != 0) {
+    exp[0]->finePrint(ss);
+    for (i = 1; i < size; i++) {
+      ss << ' ';
+      exp[i]->finePrint(ss);
+    }
+  }
+
+  if (rest) {
+    ss << " . ";
+    rest->finePrint(ss);
+  }
+
+  ss << ')';
+}
+  

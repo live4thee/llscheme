@@ -24,6 +24,7 @@
 
 #include <vector>
 #include <string>
+#include <sstream>
 
 // We need some type identification system similar to RTTI...
 
@@ -36,6 +37,8 @@ protected:
   enum ASTType type;
 public:
   ASTNode(enum ASTType _t = UnknownAST) :type(_t) {}
+
+  virtual void finePrint(std::stringstream &ss) = 0;
   virtual enum ASTType getType() { return type; }
   virtual ~ASTNode() {}
 };
@@ -44,12 +47,14 @@ class NumberASTNode :public ASTNode {
 public:
   int val;
   NumberASTNode(const std::string &_s);
+  void finePrint(std::stringstream &ss);
 };
 
 class BooleanASTNode :public ASTNode {
 public:
   int boolean;
   BooleanASTNode(const std::string &_s);
+  void finePrint(std::stringstream &ss);
 };
 
 class SymbolASTNode :public ASTNode {
@@ -57,6 +62,7 @@ public:
   std::string symbol;
   SymbolASTNode(const std::string &_s)
     :ASTNode(SymbolAST), symbol(_s) {}
+  void finePrint(std::stringstream &ss);
 };
 
 class StringASTNode :public ASTNode {
@@ -64,6 +70,7 @@ public:
   std::string str;
   StringASTNode(const std::string &_s)
     :ASTNode(StringAST), str(_s) {}
+  void finePrint(std::stringstream &ss);
 };
 
 class SExprASTNode :public ASTNode {
@@ -73,6 +80,7 @@ public:
   SExprASTNode()
     :ASTNode(SExprAST), rest(0) {}
 
+  void finePrint(std::stringstream &ss);
   void addArgument(ASTNode *arg) {
     exp.push_back(arg);
   }
