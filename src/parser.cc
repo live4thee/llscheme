@@ -1,4 +1,8 @@
-// Copyright (C) 2010 David Lee <live4thee@gmail.com>
+// -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 2; -*-
+//
+// Copyright (C)
+//         2010 David Lee <live4thee@gmail.com>
+//         2010 Qing He <qing.x.he@gmail.com>
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,6 +22,7 @@
 #include <iostream>
 #include "parser.hh"
 #include "error.hh"
+#include "ast2.hh"
 
 Parser::Parser(Lexer* input, int k) {
   this->input = input;
@@ -56,6 +61,60 @@ void Parser::match(int tkType) {
   else throw Error(std::string(std::string("expecting ") +
 			       input->getTokenName(tkType) +
 			       "; found " + peekToken(1).text));
+}
+
+ASTNode *Parser::exp(void)
+{
+  int tk1 = peekTokenType(1);
+  ASTNode *ast;
+
+  switch (tk1) {
+  case BOOL:
+    ast = new BooleanASTNode(peekToken(1).text);
+    consume();
+    return ast;
+  case STRING:
+    ast = new StringASTNode(peekToken(1).text);
+    consume();
+    return ast;
+  case NUMBER:
+    ast = new NumberASTNode(peekToken(1).text);
+    consume();
+    return ast;
+  case ID:
+    ast = new SymbolASTNode(peekToken(1).text);
+    consume();
+    return ast;
+  }
+
+  if (tk1 == LPAREN) {
+    SExprASTNode *sexpr = new SExprASTNode();
+    consume();
+
+    while (peekTokenType(1) != RPAREN) {
+      if (peekTokenType(1) == PERIOD) {
+        consume();
+        sexpr->setRest(exp());
+	match(RPAREN);
+	return sexpr;
+      }
+
+      sexpr->addArgument(exp());
+    }
+    match(RPAREN);
+    return sexpr;
+  }
+
+  if (tk1 == QUOTE) {
+    SExprASTNode *sexpr = new SExprASTNode();
+    consume();
+    sexpr->addArgument(new SymbolASTNode("quote"));
+    sexpr->addArgument(exp());
+
+    return sexpr;
+  }
+
+  throw Error(std::string("unexpected token"));
 }
 
 void Parser::form(void)

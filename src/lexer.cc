@@ -1,5 +1,8 @@
-// Copyright (C) 2010 David Lee <live4thee@gmail.com>,
-//                    Qing He <qing.x.he@gmail.com>
+// -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 2; -*-
+//
+// Copyright (C)
+//         2010 David Lee <live4thee@gmail.com>
+//         2010 Qing He <qing.x.he@gmail.com>
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -178,7 +181,8 @@ bool Lexer::isSpecialInitial(void) {
   const int N = sizeof(special) / sizeof(char);
   const char *s;
 
-  for(s = special; s < special + N && *s != ch; s++);
+  for(s = special; s < special + N && *s != ch; s++)
+    ;
   return (s != special + N);
 }
 
@@ -205,7 +209,8 @@ bool Lexer::isDelimiter(void) {
   const int N = sizeof(delimiters) / sizeof(char);
   const char *s;
 
-  for(s = delimiters; s < delimiters + N && *s != ch; s++);
+  for(s = delimiters; s < delimiters + N && *s != ch; s++)
+    ;
   return (s != delimiters + N);
 }
 

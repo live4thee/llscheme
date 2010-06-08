@@ -1,5 +1,8 @@
-// Copyright (C) 2010 Qing He <qing.x.he@gmail.com>
-// Copyright (C) 2010 David Lee <live4thee@gmail.com>
+// -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 2; -*-
+//
+// Copyright (C)
+//         2010 Qing He <qing.x.he@gmail.com>
+//         2010 David Lee <live4thee@gmail.com>
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -42,7 +45,3 @@ public:
   ASTNode *searchBinding(const std::string &name);
 };
 #endif
-
-// Local Variables:
-// c-basic-offset: 2
-// End:

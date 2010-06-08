@@ -1,4 +1,8 @@
-// Copyright (C) 2010 David Lee <live4thee@gmail.com>
+// -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 2; -*-
+//
+// Copyright (C)
+//         2010 David Lee <live4thee@gmail.com>
+//         2010 Qing He <qing.x.he@gmail.com>
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,15 +22,17 @@
 #include <iostream>
 #include <sstream>
 #include "parser.hh"
+#include "ast2.hh"
 
 int main(void)
 {
-  std::stringstream ss;
+  std::stringstream ss, ss1;
   ss << std::cin.rdbuf();
 
   Scanner *scanner = new StringScanner(ss.str());
   Lexer *lexer = new Lexer(scanner);
   Parser parser = Parser(lexer, 4);
+  SExprASTNode *ast = new SExprASTNode();
 
 #if 0
   Token token = lexer->nextToken();
@@ -37,11 +43,17 @@ int main(void)
   }
 #endif
 
+  ast->addArgument(new SymbolASTNode("begin"));
+
   // parser a sexp
   while (parser.peekTokenType(1) != EOF_TYPE) {
-    parser.form();
+    ast->addArgument(parser.exp());
   }
 
+  ast->finePrint(ss1);
+  std::cout << ss1.rdbuf() << "\n";
+
+  delete ast;
   delete lexer;
   delete scanner;
 
