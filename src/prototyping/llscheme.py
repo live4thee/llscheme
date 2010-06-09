@@ -25,11 +25,17 @@ import walker
 import CodeGenLLVM
 
 def main():
+    # a1 = (+ 1 2 3)
     a1 = lsast.Add([lsast.Const(1), lsast.Const(2), lsast.Const(3)])
-    a2 = lsast.Sub([lsast.Const(7), a1])
+    # a2 = (* 7 a1)
+    a2 = lsast.Mul([lsast.Const(7), a1])
+    # a3 = (/ 42 a2)
+    a3 = lsast.Div([lsast.Const(42), a2])
+    # a4 = (- 4 a3)
+    a4 = lsast.Sub([lsast.Const(4), a3])
 
     visitor = CodeGenLLVM.CodeGenLLVM()
-    walker.walk(a2, visitor, None, 1)
+    walker.walk(a4, visitor, None, 1)
 
 
 if __name__ == '__main__':

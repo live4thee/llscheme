@@ -92,6 +92,34 @@ class Sub(AST):
     def __repr__(self):
         return "Sub(%s)" % (repr(self.args))
 
+class Mul(AST):
+    def __init__(self, args, lineno=None):
+        self.args = args    # a list
+        self.lineno = lineno
+
+    def getChildren(self):
+        return tuple(self.args)
+
+    def getChildNodes(self):
+        return tuple(self.args)
+
+    def __repr__(self):
+        return "Mul(%s)" % (repr(self.args))
+
+class Div(AST):
+    def __init__(self, args, lineno=None):
+        self.args = args    # a list
+        self.lineno = lineno
+
+    def getChildren(self):
+        return tuple(self.args)
+
+    def getChildNodes(self):
+        return tuple(self.args)
+
+    def __repr__(self):
+        return "Div(%s)" % (repr(self.args))
+
 class CallFunc(AST):
     def __init__(self, node, args, lineno=None):
         self.node = node

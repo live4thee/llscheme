@@ -1,3 +1,0 @@
-$ python llscheme.py > test.ll
-$ llvm-as test.ll
-$ lli test.bc && echo $?
