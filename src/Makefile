@@ -21,4 +21,4 @@ clean:
 	$(RM) $(TARGET) $(OBJECT) *~ include/*~ \#* include/\#*
 
 $(TARGET): $(OBJECT)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
