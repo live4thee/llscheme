@@ -66,9 +66,3 @@ def walk(tree, visitor, walker=None, verbose=None):
         walker.VERBOSE = verbose
     walker.preorder(tree, visitor)
     return walker.visitor
-
-def dumpNode(node):
-    print node.__class__
-    for attr in dir(node):
-        if attr[0] != '_':
-            print "\t", "%-10.10s" % attr, getattr(node, attr)

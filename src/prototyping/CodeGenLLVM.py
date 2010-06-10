@@ -48,58 +48,40 @@ class CodeGenLLVM:
         args = [self.visit(a) for a in node.args]
 
         if len(args) == 0:
-            return self.builder.ret(self.visit(Const(0)))
+            return self.visit(Const(0))
         elif len(args) == 1:
-            return self.builder.ret(args[0])
+            return self.visit(args[0])
 
-        idx = 0
-        acc = args[idx]
-        while idx < len(args) - 1:
-            tmp = args[idx + 1]
-            idx += 1
+        idx, acc = 1, args[0]
+        while idx < len(args):
             symbol = self.symmaker.genSymbol()
-            addInst = self.builder.add(acc, tmp, symbol)
-            acc = addInst
+            addInst = self.builder.add(acc, args[idx], symbol)
+            idx, acc = idx + 1, addInst
 
         print "; [AddOp] inst = ", addInst
-
-        self.builder.ret(addInst)
-        print self.module
 
         return addInst
 
 
     def visitSub(self, node):
 
-        lLLInst = self.visit(node.left)
-        rLLInst = self.visit(node.right)
+        args = [self.visit(a) for a in node.args]
+        if len(args) == 0:
+            raise SyntaxError, "missing operands"
+        elif len(args) == 1:
+            return self.builder.sub(self.visit(Const(0)), args[0])
 
-        subInst = self.builder.sub(lLLInst, rLLInst, tmpSym.name)
+        idx, acc = 1, args[0]
+        while idx < len(args):
+          symbol = self.symmaker.genSymbol()
+          subInst = self.builder.sub(acc, args[idx], symbol)
+          idx , acc = idx + 1, subInst
+
         print "; [SubOp] inst = ", subInst
+        self.builder.ret(subInst)
+        print self.module
 
         return subInst
-
-
-    def visitMul(self, node):
-
-        lLLInst = self.visit(node.left)
-        rLLInst = self.visit(node.right)
-
-        mulInst = self.builder.mul(lLLInst, rLLInst, tmpSym.name)
-        print "; [MulOp] inst = ", mulInst
-
-        return mulInst
-
-
-    def visitDiv(self, node):
-
-        lLLInst = self.visit(node.left)
-        rLLInst = self.visit(node.right)
-
-        divInst = self.builder.fdiv(lLLInst, rLLInst, tmpSym.name)
-        print "; [DIvOp] inst = ", divInst
-
-        return divInst
 
 
     def mkLLConstInst(self, ty, value):
