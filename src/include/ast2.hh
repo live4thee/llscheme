@@ -26,6 +26,8 @@
 #include <string>
 #include <sstream>
 
+#include <llvm/DerivedTypes.h>
+
 // We need some type identification system similar to RTTI...
 
 enum ASTType {
@@ -39,6 +41,7 @@ public:
   ASTNode(enum ASTType _t = UnknownAST) :type(_t) {}
 
   virtual void finePrint(std::stringstream &ss) = 0;
+  virtual llvm::Value *codeGen() = 0;
   virtual enum ASTType getType() { return type; }
   virtual ~ASTNode() {}
 };
@@ -48,6 +51,7 @@ public:
   int val;
   NumberASTNode(const std::string &_s);
   void finePrint(std::stringstream &ss);
+  llvm::Value *codeGen();
 };
 
 class BooleanASTNode :public ASTNode {
@@ -55,6 +59,7 @@ public:
   int boolean;
   BooleanASTNode(const std::string &_s);
   void finePrint(std::stringstream &ss);
+  llvm::Value *codeGen();
 };
 
 class SymbolASTNode :public ASTNode {
@@ -63,6 +68,7 @@ public:
   SymbolASTNode(const std::string &_s)
     :ASTNode(SymbolAST), symbol(_s) {}
   void finePrint(std::stringstream &ss);
+  llvm::Value *codeGen();
 };
 
 class StringASTNode :public ASTNode {
@@ -71,6 +77,7 @@ public:
   StringASTNode(const std::string &_s)
     :ASTNode(StringAST), str(_s) {}
   void finePrint(std::stringstream &ss);
+  llvm::Value *codeGen();
 };
 
 class SExprASTNode :public ASTNode {
@@ -81,6 +88,7 @@ public:
     :ASTNode(SExprAST), rest(0) {}
 
   void finePrint(std::stringstream &ss);
+  llvm::Value *codeGen();
   void addArgument(ASTNode *arg) {
     exp.push_back(arg);
   }

@@ -7,7 +7,7 @@ else
 CXXFLAGS += -O2
 endif
 
-CPPFLAGS += -W -Wall -Werror -I./include
+CPPFLAGS += -W -Wall -I./include
 
 CPPFLAGS += `llvm-config --cppflags`
 LDFLAGS += `llvm-config --ldflags --libs core`
