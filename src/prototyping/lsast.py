@@ -120,6 +120,58 @@ class Div(AST):
     def __repr__(self):
         return "Div(%s)" % (repr(self.args))
 
+# Symbol as in Scheme
+class Name(AST):
+    def __init__(self, name, lineno=None):
+        self.name = name
+        self.lineno = lineno
+
+    def getChildren(self):
+        return self.name,
+
+    def getChildNodes(self):
+        return ()
+
+    def __repr__(self):
+        return "Name(%s)" % (repr(self.name),)
+
+class Begin(AST):
+    def __init__(self, nodes, lineno=None):
+        self.nodes = nodes
+        self.lineno = lineno
+
+    def getChildren(self):
+        return tuple(flatten(self.nodes))
+
+    def getChildNodes(self):
+        nodelist = []
+        nodelist.extend(flatten_nodes(self.nodes))
+        return tuple(nodelist)
+
+    def __repr__(self):
+        return "Begin(%s)" % (repr(self.nodes),)
+
+class Define(AST):
+    def __init__(self, node, expr, lineno=None):
+        self.node = node    # a Name node
+        self.expr = expr
+        self.lineno = lineno
+
+    def getChildren(self):
+        children = []
+        children.append(self.node)
+        children.append(self.expr)
+        return tuple(children)
+
+    def getChildNodes(self):
+        nodelist = []
+        children.append(self.node)
+        nodelist.append(self.expr)
+        return tuple(nodelist)
+
+    def __repr__(self):
+        return "Define(%s, %s)" % (repr(self.node), repr(self.expr))
+
 class CallFunc(AST):
     def __init__(self, node, args, lineno=None):
         self.node = node
