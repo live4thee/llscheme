@@ -50,6 +50,7 @@ struct ls_object *lsrt_new_object(int type)
 void lsrt_error(const char *str)
 {
   fprintf(stderr, "error: %s\n", str? str: "");
+  exit(1);
 }
 
 /*
