@@ -20,3 +20,6 @@ ncscope.*
 *.bc
 *.s
 *.out
+
+*.bin
+*.a
