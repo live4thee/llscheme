@@ -22,24 +22,52 @@
 #include "ast2.hh"
 #include "codegen.hh"
 
-llvm::Module *module;
-llvm::IRBuilder<> builder(llvm::getGlobalContext());
+#include <llvm/Analysis/Verifier.h>
 
-// need a runtime ls_object type that fits to llvm::Value
+using llvm::Type;
+using llvm::Value;
+using llvm::Function;
+using llvm::FunctionType;
+using llvm::StructType;
+using llvm::BasicBlock;
 
-llvm::Value *NumberASTNode::codeGen() {
+using llvm::Module;
+using llvm::IRBuilder;
+using llvm::getGlobalContext;
+using llvm::verifyFunction;
+
+Module *module;
+IRBuilder<> builder(getGlobalContext());
+
+
+// Several things we need to do before generating real code
+void codegenInit(void) {
+  // init %ls_object to LSObjType
+  // codegen: declare %ls_object
+  // init %ls_object* (i32, %ls_object*)*
+  // codegen: the function type
+  // codegen: delcare lsrt_new_object, lsrt_error, lsrt_check_args
+  // codegen: call function _prolog (used builtin functions get bound there)
 }
 
-llvm::Value *BooleanASTNode::codeGen() {
+void codegenFinish(Value *value) {
+  // codegen: return value->u.val for exit value
+  // codegen: generate fucntion _prolog
+}
+
+Value *NumberASTNode::codeGen() {
+}
+
+Value *BooleanASTNode::codeGen() {
 }
 
 // N.B. unoptimized symbol retrieve needs to be runtime
-llvm::Value *SymbolASTNode::codeGen() {
+Value *SymbolASTNode::codeGen() {
   // SymbolASTNode -> symbol ls_object, in lexical scope
   // codegen: retrieve symbol binding
 }
 
-llvm::Value *StringASTNode::codeGen() {
+Value *StringASTNode::codeGen() {
 }
 
 
@@ -65,7 +93,7 @@ llvm::Value *StringASTNode::codeGen() {
 //    (k 3 1)
 // This means name bindings and lookups need to happen at
 // runtime, that's what first-class means.
-typedef llvm::Value *syntaxHandler(SExprASTNode *);
+typedef Value *syntaxHandler(SExprASTNode *);
 static syntaxHandler handleBegin;
 static syntaxHandler handleDefine;
 static syntaxHandler handleLambda;
@@ -81,7 +109,7 @@ static const struct {
   { "quote", &handleQuote },
 };
 
-llvm::Value *SExprASTNode::codeGen() {
+Value *SExprASTNode::codeGen() {
   // if arg[0] is symbol:
   //   syntaxhandler(this) if its keyword
   //   codegen: eval arg[0] otherwise
@@ -97,18 +125,18 @@ llvm::Value *SExprASTNode::codeGen() {
 
 
 // Syntax handlers
-static llvm::Value *handleBegin(SExprASTNode *sexpr) {
+static Value *handleBegin(SExprASTNode *sexpr) {
   // codegen: eval the remaining args
 }
 
-static llvm::Value *handleDefine(SExprASTNode *sexpr) {
+static Value *handleDefine(SExprASTNode *sexpr) {
 }
 
-static llvm::Value *handleLambda(SExprASTNode *sexpr) {
+static Value *handleLambda(SExprASTNode *sexpr) {
   // codegen: argc and args check as part of the code
 }
 
-static llvm::Value *handleQuote(SExprASTNode *sexpr) {
+static Value *handleQuote(SExprASTNode *sexpr) {
   // turn ASTNode to ls_object
   // turn s-expression to nested pairs
 }
