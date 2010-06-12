@@ -7,15 +7,23 @@ else
 CXXFLAGS += -O2
 endif
 
-CXXFLAGS += -W -Wall -Werror -I./include
+CPPFLAGS += -W -Wall -I./include
 
-TARGET := llscheme
+CPPFLAGS += `llvm-config --cppflags`
+LDFLAGS += `llvm-config --ldflags --libs core`
 
-all: $(TARGET)
+TARGET := llscheme.bin
+LIBLSRT := runtime/liblsrt.a
 
-.PHONY: clean
+all: $(TARGET) $(LIBLSRT)
+
+.PHONY: clean FORCE
 clean:
 	$(RM) $(TARGET) $(OBJECT) *~ include/*~ \#* include/\#*
+	$(MAKE) -C runtime clean
 
 $(TARGET): $(OBJECT)
-	$(CXX) $(CXXFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+
+$(LIBLSRT): FORCE
+	$(MAKE) -C runtime

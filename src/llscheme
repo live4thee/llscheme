@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# temporary solution to handle runtime and linking
+
+./llscheme.bin $@
