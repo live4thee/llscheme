@@ -3,10 +3,7 @@ include ./common.mk
 SOURCE := $(wildcard *.cc)
 OBJECT := $(SOURCE:.cc=.o)
 
-
-CXXFLAGS += -I./include
-
-CPPFLAGS += `llvm-config --cppflags`
+CPPFLAGS += -I./include `llvm-config --cppflags`
 LDFLAGS += `llvm-config --ldflags --libs core`
 
 TARGET := llscheme.bin
