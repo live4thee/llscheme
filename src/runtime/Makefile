@@ -1,15 +1,11 @@
+include ../common.mk
+
 SOURCE := $(wildcard *.c)
 OBJECT := $(SOURCE:.c=.o)
 
-ifdef DEBUG
-CFLAGS += -ggdb -DDEBUG
-else
-CFLAGS += -O2
-endif
+CFLAGS += -I../include
 
-CPPFLAGS += -W -Wall -Werror -I../include
-
-LLVMCC = llvm-gcc -emit-llvm
+LLVMCC = clang -emit-llvm
 LLVMAR = llvm-ar
 
 TARGET := liblsrt.a

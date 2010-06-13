@@ -40,18 +40,22 @@ using llvm::verifyFunction;
 #define context getGlobalContext()
 
 Value *NumberASTNode::codeGen() {
+  return NULL;
 }
 
 Value *BooleanASTNode::codeGen() {
+  return NULL;
 }
 
 // N.B. unoptimized symbol retrieve needs to be runtime
 Value *SymbolASTNode::codeGen() {
   // SymbolASTNode -> symbol ls_object, in lexical scope
   // codegen: retrieve symbol binding
+  return NULL;
 }
 
 Value *StringASTNode::codeGen() {
+  return NULL;
 }
 
 
@@ -105,22 +109,33 @@ Value *SExprASTNode::codeGen() {
   // codegen: eval the remaining args
   // codegen: call function with arg count and vectors of args
   // TODO: ( args . rest)
+  return NULL;
 }
 
 
 // Syntax handlers
 static Value *handleBegin(SExprASTNode *sexpr) {
+  (void) sexpr;
   // codegen: eval the remaining args
+  return NULL;
 }
 
 static Value *handleDefine(SExprASTNode *sexpr) {
+  (void) sexpr;
+  return NULL;
 }
 
 static Value *handleLambda(SExprASTNode *sexpr) {
+  (void) sexpr;
   // codegen: argc and args check as part of the code
+  return NULL;
 }
 
 static Value *handleQuote(SExprASTNode *sexpr) {
+  (void) sexpr;
   // turn ASTNode to ls_object
   // turn s-expression to nested pairs
+  return NULL;
 }
+
+/* vim: set et ts=2 sw=2 cin: */
