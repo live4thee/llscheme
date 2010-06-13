@@ -2,10 +2,12 @@ COMMON_CFLAGS := -W -Wall
 
 ifdef DEBUG
 COMMON_CFLAGS += -ggdb -DDEBUG
+else
+COMMON_CFLAGS += -O2
 endif
 
-CXX := clang++
-CC  := clang
+CXX := g++
+CC  := gcc
 
-CPPFLAGS += $(COMMON_CFLAGS)
+CXXFLAGS += $(COMMON_CFLAGS)
 CFLAGS   += $(COMMON_CFLAGS)
