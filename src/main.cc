@@ -24,7 +24,9 @@
 #include "parser.hh"
 #include "ast2.hh"
 
-int main(void)
+extern int codegen(ASTNode *);
+
+int main(int argc, char *argv[])
 {
   std::stringstream ss, ss1;
   ss << std::cin.rdbuf();
@@ -50,8 +52,12 @@ int main(void)
     ast->addArgument(parser.exp());
   }
 
-  ast->finePrint(ss1);
-  std::cout << ss1.rdbuf() << "\n";
+  if (argc == 2 && std::string(argv[1]) == "-d") {
+    ast->finePrint(ss1);
+    std::cout << ss1.rdbuf() << "\n";
+  } else {
+    codegen(ast);
+  }
 
   delete ast;
   delete lexer;

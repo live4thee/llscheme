@@ -20,9 +20,10 @@
 //
 
 #include "ast2.hh"
-#include "codegen.hh"
+#include "driver.hh"
 
 #include <llvm/Analysis/Verifier.h>
+#include <vector>
 
 using llvm::Type;
 using llvm::Value;
@@ -36,24 +37,7 @@ using llvm::IRBuilder;
 using llvm::getGlobalContext;
 using llvm::verifyFunction;
 
-Module *module;
-IRBuilder<> builder(getGlobalContext());
-
-
-// Several things we need to do before generating real code
-void codegenInit(void) {
-  // init %ls_object to LSObjType
-  // codegen: declare %ls_object
-  // init %ls_object* (i32, %ls_object*)*
-  // codegen: the function type
-  // codegen: delcare lsrt_new_object, lsrt_error, lsrt_check_args
-  // codegen: call function _prolog (used builtin functions get bound there)
-}
-
-void codegenFinish(Value *value) {
-  // codegen: return value->u.val for exit value
-  // codegen: generate fucntion _prolog
-}
+#define context getGlobalContext()
 
 Value *NumberASTNode::codeGen() {
 }

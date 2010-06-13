@@ -19,16 +19,23 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 //
 
-#ifndef CODEGEN_HH_
-#define CODEGEN_HH_
+#ifndef DRIVER_HH_
+#define DRIVER_HH_
 
-#include <llvm/DerivedTypes.h>
+#include <llvm/Type.h>
 #include <llvm/LLVMContext.h>
 #include <llvm/Module.h>
 #include <llvm/Support/IRBuilder.h>
 
+#include "ast2.hh"
+
 extern llvm::Module *module;
 extern llvm::IRBuilder<> builder;
 
+extern llvm::Type *LSObjType;
+extern llvm::FunctionType *LSFuncType;
+extern llvm::Type *LSFuncPtrType;
+
+extern int codegen(ASTNode *);
 
 #endif
