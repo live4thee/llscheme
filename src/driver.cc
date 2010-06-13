@@ -95,6 +95,7 @@ static void InitializeLSRTFunctions(void) {
                               Function::ExternalLinkage, NULL);
 
   v.clear();
+  v.push_back(Type::getInt32Ty(context));
   v.push_back(Type::getInt8Ty(context)->getPointerTo());
   v.push_back(Type::getInt32Ty(context));
   v.push_back(LSObjType->getPointerTo());

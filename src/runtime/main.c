@@ -65,17 +65,43 @@ void lsrt_error(const char *str)
  *
  * e.g. the arg spec of operation `+' is "n*"
  */
-void lsrt_check_args(const char *spec, int argc, struct ls_object *args)
+void lsrt_check_args(int n, const char *spec, int argc,
+                     struct ls_object *args)
 {
-  UNUSED_ARGUMENT(spec);
-  UNUSED_ARGUMENT(argc);
-  UNUSED_ARGUMENT(args);
+  int i = 0;
+  char c;
 
-  /* XXX: we can't get more info with this simple approach :-( */
-  if (0) {
-    lsrt_error("type error");
+  if (n != 0 && n != argc) {
+    lsrt_error("argument count mismatch");
   }
+  /* type checking follows */
+  for (i = 0; i < argc; i++) {
+    c = *spec;
+    if (c == '*') {
+      c = *(--spec);
+      if (i == 0) return;
+    }
+    spec++;
+
+    switch (c) {
+    case 'a': break;
+    case 'o':
+      if (args[i].type == ls_t_void)
+        goto err;
+      break;
+    case 'n':
+      if (args[i].type != ls_t_number &&
+          args[i].type != ls_t_bignum)
+        goto err;
+      break;
+    default:
+      break;
+    }
+  }
+
   return;
+err:
+  lsrt_error("argument type error");
 }
 
 static struct ls_object *
@@ -84,7 +110,7 @@ lsrt_builtin_arith(const char op, int argc, struct ls_object *args)
   struct ls_object *ret = lsrt_new_object(ls_t_number);
   int i;
 
-  lsrt_check_args("n*", argc, args);
+  lsrt_check_args(0, "n*", argc, args);
 
   ret->u1.val = args[0].u1.val;
 
