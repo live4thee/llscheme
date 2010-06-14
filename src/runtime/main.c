@@ -77,6 +77,7 @@ void lsrt_check_args_count(int min, int max, int argc)
  * `o' for any but void
  * `n' for number or bignum
  * `p' for pair
+ * `f' for function
  */
 void lsrt_check_arg_type(struct ls_object *args[], int i, char c)
 {
@@ -84,23 +85,31 @@ void lsrt_check_arg_type(struct ls_object *args[], int i, char c)
   case 'a': break;
   case 'o':
     if (!lso_is_void(args[i]))
-      goto err;
+      lsrt_error("fucntion argument type mismatch");
     break;
   case 'n':
     if (!lso_is_number(args[i]) &&
         !lso_is_bignum(args[i]))
-      goto err;
+      lsrt_error("expected number");
     break;
+  case 'f':
+    if (!lso_is_func(args[i]) || lso_func_get(args[i]) == NULL)
+      lsrt_error("expected function");
   default:
     break;
   }
 
   return;
-
- err:
-  lsrt_error("fucntion argument type mismatch");
 }
 
+void lsrt_check_symbol_unbound(struct ls_object *arg)
+{
+  if (!lso_is_symbol(arg))
+    lsrt_error("internal error");
+
+  if (lso_symbol_deref(arg) == NULL)
+    lsrt_error("unbounded variable");
+}
 
 int lsrt_main_retval(struct ls_object *lso)
 {

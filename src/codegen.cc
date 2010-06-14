@@ -60,10 +60,11 @@ Value *BooleanASTNode::codeGen() {
 Value *SymbolASTNode::codeGen() {
   Constant *str, *init, *g, *s;
   std::vector<Constant *> v, m, idx;
+  Value *addr, *val;
 
   g = module->getNamedGlobal("_sym_" + symbol);
   if (g)
-    return g;
+    goto emit;
 
   // creating symbol objects and their initializers
   // NB. ConstantExpr::getInBoundsGetElementPtr is needed to
@@ -91,7 +92,13 @@ Value *SymbolASTNode::codeGen() {
   if (eenv.searchBinding(symbol) == NULL)
     eenv.addGlobalBinding(symbol, g);
 
-  return g;
+ emit:
+  builder.CreateCall(module->getFunction("lsrt_check_symbol_unbound"), g);
+  addr = LSObjGetPointerAddr(context, g, 0, 1);
+  val = builder.CreateBitCast(builder.CreateLoad(addr),
+                              LSObjType->getPointerTo());
+
+  return val;
 }
 
 Value *StringASTNode::codeGen() {
@@ -167,20 +174,27 @@ Value *SExprASTNode::codeGen() {
     // procs
     func = exp[0]->codeGen();
   }
+  else if (exp[0]->getType() == SExprAST) {
+    // possibly lambdas
+    func = exp[0]->codeGen();
+  }
+  else {
+    throw Error(std::string("not a function"));
+  }
 
-  if (!func)
-    return LSObjNew(context, ls_t_void);
-
-  // symbol -> func, lacks type safety,
-  // if not found <unbound variable>
+  // TODO: put things in one alloca
+  // func -> func_ptr, type safety check
+  addr = builder.CreateAlloca(LSObjType->getPointerTo(),
+                              ConstantInt::get(Type::getInt32Ty(context), 1));
+  builder.CreateStore(func, addr);
+  builder.CreateCall3(module->getFunction("lsrt_check_arg_type"),
+                      addr,
+                      ConstantInt::get(Type::getInt32Ty(context), 0),
+                      ConstantInt::get(Type::getInt8Ty(context), 'f'));
   addr = LSObjGetPointerAddr(context, func, 0, 1);
   func = builder.CreateLoad(addr);
-  func = builder.CreateBitCast(func, LSObjType->getPointerTo());
-  // func -> func_ptr, lacks type safety
-  addr = LSObjGetPointerAddr(context, func, 0, 1);
-  func = builder.CreateLoad(addr);
 
-  size = ConstantInt::get(llvm::Type::getInt32Ty(context), exp.size() - 1);
+  size = ConstantInt::get(Type::getInt32Ty(context), exp.size() - 1);
   addr = builder.CreateAlloca(LSObjType->getPointerTo(), size);
 
   for (i = 1; i < numArgument(); i++) {
