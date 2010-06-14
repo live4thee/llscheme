@@ -1,5 +1,89 @@
 #!/bin/sh
 
-# temporary solution to handle runtime and linking
+function usage {
+    cat >&2 << EOF
+$0: simple llscheme driver
 
-./llscheme.bin $@
+usage: cat <.scm> | llscheme -[hcSdvo]
+
+options:
+    -h             show this message
+    -c             do not link, output a.o
+    -S             do not assemble, output a.s
+    -d             dump asttree
+    -v             verbose
+    -o <file>      output file name
+EOF
+}
+
+function cleanup {
+rm -f $TEMPFILE
+rm -f $TEMPFILE2
+}
+
+trap cleanup QUIT INT
+
+PASSED_ARGS=
+FINEPRINT=0
+ASSEMBLE=1
+LINK=1
+OUTPUT=
+
+while [ $# -gt 0 ]; do
+    case $1 in
+        -h | --help) usage; exit 0 ;;
+        -d) FINEPRINT=1; PASSED_ARGS="-d" ;;
+        -S) ASSEMBLE=0 ;;
+        -c) LINK=0 ;;
+        -o) shift; OUTPUT=$1 ;;
+        -v) VERBOSE=1 ;;
+         *) break ;;
+    esac
+    shift
+done
+
+# temporary solution to handle runtime and linking
+TEMPFILE=`mktemp`
+TEMPFILE2=`mktemp`
+
+if [ x$FINEPRINT = x1 ]; then
+    if [ x$VERBOSE = x1 ]; then echo "./llscheme.bin -d -"; fi
+    ./llscheme.bin -d
+    exit 0
+fi
+
+if [ x$ASSEMBLE = x0 ]; then
+    if [ x$OUTPUT = x ]; then
+        RES=a.s
+    else
+        RES=$OUTPUT
+    fi
+else
+        RES=$TEMPFILE
+fi
+if [ x$VERBOSE = x1 ]; then echo "./llscheme.bin $PASSED_ARGS - $@ > $RES"; fi
+./llscheme.bin $PASSED_ARGS $@ > "$RES"
+if [ x$ASSEMBLE = x0 ]; then
+    exit 0
+fi
+
+if [ x$LINK = x0 ]; then
+    if [ x$OUTPUT = x ]; then
+        RES=a.o
+    else
+        RES=$OUTPUT
+    fi
+else
+        RES=$TEMPFILE2
+fi
+if [ x$VERBOSE = x1 ]; then echo "llvm-as $TEMPFILE -f -o $RES"; fi
+llvm-as $TEMPFILE -f -o "$RES"
+if [ x$LINK = x0 ]; then
+    exit 0
+fi
+
+if [ x$OUTPUT = x ]; then
+    OUTPUT=a.out
+fi
+if [ x$VERBOSE = x1 ]; then echo "llvm-ld $TEMPFILE2 -Lruntime -llsrt -o $OUTPUT"; fi
+llvm-ld $TEMPFILE2 -Lruntime -llsrt -o "$OUTPUT"

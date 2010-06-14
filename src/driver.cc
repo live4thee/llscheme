@@ -24,6 +24,7 @@
 
 #include <llvm/Analysis/Verifier.h>
 #include <vector>
+#include <iostream>
 
 using llvm::Type;
 using llvm::Value;
@@ -162,7 +163,7 @@ int codegen(ASTNode *ast) {
   codegenInit();
   codegenFinish(ast->codeGen());
 
-  module->dump();
+  module->print(std::cout, NULL);
 
   return 0;
 }

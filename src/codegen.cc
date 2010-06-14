@@ -138,6 +138,9 @@ static Value *handleBegin(SExprASTNode *sexpr) {
   Value *v = NULL;
   int i;
 
+  if (sexpr->numArgument() == 1) // (begin)
+    v = LSObjNew(context, 0);
+
   for (i = 1; i < sexpr->numArgument(); i++) {
     v = sexpr->getArgument(i)->codeGen();
   }
