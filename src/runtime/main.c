@@ -171,3 +171,62 @@ struct ls_object *lsrt_builtin_divide(int argc, struct ls_object *args[])
   return lsrt_builtin_arith('/', argc, args);
 }
 
+static void _display(struct ls_object *lso, int fp)
+{
+  switch (lso->type) {
+  case ls_t_void:
+    printf("<void>");
+    break;
+  case ls_t_number:
+    printf("%d", lso_number_get(lso));
+    break;
+  case ls_t_boolean:
+    if (lso_boolean_get(lso))
+      printf("#t");
+    else
+      printf("#f");
+    break;
+  case ls_t_bignum:
+    printf("<bignum>");
+    break;
+  case ls_t_symbol:
+    if (lso_symbol_name(lso))
+      printf("%s", lso_symbol_name(lso));
+    else
+      printf("<anon symbol...>");
+    break;
+  case ls_t_string:
+    printf("\"%s\"", lso_string_get(lso));
+    break;
+  case ls_t_pair:
+    if (!fp)
+      printf("(");
+
+    _display(lso_pair_car(lso), 0);
+    if (!lso_is_void(lso_pair_cdr(lso))) {
+      if (lso_is_pair(lso_pair_cdr(lso)))
+        printf(" ");
+      else
+        printf(" . ");
+      _display(lso_pair_cdr(lso), 1);
+    }
+
+    if (!fp)
+      printf(")");
+    break;
+  case ls_t_func:
+    printf("<procedure %p>", lso_func_get(lso));
+    break;
+  default:
+    break;
+  }
+}
+
+struct ls_object *lsrt_builtin_display(int argc, struct ls_object *args[])
+{
+  lsrt_check_args_count(1, 1, argc);
+  _display(args[0], 0);
+  printf("\n");
+
+  return lsrt_new_object(ls_t_void);
+}

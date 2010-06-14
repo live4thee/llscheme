@@ -134,6 +134,7 @@ static const struct _builtin_proc {
   { "-", "minus" },
   { "*", "multiply" },
   { "/", "divide" },
+  { "display", "" },
 };
 static const int num_builtin_proc =
   sizeof(builtin_proc) / sizeof(_builtin_proc);
