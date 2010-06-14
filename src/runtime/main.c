@@ -78,17 +78,17 @@ void lsrt_check_args_count(int min, int max, int argc)
  * `n' for number or bignum
  * `p' for pair
  */
-void lsrt_check_arg_type(struct ls_object *args, int i, char c)
+void lsrt_check_arg_type(struct ls_object *args[], int i, char c)
 {
   switch (c) {
   case 'a': break;
   case 'o':
-    if (!lso_is_void(args + i))
+    if (!lso_is_void(args[i]))
       goto err;
     break;
   case 'n':
-    if (!lso_is_number(args + i) &&
-        !lso_is_bignum(args + i))
+    if (!lso_is_number(args[i]) &&
+        !lso_is_bignum(args[i]))
       goto err;
     break;
   default:
@@ -115,21 +115,21 @@ int lsrt_main_retval(struct ls_object *lso)
 
 
 static struct ls_object *
-lsrt_builtin_arith(const char op, int argc, struct ls_object *args)
+lsrt_builtin_arith(const char op, int argc, struct ls_object *args[])
 {
   struct ls_object *ret = lsrt_new_object(ls_t_number);
   int i;
 
-  lso_number(ret) = lso_number_get(args);
+  lso_number(ret) = lso_number_get(args[0]);
 
   for (i = 1; i < argc; i++) {
     lsrt_check_arg_type(args, i, 'n');
     switch (op) {
-    case '+': lso_number(ret) += lso_number_get(args + i); break;
-    case '-': lso_number(ret) += lso_number_get(args + i); break;
-    case '*': lso_number(ret) += lso_number_get(args + i); break;
+    case '+': lso_number(ret) += lso_number_get(args[i]); break;
+    case '-': lso_number(ret) -= lso_number_get(args[i]); break;
+    case '*': lso_number(ret) *= lso_number_get(args[i]); break;
       /* this is however wrong, we need rationals */
-    case '/': lso_number(ret) += lso_number_get(args + i); break;
+    case '/': lso_number(ret) /= lso_number_get(args[i]); break;
     default:
       break;
     }
@@ -138,25 +138,25 @@ lsrt_builtin_arith(const char op, int argc, struct ls_object *args)
   return ret;
 }
 
-struct ls_object *lsrt_builtin_plus(int argc, struct ls_object *args)
+struct ls_object *lsrt_builtin_plus(int argc, struct ls_object *args[])
 {
   lsrt_check_args_count(0, 0, argc);
   return lsrt_builtin_arith('+', argc, args);
 }
 
-struct ls_object *lsrt_builtin_minus(int argc, struct ls_object *args)
+struct ls_object *lsrt_builtin_minus(int argc, struct ls_object *args[])
 {
    lsrt_check_args_count(1, 0, argc);
    return lsrt_builtin_arith('-', argc, args);
 }
 
-struct ls_object *lsrt_builtin_multiply(int argc, struct ls_object *args)
+struct ls_object *lsrt_builtin_multiply(int argc, struct ls_object *args[])
 {
   lsrt_check_args_count(0, 0, argc);
   return lsrt_builtin_arith('*', argc, args);
 }
 
-struct ls_object *lsrt_builtin_divide(int argc, struct ls_object *args)
+struct ls_object *lsrt_builtin_divide(int argc, struct ls_object *args[])
 {
   lsrt_check_args_count(1, 0, argc);
   return lsrt_builtin_arith('/', argc, args);

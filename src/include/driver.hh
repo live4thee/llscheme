@@ -28,10 +28,12 @@
 #include <llvm/Support/IRBuilder.h>
 
 #include "ast2.hh"
+#include "env.hh"
 #include "runtime/object.h"
 
 extern llvm::Module *module;
 extern llvm::IRBuilder<> builder;
+extern ExecutionEnv eenv;
 
 extern llvm::Type *LSObjType;
 extern llvm::FunctionType *LSFuncType;
@@ -51,29 +53,51 @@ LSObjNew(llvm::LLVMContext &context,
 }
 
 static inline llvm::Value *
-LSObjGetTypeAddr(llvm::LLVMContext &context,
-                 llvm::Value *lso, int arrayIndex) {
+GEP1(llvm::LLVMContext &context,
+     llvm::Value *val, int i0) {
   llvm::Constant *idx0 =
-    llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), arrayIndex);
+    llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), i0);
+  llvm::Value *offset[] = {idx0};
+
+  return builder.CreateInBoundsGEP(val, offset, offset + 1);
+}
+
+static inline llvm::Value *
+GEP2(llvm::LLVMContext &context,
+     llvm::Value *val, int i0, int i1) {
+  llvm::Constant *idx0 =
+    llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), i0);
   llvm::Constant *idx1 =
-    llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), 0);
+    llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), i1);
   llvm::Value *offset[] = {idx0, idx1};
 
-  return builder.CreateInBoundsGEP(lso, offset, offset + 2);
+  return builder.CreateInBoundsGEP(val, offset, offset + 2);
+}
+
+static inline llvm::Value *
+LSObjGetTypeAddr(llvm::LLVMContext &context,
+                 llvm::Value *lso, int arrayIndex) {
+  return GEP2(context, lso, arrayIndex, 0);
+}
+
+static inline llvm::Value *
+GEP3(llvm::LLVMContext &context,
+     llvm::Value *val, int i0, int i1, int i2) {
+  llvm::Constant *idx0 =
+    llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), i0);
+  llvm::Constant *idx1 =
+    llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), i1);
+  llvm::Constant *idx2 =
+    llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), i2);
+  llvm::Value *offset[] = {idx0, idx1, idx2};
+
+  return builder.CreateInBoundsGEP(val, offset, offset + 3);
 }
 
 static inline llvm::Value *
 LSObjGetPointerAddr(llvm::LLVMContext &context,
                     llvm::Value *lso, int arrayIndex, int index) {
-  llvm::Constant *idx0 =
-    llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), arrayIndex);
-  llvm::Constant *idx1 =
-    llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), index);
-  llvm::Constant *idx2 =
-    llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), 0);
-  llvm::Value *offset[] = {idx0, idx1, idx2};
-
-  return builder.CreateInBoundsGEP(lso, offset, offset + 3);
+  return GEP3(context, lso, arrayIndex, index, 0);
 }
 
 static inline llvm::Value *

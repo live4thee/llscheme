@@ -22,6 +22,7 @@
 #include "ast2.hh"
 #include "driver.hh"
 #include "error.hh"
+#include "env.hh"
 
 #include <llvm/Analysis/Verifier.h>
 #include <vector>
@@ -56,11 +57,41 @@ Value *BooleanASTNode::codeGen() {
   return NULL;
 }
 
-// N.B. unoptimized symbol retrieve needs to be runtime
 Value *SymbolASTNode::codeGen() {
-  // SymbolASTNode -> symbol ls_object, in lexical scope
-  // codegen: retrieve symbol binding
-  return NULL;
+  Constant *str, *init, *g, *s;
+  std::vector<Constant *> v, m, idx;
+
+  g = module->getNamedGlobal("_sym_" + symbol);
+  if (g)
+    return g;
+
+  // creating symbol objects and their initializers
+  // NB. ConstantExpr::getInBoundsGetElementPtr is needed to
+  //     change const string literals [ n x i8 ]* into i8*
+  str = llvm::ConstantArray::get(context, "_sym_" + symbol);
+  s = new llvm::GlobalVariable(*module, str->getType(), true,
+                llvm::GlobalValue::PrivateLinkage, str, "__s_" + symbol);
+
+  v.push_back(ConstantInt::get(Type::getInt32Ty(context), ls_t_symbol));
+  m.push_back(Constant::getNullValue(Type::getInt8Ty(context)->getPointerTo()));
+  v.push_back(llvm::ConstantStruct::get(context, m, false));
+
+  m.clear();
+  idx.push_back(ConstantInt::get(Type::getInt32Ty(context), 0));
+  idx.push_back(ConstantInt::get(Type::getInt32Ty(context), 0));
+
+  m.push_back(llvm::ConstantExpr::getInBoundsGetElementPtr(s, &idx[0], idx.size()));
+  v.push_back(llvm::ConstantStruct::get(context, m, false));
+  init = llvm::ConstantStruct::get(context, v, false);
+
+  g = new llvm::GlobalVariable(*module, LSObjType, false,
+                llvm::GlobalValue::PrivateLinkage,
+                init, "_sym_" + symbol);
+
+  if (eenv.searchBinding(symbol) == NULL)
+    eenv.addGlobalBinding(symbol, g);
+
+  return g;
 }
 
 Value *StringASTNode::codeGen() {
@@ -110,14 +141,9 @@ static const int num_builtin_syntax =
 
 Value *SExprASTNode::codeGen() {
   int i;
+  Value *func = NULL, *addr, *val;
+  Constant *size;
 
-  if (exp[0]->getType() == SymbolAST) {
-    SymbolASTNode *node = static_cast<SymbolASTNode *>(exp[0]);
-    for (i = 0; i < num_builtin_syntax; i++) {
-      if (node->symbol == builtin_syntax[i].key)
-        return builtin_syntax[i].handler(this);
-    }
-  }
   // if arg[0] is symbol:
   //   syntaxhandler(this) if its keyword
   //   codegen: eval arg[0] otherwise
@@ -129,7 +155,41 @@ Value *SExprASTNode::codeGen() {
   // codegen: eval the remaining args
   // codegen: call function with arg count and vectors of args
   // TODO: ( args . rest)
-  return NULL;
+
+  if (exp[0]->getType() == SymbolAST) {
+    SymbolASTNode *node = static_cast<SymbolASTNode *>(exp[0]);
+    // syntax
+    for (i = 0; i < num_builtin_syntax; i++) {
+      if (node->symbol == builtin_syntax[i].key)
+        return builtin_syntax[i].handler(this);
+    }
+
+    // procs
+    func = exp[0]->codeGen();
+  }
+
+  if (!func)
+    return LSObjNew(context, ls_t_void);
+
+  // symbol -> func, lacks type safety,
+  // if not found <unbound variable>
+  addr = LSObjGetPointerAddr(context, func, 0, 1);
+  func = builder.CreateLoad(addr);
+  func = builder.CreateBitCast(func, LSObjType->getPointerTo());
+  // func -> func_ptr, lacks type safety
+  addr = LSObjGetPointerAddr(context, func, 0, 1);
+  func = builder.CreateLoad(addr);
+
+  size = ConstantInt::get(llvm::Type::getInt32Ty(context), exp.size() - 1);
+  addr = builder.CreateAlloca(LSObjType->getPointerTo(), size);
+
+  for (i = 1; i < numArgument(); i++) {
+    val = exp[i]->codeGen();
+    builder.CreateStore(val, GEP1(context, addr, i - 1));
+  }
+
+  func = builder.CreateBitCast(func, LSFuncPtrType);
+  return builder.CreateCall2(func, size, addr);
 }
 
 

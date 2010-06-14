@@ -25,9 +25,10 @@
 #include <string>
 #include <map>
 #include <stack>
-#include "ast2.hh"
 
-typedef std::map<const std::string, ASTNode *> Binding;
+#include <llvm/Value.h>
+
+typedef std::map<const std::string, llvm::Value *> Binding;
 
 class ExecutionEnv {
   Binding *global;
@@ -36,12 +37,16 @@ public:
   ExecutionEnv();
   virtual ~ExecutionEnv();
 
-  void addBinding(const std::string &name, ASTNode *val);
-  void addGlobalBinding(const std::string &name, ASTNode *val);
+  void addBinding(const std::string &name, llvm::Value *val);
+  void addGlobalBinding(const std::string &name, llvm::Value *val);
 
   void newScope();
   void oldScope();
 
-  ASTNode *searchBinding(const std::string &name);
+  llvm::Value *searchBinding(const std::string &name);
+
+  Binding *getGlobalBinding();
+  Binding *getCurrentScopeBinding();
 };
+
 #endif

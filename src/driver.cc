@@ -21,6 +21,7 @@
 
 #include "ast2.hh"
 #include "driver.hh"
+#include "env.hh"
 
 #include <llvm/Analysis/Verifier.h>
 #include <vector>
@@ -28,8 +29,10 @@
 
 using llvm::Type;
 using llvm::Value;
+using llvm::Constant;
 using llvm::Function;
 using llvm::FunctionType;
+using llvm::GlobalVariable;
 using llvm::StructType;
 using llvm::BasicBlock;
 
@@ -47,6 +50,7 @@ using llvm::verifyFunction;
 
 Module *module;
 IRBuilder<> builder(context);
+ExecutionEnv eenv;
 
 Type *LSObjType;
 FunctionType *LSFuncType;
@@ -71,7 +75,7 @@ static void InitializeLSTypes(void) {
 
   v.clear();
   v.push_back(Type::getInt32Ty(context));
-  v.push_back(LSObjType->getPointerTo());
+  v.push_back(LSObjType->getPointerTo()->getPointerTo());
 
   ftype = FunctionType::get(LSObjType->getPointerTo(), v, false);
   type = ftype->getPointerTo();
@@ -117,6 +121,46 @@ static void InitializeLSRTFunctions(void) {
                    "lsrt_main_retval", module);
 }
 
+static const struct _builtin_proc {
+  const std::string proc;
+  const std::string builtin;
+} builtin_proc[] = {
+  { "+", "plus" },
+  { "-", "minus" },
+  { "*", "multiply" },
+  { "/", "divide" },
+};
+static const int num_builtin_proc =
+  sizeof(builtin_proc) / sizeof(_builtin_proc);
+
+static void CheckBuiltinProcs(void) {
+  int i;
+  Value *val, *obj, *func;
+  std::string fname;
+
+  for (i = 0; i < num_builtin_proc; i++) {
+    val = eenv.searchBinding(builtin_proc[i].proc);
+    if (val) {
+      fname = builtin_proc[i].builtin;
+      if (fname == "")
+        fname = builtin_proc[i].proc;
+
+      func = Function::Create(LSFuncType, Function::ExternalLinkage,
+                              "lsrt_builtin_" + fname, module);
+      // obj(sym).u1.ptr -> obj(func).u1.ptr -> func_ptr
+      // obj(sym).u2.ptr -> symbol
+      obj = LSObjNew(context, ls_t_func);
+
+      builder.CreateStore(builder.CreateBitCast(func,
+                              Type::getInt8Ty(context)->getPointerTo()),
+                          LSObjGetPointerAddr(context, obj, 0, 1));
+      builder.CreateStore(builder.CreateBitCast(obj,
+                              Type::getInt8Ty(context)->getPointerTo()),
+                          LSObjGetPointerAddr(context, val, 0, 1));
+    }
+  }
+}
+
 // Several things we need to do before generating real code
 static void codegenInit(void) {
   std::vector<const Type*> v;
@@ -159,6 +203,7 @@ static void codegenFinish(Value *value) {
   bb = BasicBlock::Create(context, "entry", f);
   builder.SetInsertPoint(bb);
 
+  CheckBuiltinProcs();
   builder.CreateRetVoid();
 }
 

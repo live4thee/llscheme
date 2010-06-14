@@ -25,13 +25,13 @@
 static void clearBinding(Binding *b) {
   Binding::iterator i;
 
+/*
   for (i = b->begin(); i != b->end(); i++) {
-    ASTNode *ast = i->second;
-
-    delete ast;
-    ast = NULL;
+    llvm::Value *val = i->second;
+    delete val;
+    val = NULL;
   }
-
+*/
   b->clear();
 }
 
@@ -55,12 +55,12 @@ ExecutionEnv::~ExecutionEnv() {
   delete global;
 }
 
-void ExecutionEnv::addBinding(const std::string &name, ASTNode *val) {
-  lexical.top()->insert(std::pair<const std::string, ASTNode *>(name, val));
+void ExecutionEnv::addBinding(const std::string &name, llvm::Value *val) {
+  lexical.top()->insert(std::pair<const std::string, llvm::Value *>(name, val));
 }
 
-void ExecutionEnv::addGlobalBinding(const std::string &name, ASTNode *val) {
-  global->insert(std::pair<const std::string, ASTNode *>(name, val));
+void ExecutionEnv::addGlobalBinding(const std::string &name, llvm::Value *val) {
+  global->insert(std::pair<const std::string, llvm::Value *>(name, val));
 }
 
 void ExecutionEnv::newScope() {
@@ -78,7 +78,7 @@ void ExecutionEnv::oldScope() {
   delete b;
 }
 
-ASTNode *ExecutionEnv::searchBinding(const std::string &name) {
+llvm::Value *ExecutionEnv::searchBinding(const std::string &name) {
   Binding::iterator i;
 
   i = lexical.top()->find(name);
@@ -90,4 +90,12 @@ ASTNode *ExecutionEnv::searchBinding(const std::string &name) {
     return i->second;
 
   return NULL;
+}
+
+Binding *ExecutionEnv::getGlobalBinding() {
+  return global;
+}
+
+Binding *ExecutionEnv::getCurrentScopeBinding() {
+  return lexical.top();
 }
