@@ -24,6 +24,7 @@
 
 #include "runtime/object.h"
 #include <malloc.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -42,15 +43,28 @@ struct ls_object *lsrt_new_object(int type)
   struct ls_object *ret;
 
   ret = (struct ls_object *) malloc(sizeof *ret);
+  memset(ret, 0, sizeof *ret);
   ret->type = type;
 
   return ret;
 }
 
+/* TODO: printf like parameter */
 void lsrt_error(const char *str)
 {
   fprintf(stderr, "error: %s\n", str? str: "");
   exit(1);
+}
+
+/* optional argument spec later */
+void lsrt_check_args_count(int min, int max, int argc)
+{
+  if ((min != 0 && min > argc) ||
+      (max != 0 && max < argc)) {
+    lsrt_error("fucntion count mismatch");
+  }
+
+  return;
 }
 
 /*
@@ -61,48 +75,30 @@ void lsrt_error(const char *str)
  * `o' for any but void
  * `n' for number or bignum
  * `p' for pair
- * `*' for vararg, the type is previous one
- *
- * e.g. the arg spec of operation `+' is "n*"
  */
-void lsrt_check_args(int n, const char *spec, int argc,
-                     struct ls_object *args)
+void lsrt_check_arg_type(struct ls_object *args, int i, char c)
 {
-  int i = 0;
-  char c;
-
-  if (n != 0 && n != argc) {
-    lsrt_error("argument count mismatch");
-  }
-  /* type checking follows */
-  for (i = 0; i < argc; i++) {
-    c = *spec;
-    if (c == '*') {
-      c = *(--spec);
-      if (i == 0) return;
-    }
-    spec++;
-
-    switch (c) {
-    case 'a': break;
-    case 'o':
-      if (args[i].type == ls_t_void)
-        goto err;
-      break;
-    case 'n':
-      if (args[i].type != ls_t_number &&
-          args[i].type != ls_t_bignum)
-        goto err;
-      break;
-    default:
-      break;
-    }
+  switch (c) {
+  case 'a': break;
+  case 'o':
+    if (args[i].type== ls_t_void)
+      goto err;
+    break;
+  case 'n':
+    if (args[i].type != ls_t_number &&
+        args[i].type != ls_t_bignum)
+      goto err;
+    break;
+  default:
+    break;
   }
 
   return;
-err:
-  lsrt_error("argument type error");
+
+ err:
+  lsrt_error("fucntion argument type mismatch");
 }
+
 
 int lsrt_main_retval(struct ls_object *lso)
 {
@@ -122,11 +118,10 @@ lsrt_builtin_arith(const char op, int argc, struct ls_object *args)
   struct ls_object *ret = lsrt_new_object(ls_t_number);
   int i;
 
-  lsrt_check_args(0, "n*", argc, args);
-
   ret->u1.val = args[0].u1.val;
 
   for (i = 1; i < argc; i++) {
+    lsrt_check_arg_type(args, i, 'n');
     switch (op) {
     case '+': ret->u1.val += args[i].u1.val; break;
     case '-': ret->u1.val -= args[i].u1.val; break;
@@ -143,21 +138,25 @@ lsrt_builtin_arith(const char op, int argc, struct ls_object *args)
 
 struct ls_object *lsrt_builtin_plus(int argc, struct ls_object *args)
 {
+  lsrt_check_args_count(0, 0, argc);
   return lsrt_builtin_arith('+', argc, args);
 }
 
 struct ls_object *lsrt_builtin_minus(int argc, struct ls_object *args)
 {
-  return lsrt_builtin_arith('-', argc, args);
+   lsrt_check_args_count(1, 0, argc);
+   return lsrt_builtin_arith('-', argc, args);
 }
 
 struct ls_object *lsrt_builtin_multiply(int argc, struct ls_object *args)
 {
+  lsrt_check_args_count(0, 0, argc);
   return lsrt_builtin_arith('*', argc, args);
 }
 
 struct ls_object *lsrt_builtin_divide(int argc, struct ls_object *args)
 {
+  lsrt_check_args_count(1, 0, argc);
   return lsrt_builtin_arith('/', argc, args);
 }
 
