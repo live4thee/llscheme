@@ -28,6 +28,7 @@
 #include <llvm/Support/IRBuilder.h>
 
 #include "ast2.hh"
+#include "runtime/object.h"
 
 extern llvm::Module *module;
 extern llvm::IRBuilder<> builder;

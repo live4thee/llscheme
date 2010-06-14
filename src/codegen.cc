@@ -45,7 +45,7 @@ using llvm::verifyFunction;
 Value *NumberASTNode::codeGen() {
   Value *obj, *addr;
 
-  obj = LSObjNew(context, 1);
+  obj = LSObjNew(context, ls_t_number);
   addr = LSObjGetValueAddr(context, obj, 0, 1);
   builder.CreateStore(ConstantInt::get(Type::getInt32Ty(context), val), addr);
 
@@ -139,7 +139,7 @@ static Value *handleBegin(SExprASTNode *sexpr) {
   int i;
 
   if (sexpr->numArgument() == 1) // (begin)
-    v = LSObjNew(context, 0);
+    v = LSObjNew(context, ls_t_void);
 
   for (i = 1; i < sexpr->numArgument(); i++) {
     v = sexpr->getArgument(i)->codeGen();

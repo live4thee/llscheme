@@ -51,6 +51,7 @@
  */
 
 
+#ifdef _LLSCHEME_RUNTIME
 /*
  * The LLVM IR assembly representation
  *   %ls_object = type { i32, %anon.um, %anon.um }
@@ -86,25 +87,29 @@ struct ls_object * (*ls_func_type) (int argc, struct ls_object *args);
  */
 
 /* predicates */
-#define lso_is_void(x)    (x->type == ls_t_void)
-#define lso_is_number(x)  (x->type == ls_t_number)
-#define lso_is_boolean(x) (x->type == ls_t_boolean)
-#define lso_is_bignum(x)  (x->type == ls_t_bignum)
-#define lso_is_symbol(x)  (x->type == ls_t_symbol)
-#define lso_is_string(x)  (x->type == ls_t_string)
-#define lso_is_pair(x)    (x->type == ls_t_pair)
-#define lso_is_func(x)    (x->type == ls_t_func)
+#define lso_is_void(x)    ((x)->type == ls_t_void)
+#define lso_is_number(x)  ((x)->type == ls_t_number)
+#define lso_is_boolean(x) ((x)->type == ls_t_boolean)
+#define lso_is_bignum(x)  ((x)->type == ls_t_bignum)
+#define lso_is_symbol(x)  ((x)->type == ls_t_symbol)
+#define lso_is_string(x)  ((x)->type == ls_t_string)
+#define lso_is_pair(x)    ((x)->type == ls_t_pair)
+#define lso_is_func(x)    ((x)->type == ls_t_func)
 
 /* accessors */
-#define lso_number_get(x) (x->u1.val)
-#define lso_boolean_get(x) (x->u1.val)
-#define lso_symbol_deref(x) ((struct ls_object *) x->u1.ptr)
-#define lso_symbol_name(x) (x->u2.val)
-#define lso_string_get(x) ((char *) x->u1.val)
-#define lso_string_maxsize(x) (x->u2.val)
-#define lso_pair_car(x) ((struct ls_object *) x->u1.ptr)
-#define lso_pair_cdr(x) ((struct ls_object *) x->u2.ptr)
-#define lso_func_get(x) ((ls_func_type) x->u1.ptr)
+#define lso_number_get(x) ((x)->u1.val)
+#define lso_boolean_get(x) ((x)->u1.val)
+#define lso_symbol_deref(x) ((struct ls_object *) (x)->u1.ptr)
+#define lso_symbol_name(x) ((x)->u2.val)
+#define lso_string_get(x) ((char *) (x)->u1.val)
+#define lso_string_maxsize(x) ((x)->u2.val)
+#define lso_pair_car(x) ((struct ls_object *) (x)->u1.ptr)
+#define lso_pair_cdr(x) ((struct ls_object *) (x)->u2.ptr)
+#define lso_func_get(x) ((ls_func_type) (x)->u1.ptr)
+
+#define lso_set_type(x, t) do { (x)->type = t; } while(0)
+#define lso_number(x)   (x)->u1.val
+#define lso_boolean(x)  (x)->u1.val
 
 /* static initializers */
 /*
@@ -170,4 +175,5 @@ lso_mk_func(ls_func_type f)
       { (void *)(const void *) f }, { 0 } });
 }
 
+#endif /* LLSCHEME_RUNTIME */
 #endif

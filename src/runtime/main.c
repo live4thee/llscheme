@@ -22,6 +22,8 @@
 
 /* This file is part of the runtime */
 
+#define _LLSCHEME_RUNTIME
+
 #include "runtime/object.h"
 #include <malloc.h>
 #include <string.h>
@@ -44,7 +46,7 @@ struct ls_object *lsrt_new_object(int type)
 
   ret = (struct ls_object *) malloc(sizeof *ret);
   memset(ret, 0, sizeof *ret);
-  ret->type = type;
+  lso_set_type(ret, type);
 
   return ret;
 }
@@ -81,12 +83,12 @@ void lsrt_check_arg_type(struct ls_object *args, int i, char c)
   switch (c) {
   case 'a': break;
   case 'o':
-    if (args[i].type== ls_t_void)
+    if (!lso_is_void(args + i))
       goto err;
     break;
   case 'n':
-    if (args[i].type != ls_t_number &&
-        args[i].type != ls_t_bignum)
+    if (!lso_is_number(args + i) &&
+        !lso_is_bignum(args + i))
       goto err;
     break;
   default:
@@ -102,11 +104,11 @@ void lsrt_check_arg_type(struct ls_object *args, int i, char c)
 
 int lsrt_main_retval(struct ls_object *lso)
 {
-  if (lso->type == ls_t_number)
-    return lso->u1.val;
+  if (lso_is_number(lso))
+    return lso_number_get(lso);
 
-  if (lso->type == ls_t_boolean)
-    return !!lso->u1.val - 1;
+  if (lso_is_boolean(lso))
+    return !!lso_boolean_get(lso) - 1;
 
   return 0;
 }
@@ -118,16 +120,16 @@ lsrt_builtin_arith(const char op, int argc, struct ls_object *args)
   struct ls_object *ret = lsrt_new_object(ls_t_number);
   int i;
 
-  ret->u1.val = args[0].u1.val;
+  lso_number(ret) = lso_number_get(args);
 
   for (i = 1; i < argc; i++) {
     lsrt_check_arg_type(args, i, 'n');
     switch (op) {
-    case '+': ret->u1.val += args[i].u1.val; break;
-    case '-': ret->u1.val -= args[i].u1.val; break;
-    case '*': ret->u1.val *= args[i].u1.val; break;
+    case '+': lso_number(ret) += lso_number_get(args + i); break;
+    case '-': lso_number(ret) += lso_number_get(args + i); break;
+    case '*': lso_number(ret) += lso_number_get(args + i); break;
       /* this is however wrong, we need rationals */
-    case '/': ret->u1.val /= args[i].u1.val; break;
+    case '/': lso_number(ret) += lso_number_get(args + i); break;
     default:
       break;
     }
