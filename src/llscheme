@@ -11,6 +11,7 @@ options:
     -c             do not link, output a.o
     -S             do not assemble, output a.s
     -d             dump asttree
+    -p             add (display) in every s-expr
     -v             verbose
     -o <file>      output file name
 EOF
@@ -36,6 +37,7 @@ while [ $# -gt 0 ]; do
         -S) ASSEMBLE=0 ;;
         -c) LINK=0 ;;
         -o) shift; OUTPUT=$1 ;;
+        -p) PASSED_ARGS="-p" ;;
         -v) VERBOSE=1 ;;
          *) break ;;
     esac

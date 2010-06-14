@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
 {
   std::stringstream ss, ss1;
   ss << std::cin.rdbuf();
+  int display = 0;
 
   Scanner *scanner = new StringScanner(ss.str());
   Lexer *lexer = new Lexer(scanner);
@@ -45,11 +46,22 @@ int main(int argc, char *argv[])
   }
 #endif
 
+  if (argc == 2 && std::string(argv[1]) == "-p")
+    display = 1;
+
   ast->addArgument(new SymbolASTNode("begin"));
 
   // parser a sexp
   while (parser.peekTokenType(1) != EOF_TYPE) {
-    ast->addArgument(parser.exp());
+    SExprASTNode *ast2;
+    if (display) {
+      ast2 = new SExprASTNode();
+      ast2->addArgument(new SymbolASTNode("display"));
+      ast2->addArgument(parser.exp());
+      ast->addArgument(ast2);
+    }
+    else
+      ast->addArgument(parser.exp());
   }
 
   if (argc == 2 && std::string(argv[1]) == "-d") {
