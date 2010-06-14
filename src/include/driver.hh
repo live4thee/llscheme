@@ -38,4 +38,50 @@ extern llvm::Type *LSFuncPtrType;
 
 extern int codegen(ASTNode *);
 
+static inline llvm::Value *
+LSObjNew(llvm::LLVMContext &context,
+         int type) {
+  llvm::Value *t;
+  llvm::Function *f;
+
+  t = llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), type);
+  f = module->getFunction("lsrt_new_object");
+  return builder.CreateCall(f, t);
+}
+
+static inline llvm::Value *
+LSObjGetTypeAddr(llvm::LLVMContext &context,
+                 llvm::Value *lso, int arrayIndex) {
+  llvm::Constant *idx0 =
+    llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), arrayIndex);
+  llvm::Constant *idx1 =
+    llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), 0);
+  llvm::Value *offset[] = {idx0, idx1};
+
+  return builder.CreateInBoundsGEP(lso, offset, offset + 2);
+}
+
+static inline llvm::Value *
+LSObjGetPointerAddr(llvm::LLVMContext &context,
+                    llvm::Value *lso, int arrayIndex, int index) {
+  llvm::Constant *idx0 =
+    llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), arrayIndex);
+  llvm::Constant *idx1 =
+    llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), index);
+  llvm::Constant *idx2 =
+    llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), 0);
+  llvm::Value *offset[] = {idx0, idx1, idx2};
+
+  return builder.CreateInBoundsGEP(lso, offset, offset + 3);
+}
+
+static inline llvm::Value *
+LSObjGetValueAddr(llvm::LLVMContext &context,
+                  llvm::Value *lso, int arraryIndex, int index) {
+  llvm::Value *addr = LSObjGetPointerAddr(context, lso, arraryIndex, index);
+
+  return builder.CreateBitCast(addr,
+                               llvm::Type::getInt32Ty(context)->getPointerTo());
+}
+
 #endif

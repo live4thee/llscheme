@@ -104,6 +104,18 @@ err:
   lsrt_error("argument type error");
 }
 
+int lsrt_main_retval(struct ls_object *lso)
+{
+  if (lso->type == ls_t_number)
+    return lso->u1.val;
+
+  if (lso->type == ls_t_boolean)
+    return !!lso->u1.val - 1;
+
+  return 0;
+}
+
+
 static struct ls_object *
 lsrt_builtin_arith(const char op, int argc, struct ls_object *args)
 {

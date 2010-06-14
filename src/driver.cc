@@ -85,14 +85,14 @@ static void InitializeLSRTFunctions(void) {
 
   v.push_back(Type::getInt8Ty(context)->getPointerTo());
   ftype = FunctionType::get(Type::getVoidTy(context), v, false);
-  module->getOrInsertFunction("lsrt_error", ftype,
-                              Function::ExternalLinkage, NULL);
+  Function::Create(ftype, Function::ExternalLinkage,
+                   "lsrt_error", module);
 
   v.clear();
   v.push_back(Type::getInt32Ty(context));
-  ftype = FunctionType::get(LSObjType, v, false);
-  module->getOrInsertFunction("lsrt_new_object", ftype,
-                              Function::ExternalLinkage, NULL);
+  ftype = FunctionType::get(LSObjType->getPointerTo(), v, false);
+  Function::Create(ftype, Function::ExternalLinkage,
+                   "lsrt_new_object", module);
 
   v.clear();
   v.push_back(Type::getInt32Ty(context));
@@ -100,8 +100,14 @@ static void InitializeLSRTFunctions(void) {
   v.push_back(Type::getInt32Ty(context));
   v.push_back(LSObjType->getPointerTo());
   ftype = FunctionType::get(Type::getVoidTy(context), v, false);
-  module->getOrInsertFunction("lsrt_check_args", ftype,
-                              Function::ExternalLinkage, NULL);
+  Function::Create(ftype, Function::ExternalLinkage,
+                   "lsrt_check_args", module);
+
+  v.clear();
+  v.push_back(LSObjType->getPointerTo());
+  ftype = FunctionType::get(Type::getInt32Ty(context), v, false);
+  Function::Create(ftype, Function::ExternalLinkage,
+                   "lsrt_main_retval", module);
 }
 
 // Several things we need to do before generating real code
@@ -134,9 +140,19 @@ static void codegenInit(void) {
 }
 
 static void codegenFinish(Value *value) {
-  (void)value;
-  // codegen: return value->u.val for exit value
-  // codegen: generate fucntion _prolog
+  BasicBlock *bb;
+  Function *f;
+  Value *ret;
+
+  f = module->getFunction("lsrt_main_retval");
+  ret = builder.CreateCall(f, value);
+  builder.CreateRet(ret);
+
+  f = module->getFunction("_prolog");
+  bb = BasicBlock::Create(context, "entry", f);
+  builder.SetInsertPoint(bb);
+
+  builder.CreateRetVoid();
 }
 
 /* mater driver function called by main() */

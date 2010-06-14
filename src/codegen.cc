@@ -21,11 +21,14 @@
 
 #include "ast2.hh"
 #include "driver.hh"
+#include "error.hh"
 
 #include <llvm/Analysis/Verifier.h>
 #include <vector>
 
 using llvm::Type;
+using llvm::Constant;
+using llvm::ConstantInt;
 using llvm::Value;
 using llvm::Function;
 using llvm::FunctionType;
@@ -40,7 +43,13 @@ using llvm::verifyFunction;
 #define context getGlobalContext()
 
 Value *NumberASTNode::codeGen() {
-  return NULL;
+  Value *obj, *addr;
+
+  obj = LSObjNew(context, 1);
+  addr = LSObjGetValueAddr(context, obj, 0, 1);
+  builder.CreateStore(ConstantInt::get(Type::getInt32Ty(context), val), addr);
+
+  return obj;
 }
 
 Value *BooleanASTNode::codeGen() {
@@ -87,8 +96,8 @@ static syntaxHandler handleDefine;
 static syntaxHandler handleLambda;
 static syntaxHandler handleQuote;
 
-static const struct {
-  const std::string &key;
+static const struct _builtin_syntax {
+  const std::string key;
   syntaxHandler *handler;
 } builtin_syntax[] = {
   { "begin", &handleBegin },
@@ -96,8 +105,19 @@ static const struct {
   { "lambda", &handleLambda },
   { "quote", &handleQuote },
 };
+static const int num_builtin_syntax =
+  sizeof(builtin_syntax) / sizeof(_builtin_syntax);
 
 Value *SExprASTNode::codeGen() {
+  int i;
+
+  if (exp[0]->getType() == SymbolAST) {
+    SymbolASTNode *node = static_cast<SymbolASTNode *>(exp[0]);
+    for (i = 0; i < num_builtin_syntax; i++) {
+      if (node->symbol == builtin_syntax[i].key)
+        return builtin_syntax[i].handler(this);
+    }
+  }
   // if arg[0] is symbol:
   //   syntaxhandler(this) if its keyword
   //   codegen: eval arg[0] otherwise
@@ -115,9 +135,17 @@ Value *SExprASTNode::codeGen() {
 
 // Syntax handlers
 static Value *handleBegin(SExprASTNode *sexpr) {
-  (void) sexpr;
-  // codegen: eval the remaining args
-  return NULL;
+  Value *v = NULL;
+  int i;
+
+  for (i = 1; i < sexpr->numArgument(); i++) {
+    v = sexpr->getArgument(i)->codeGen();
+  }
+
+  if (sexpr->hasRest())
+    throw Error(std::string("unexpected `.' in begin"));
+
+  return v;
 }
 
 static Value *handleDefine(SExprASTNode *sexpr) {
