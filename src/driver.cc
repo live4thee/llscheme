@@ -218,7 +218,7 @@ int codegen(ASTNode *ast) {
   module = new Module("lls", getGlobalContext());
 
   codegenInit();
-  codegenFinish(ast->codeGen());
+  codegenFinish(ast->codeGenEval());
 
   module->print(std::cout, NULL);
 

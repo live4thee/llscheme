@@ -41,7 +41,15 @@ public:
   ASTNode(enum ASTType _t = UnknownAST) :type(_t) {}
 
   virtual void finePrint(std::stringstream &ss) = 0;
+  // codeGen generates code to represent the object, while
+  // codeGenEval does an additional evaluation, for example:
+  //  - two functions are the same for numbers, booleans and strings
+  //  - for symbol, codeGen returns the symbol object, while
+  //    codeGenEval returns the object bound to the symbol
+  //  - for s-expr, codeGenEval evaluates the s-expr, while
+  //    codeGen generates pair representation
   virtual llvm::Value *codeGen() = 0;
+  virtual llvm::Value *codeGenEval() { return codeGen(); }
   virtual enum ASTType getType() { return type; }
   virtual ~ASTNode() {}
 };
@@ -69,6 +77,7 @@ public:
     :ASTNode(SymbolAST), symbol(_s) {}
   void finePrint(std::stringstream &ss);
   llvm::Value *codeGen();
+  llvm::Value *codeGenEval();
 };
 
 class StringASTNode :public ASTNode {
@@ -89,6 +98,7 @@ public:
 
   void finePrint(std::stringstream &ss);
   llvm::Value *codeGen();
+  llvm::Value *codeGenEval();
   void addArgument(ASTNode *arg) {
     exp.push_back(arg);
   }

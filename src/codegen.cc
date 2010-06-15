@@ -60,11 +60,10 @@ Value *BooleanASTNode::codeGen() {
 Value *SymbolASTNode::codeGen() {
   Constant *str, *init, *g, *s;
   std::vector<Constant *> v, m, idx;
-  Value *addr, *val;
 
   g = module->getNamedGlobal("_sym_" + symbol);
   if (g)
-    goto emit;
+    return g;
 
   // creating symbol objects and their initializers
   // NB. ConstantExpr::getInBoundsGetElementPtr is needed to
@@ -92,9 +91,15 @@ Value *SymbolASTNode::codeGen() {
   if (eenv.searchBinding(symbol) == NULL)
     eenv.addGlobalBinding(symbol, g);
 
- emit:
-  builder.CreateCall(module->getFunction("lsrt_check_symbol_unbound"), g);
-  addr = LSObjGetPointerAddr(context, g, 0, 1);
+  return g;
+}
+
+Value *SymbolASTNode::codeGenEval() {
+  Value *s = codeGen();
+  Value *addr, *val;
+
+  builder.CreateCall(module->getFunction("lsrt_check_symbol_unbound"), s);
+  addr = LSObjGetPointerAddr(context, s, 0, 1);
   val = builder.CreateBitCast(builder.CreateLoad(addr),
                               LSObjType->getPointerTo());
 
@@ -104,7 +109,6 @@ Value *SymbolASTNode::codeGen() {
 Value *StringASTNode::codeGen() {
   return NULL;
 }
-
 
 // N.B. syntax can be implemented using handlers, but not
 // primitive procs, like `+'. Although a handler would work
@@ -147,6 +151,10 @@ static const int num_builtin_syntax =
   sizeof(builtin_syntax) / sizeof(_builtin_syntax);
 
 Value *SExprASTNode::codeGen() {
+  return NULL;
+}
+
+Value *SExprASTNode::codeGenEval() {
   int i;
   Value *func = NULL, *addr, *val;
   Constant *size;
@@ -172,11 +180,11 @@ Value *SExprASTNode::codeGen() {
     }
 
     // procs
-    func = exp[0]->codeGen();
+    func = exp[0]->codeGenEval();
   }
   else if (exp[0]->getType() == SExprAST) {
     // possibly lambdas
-    func = exp[0]->codeGen();
+    func = exp[0]->codeGenEval();
   }
   else {
     throw Error(std::string("not a function"));
@@ -198,7 +206,7 @@ Value *SExprASTNode::codeGen() {
   addr = builder.CreateAlloca(LSObjType->getPointerTo(), size);
 
   for (i = 1; i < numArgument(); i++) {
-    val = exp[i]->codeGen();
+    val = exp[i]->codeGenEval();
     builder.CreateStore(val, GEP1(context, addr, i - 1));
   }
 
@@ -216,7 +224,7 @@ static Value *handleBegin(SExprASTNode *sexpr) {
     v = LSObjNew(context, ls_t_void);
 
   for (i = 1; i < sexpr->numArgument(); i++) {
-    v = sexpr->getArgument(i)->codeGen();
+    v = sexpr->getArgument(i)->codeGenEval();
   }
 
   if (sexpr->hasRest())
@@ -237,10 +245,10 @@ static Value *handleLambda(SExprASTNode *sexpr) {
 }
 
 static Value *handleQuote(SExprASTNode *sexpr) {
-  (void) sexpr;
-  // turn ASTNode to ls_object
-  // turn s-expression to nested pairs
-  return NULL;
+  if (sexpr->numArgument() != 2)
+    throw Error(std::string("quote takes only one argument"));
+
+  return sexpr->getArgument(1)->codeGen();
 }
 
 /* vim: set et ts=2 sw=2 cin: */
