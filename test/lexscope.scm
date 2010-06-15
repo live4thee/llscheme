@@ -1,0 +1,12 @@
+((lambda (x y)
+ (- ((lambda (x) (* x y)) (+ x y))
+    ((lambda (x) (* x x)) y)))
+ 5 3)
+
+(define (a x) (lambda (y) (+ 1 x y)))
+(define b (a 2))
+(b 3)
+(b 4)
+(define b (a 10))
+(b 5)
+(b 6)

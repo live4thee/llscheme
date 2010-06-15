@@ -1,0 +1,32 @@
+lexical scope and closures
+
+Lexical scoping means the binding can always be determined in parsing,
+which in other words, is at compile time, this makes it appear easy.
+
+However, the lexical scoping in scheme is not as easy as it appears.
+Because in scheme, lexical scopes can be nested, but not in assembler.
+
+The simple example would be:
+  (define (a x) ((lambda (y) (+ x y 1)) 2))
+The `x' in lambda refers to the first argument of a, since it's in
+the scope of a, but if we are to transform it to C:
+  func a(x) { return f.anon(2); }
+  func f.anon(y) { return 1 + y + <??>; }
+As x is local to a, how is it addressed in f.anon?
+
+Furthermore, if we remove `2', in the above example, it becomes a closure.
+  (define (a x) (lambda(y) (+ x y 1)))
+How this can be done?
+
+A possible solution is to extend the function parameters:
+  from:   ls_object *()(int argc, ls_object *args[])
+    to:   ls_object *()(int argc, ls_object *args[], ls_object *free[])
+The compiler then keeps track of all upper lexical variables used by the
+called functions, and passing them to the called function using free.
+The number of items in free needs not be passed since it's internal to
+the compiler.
+
+The closure can also implemented by this approach, extend the function object:
+  from:   ls_object { ls_t_func, func_ptr, NULL }
+    to:   ls_object { ls_t_func, func_ptr, ls_object *free[] } 
+And the resulting object is automatically a closure.
