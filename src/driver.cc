@@ -141,7 +141,8 @@ static const int num_builtin_proc =
 
 static void CheckBuiltinProcs(void) {
   int i;
-  Value *val, *obj, *func;
+  Value *val, *obj;
+  Function *func;
   std::string fname;
 
   for (i = 0; i < num_builtin_proc; i++) {
@@ -155,11 +156,8 @@ static void CheckBuiltinProcs(void) {
                               "lsrt_builtin_" + fname, module);
       // obj(sym).u1.ptr -> obj(func).u1.ptr -> func_ptr
       // obj(sym).u2.ptr -> symbol
-      obj = LSObjNew(context, ls_t_func);
+      obj = LSObjFunctionInit(context, func, fname);
 
-      builder.CreateStore(builder.CreateBitCast(func,
-                              Type::getInt8Ty(context)->getPointerTo()),
-                          LSObjGetPointerAddr(context, obj, 0, 1));
       builder.CreateStore(builder.CreateBitCast(obj,
                               Type::getInt8Ty(context)->getPointerTo()),
                           LSObjGetPointerAddr(context, val, 0, 1));

@@ -113,13 +113,9 @@ LSObjGetValueAddr(llvm::LLVMContext &context,
 static inline llvm::Value *
 LSObjFunctionInit(llvm::LLVMContext &context,
                   llvm::Function *func, const std::string &name) {
-  llvm::GlobalVariable *g, *s;
-  llvm::Constant *str, *init;
+  llvm::GlobalVariable *g;
+  llvm::Constant *init;
   std::vector<llvm::Constant *> v, m, idx;
-
-  str = llvm::ConstantArray::get(context, name);
-  s = new llvm::GlobalVariable(*module, str->getType(), true,
-                llvm::GlobalValue::PrivateLinkage, str, "__str_f_" + name);
 
   v.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), ls_t_func));
 
@@ -132,7 +128,7 @@ LSObjFunctionInit(llvm::LLVMContext &context,
   idx.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), 0));
   idx.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), 0));
 
-  m.push_back(llvm::ConstantExpr::getInBoundsGetElementPtr(s, &idx[0], idx.size()));
+  m.push_back(llvm::Constant::getNullValue(llvm::Type::getInt8Ty(context)->getPointerTo()));
   v.push_back(llvm::ConstantStruct::get(context, m, false));
   init = llvm::ConstantStruct::get(context, v, false);
 
