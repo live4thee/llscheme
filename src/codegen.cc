@@ -73,7 +73,7 @@ Value *SymbolASTNode::codeGen() {
   //     change const string literals [ n x i8 ]* into i8*
   str = llvm::ConstantArray::get(context, symbol);
   s = new llvm::GlobalVariable(*module, str->getType(), true,
-                llvm::GlobalValue::PrivateLinkage, str, "__str_s_" + symbol);
+                llvm::GlobalValue::PrivateLinkage, str, "_str_s_" + symbol);
 
   v.push_back(ConstantInt::get(Type::getInt32Ty(context), ls_t_symbol));
   m.push_back(Constant::getNullValue(Type::getInt8Ty(context)->getPointerTo()));
@@ -253,12 +253,12 @@ static Value *createFunction(SExprASTNode *def,
   int i, n;
 
   if (name == "")
-    fname = "_func.anon_";
+    fname = ".anon";
   else
     fname = name;
 
   n = formals->numArgument() - start;
-  f = Function::Create(LSFuncType, Function::PrivateLinkage, fname, module);
+  f = Function::Create(LSFuncType, Function::PrivateLinkage, "_func_" + fname, module);
 
   obj = LSObjFunctionInit(context, f, name);
 
