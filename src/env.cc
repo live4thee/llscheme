@@ -67,7 +67,7 @@ void ExecutionEnv::newScope() {
   lexical.push(new Binding);
 }
 
-void ExecutionEnv::oldScope() {
+void ExecutionEnv::lastScope() {
   if (lexical.empty())
     throw Error(std::string("Scope error"));
 
@@ -87,6 +87,16 @@ llvm::Value *ExecutionEnv::searchBinding(const std::string &name) {
 
   i = global->find(name);
   if (i != global->end())
+    return i->second;
+
+  return NULL;
+}
+
+llvm::Value *ExecutionEnv::searchCurrentScopeBinding(const std::string &name) {
+  Binding::iterator i;
+
+  i = lexical.top()->find(name);
+  if (i != lexical.top()->end())
     return i->second;
 
   return NULL;

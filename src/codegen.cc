@@ -71,9 +71,9 @@ Value *SymbolASTNode::codeGen() {
   // creating symbol objects and their initializers
   // NB. ConstantExpr::getInBoundsGetElementPtr is needed to
   //     change const string literals [ n x i8 ]* into i8*
-  str = llvm::ConstantArray::get(context, "_sym_" + symbol);
+  str = llvm::ConstantArray::get(context, symbol);
   s = new llvm::GlobalVariable(*module, str->getType(), true,
-                llvm::GlobalValue::PrivateLinkage, str, "__s_" + symbol);
+                llvm::GlobalValue::PrivateLinkage, str, "__str_s_" + symbol);
 
   v.push_back(ConstantInt::get(Type::getInt32Ty(context), ls_t_symbol));
   m.push_back(Constant::getNullValue(Type::getInt8Ty(context)->getPointerTo()));
@@ -99,6 +99,10 @@ Value *SymbolASTNode::codeGen() {
 Value *SymbolASTNode::codeGenEval() {
   Value *s = codeGen();
   Value *addr, *val;
+
+  // TODO: does local variables needs another redirection like globals?
+  if (eenv.searchCurrentScopeBinding(symbol))
+      return s;
 
   builder.CreateCall(module->getFunction("lsrt_check_symbol_unbound"), s);
   addr = LSObjGetPointerAddr(context, s, 0, 1);
@@ -235,15 +239,87 @@ static Value *handleBegin(SExprASTNode *sexpr) {
   return v;
 }
 
+static Value *createFunction(SExprASTNode *def,
+                             SExprASTNode *formals, int start,
+                             const std::string &name) {
+  Function *f;
+  Function::arg_iterator ai;
+  BasicBlock *bb, *prevb;
+  BasicBlock::iterator previ;
+  Value *obj, *argval;
+  std::string fname;
+  SymbolASTNode *arg;
+  std::vector<Constant *> idx;
+  int i, n;
+
+  if (name == "")
+    fname = "_func.anon_";
+  else
+    fname = name;
+
+  n = formals->numArgument() - start;
+  f = Function::Create(LSFuncType, Function::PrivateLinkage, fname, module);
+
+  obj = LSObjFunctionInit(context, f, name);
+
+  // need to bind it if defined a name
+  eenv.newScope();
+
+  // save current insert block and restore later
+  bb = BasicBlock::Create(context, "entry", f);
+  prevb = builder.GetInsertBlock();
+  previ = builder.GetInsertPoint();
+  builder.SetInsertPoint(bb);
+
+  ai = f->arg_begin();
+  ai->setName("argc");
+  builder.CreateCall3(module->getFunction("lsrt_check_args_count"),
+                      llvm::ConstantInt::get(Type::getInt32Ty(context), n),
+                      llvm::ConstantInt::get(Type::getInt32Ty(context), n),
+                      ai);
+  ai++;
+  ai->setName("args");
+  argval = builder.CreateLoad(ai);
+
+  for (i = start; i < n ; i++) {
+    if (formals->getArgument(i)->getType() != SymbolAST)
+      throw Error(std::string("argument names need to be symbol"));
+
+    arg = static_cast<SymbolASTNode *>(formals->getArgument(i));
+
+    eenv.addBinding(arg->symbol, builder.CreateLoad(GEP1(context, ai, i - start)));
+  }
+
+  for (i = 2; i < def->numArgument(); i++)
+    argval = def->getArgument(i)->codeGenEval();
+
+  builder.CreateRet(argval);
+
+  builder.SetInsertPoint(prevb, previ);
+  eenv.lastScope();
+
+  llvm::verifyFunction(*f);
+
+  return obj;
+}
+
 static Value *handleDefine(SExprASTNode *sexpr) {
   (void) sexpr;
   return NULL;
 }
 
 static Value *handleLambda(SExprASTNode *sexpr) {
-  (void) sexpr;
-  // codegen: argc and args check as part of the code
-  return NULL;
+
+  SExprASTNode *formals;
+
+  if (sexpr->numArgument() < 3)
+    throw Error(std::string("too few arguments for lambda"));
+
+  if (sexpr->getArgument(1)->getType() != SExprAST)
+    throw Error(std::string("lambda expects argument list"));
+
+  formals = static_cast<SExprASTNode *> (sexpr->getArgument(1));
+  return createFunction(sexpr, formals, 0, "");
 }
 
 static Value *handleQuote(SExprASTNode *sexpr) {

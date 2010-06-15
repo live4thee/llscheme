@@ -41,9 +41,10 @@ public:
   void addGlobalBinding(const std::string &name, llvm::Value *val);
 
   void newScope();
-  void oldScope();
+  void lastScope();
 
   llvm::Value *searchBinding(const std::string &name);
+  llvm::Value *searchCurrentScopeBinding(const std::string &name);
 
   Binding *getGlobalBinding();
   Binding *getCurrentScopeBinding();
