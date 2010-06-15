@@ -22,6 +22,8 @@
 #include "env.hh"
 #include "error.hh"
 
+#include <iostream>
+
 static void clearBinding(Binding *b) {
   Binding::iterator i;
 
@@ -41,14 +43,14 @@ ExecutionEnv::ExecutionEnv() {
 
   global = new Binding;
   tmp = new Binding;
-  lexical.push(tmp);
+  lexical.push_back(tmp);
 }
 
 ExecutionEnv::~ExecutionEnv() {
   while (!lexical.empty()) {
-    Binding *b = lexical.top();
+    Binding *b = lexical.back();
     clearBinding(b);
-    lexical.pop();
+    lexical.pop_back();
     delete b;
   }
 
@@ -56,7 +58,7 @@ ExecutionEnv::~ExecutionEnv() {
 }
 
 void ExecutionEnv::addBinding(const std::string &name, llvm::Value *val) {
-  lexical.top()->insert(std::pair<const std::string, llvm::Value *>(name, val));
+  lexical.back()->insert(std::pair<const std::string, llvm::Value *> (name, val));
 }
 
 void ExecutionEnv::addGlobalBinding(const std::string &name, llvm::Value *val) {
@@ -64,26 +66,27 @@ void ExecutionEnv::addGlobalBinding(const std::string &name, llvm::Value *val) {
 }
 
 void ExecutionEnv::newScope() {
-  lexical.push(new Binding);
+  lexical.push_back(new Binding);
 }
 
 void ExecutionEnv::lastScope() {
   if (lexical.empty())
     throw Error(std::string("Scope error"));
 
-  Binding *b = lexical.top();
+  Binding *b = lexical.back();
 
   clearBinding(b);
-  lexical.pop();
+  lexical.pop_back();
   delete b;
 }
 
 llvm::Value *ExecutionEnv::searchBinding(const std::string &name) {
   Binding::iterator i;
+  llvm::Value *val;
 
-  i = lexical.top()->find(name);
-  if (i != lexical.top()->end())
-    return i->second;
+  val = searchCurrentScopeBinding(name);
+  if (val)
+    return val;
 
   i = global->find(name);
   if (i != global->end())
@@ -94,10 +97,15 @@ llvm::Value *ExecutionEnv::searchBinding(const std::string &name) {
 
 llvm::Value *ExecutionEnv::searchCurrentScopeBinding(const std::string &name) {
   Binding::iterator i;
+  std::deque<Binding *>::reverse_iterator p;
+  Binding *b;
 
-  i = lexical.top()->find(name);
-  if (i != lexical.top()->end())
-    return i->second;
+  for(p = lexical.rbegin(); p != lexical.rend(); p++) {
+    b = *p;
+    i = b->find(name);
+    if (i != b->end())
+      return i->second;
+  }
 
   return NULL;
 }
@@ -107,5 +115,5 @@ Binding *ExecutionEnv::getGlobalBinding() {
 }
 
 Binding *ExecutionEnv::getCurrentScopeBinding() {
-  return lexical.top();
+  return lexical.back();
 }

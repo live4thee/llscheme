@@ -24,7 +24,7 @@
 
 #include <string>
 #include <map>
-#include <stack>
+#include <deque>
 
 #include <llvm/Value.h>
 
@@ -32,7 +32,7 @@ typedef std::map<const std::string, llvm::Value *> Binding;
 
 class ExecutionEnv {
   Binding *global;
-  std::stack<Binding *> lexical;
+  std::deque<Binding *> lexical;
 public:
   ExecutionEnv();
   virtual ~ExecutionEnv();
