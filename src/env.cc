@@ -84,7 +84,7 @@ llvm::Value *ExecutionEnv::searchBinding(const std::string &name) {
   Binding::iterator i;
   llvm::Value *val;
 
-  val = searchCurrentScopeBinding(name);
+  val = searchLocalBinding(name);
   if (val)
     return val;
 
@@ -95,7 +95,7 @@ llvm::Value *ExecutionEnv::searchBinding(const std::string &name) {
   return NULL;
 }
 
-llvm::Value *ExecutionEnv::searchCurrentScopeBinding(const std::string &name) {
+llvm::Value *ExecutionEnv::searchLocalBinding(const std::string &name) {
   Binding::iterator i;
   std::deque<Binding *>::reverse_iterator p;
   Binding *b;

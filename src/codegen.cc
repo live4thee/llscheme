@@ -26,6 +26,7 @@
 
 #include <llvm/Analysis/Verifier.h>
 #include <vector>
+#include <iostream>
 
 using llvm::Type;
 using llvm::Constant;
@@ -101,7 +102,7 @@ Value *SymbolASTNode::codeGenEval() {
   Value *addr, *val;
 
   // TODO: does local variables needs another redirection like globals?
-  if (eenv.searchCurrentScopeBinding(symbol))
+  if (eenv.searchLocalBinding(symbol))
       return s;
 
   builder.CreateCall(module->getFunction("lsrt_check_symbol_unbound"), s);
@@ -281,13 +282,13 @@ static Value *createFunction(SExprASTNode *def,
   ai->setName("args");
   argval = builder.CreateLoad(ai);
 
-  for (i = start; i < n ; i++) {
-    if (formals->getArgument(i)->getType() != SymbolAST)
+  for (i = 0; i < n ; i++) {
+    if (formals->getArgument(i + start)->getType() != SymbolAST)
       throw Error(std::string("argument names need to be symbol"));
 
-    arg = static_cast<SymbolASTNode *>(formals->getArgument(i));
+    arg = static_cast<SymbolASTNode *>(formals->getArgument(i + start));
 
-    eenv.addBinding(arg->symbol, builder.CreateLoad(GEP1(context, ai, i - start)));
+    eenv.addBinding(arg->symbol, builder.CreateLoad(GEP1(context, ai, i)));
   }
 
   for (i = 2; i < def->numArgument(); i++)
@@ -304,8 +305,50 @@ static Value *createFunction(SExprASTNode *def,
 }
 
 static Value *handleDefine(SExprASTNode *sexpr) {
-  (void) sexpr;
-  return NULL;
+  SExprASTNode *formals;
+  SymbolASTNode *sym;
+  Value *val;
+  int n;
+
+  if (sexpr->numArgument() < 3)
+    throw Error(std::string("too few arguments for define"));
+
+  if (sexpr->getArgument(1)->getType() == SymbolAST) {
+    // define a symbol
+    if (sexpr->numArgument() != 3)
+      throw Error(std::string("defining symbol takes 2 arguments"));
+
+    // XXX: let's put define also in global scope
+    sym = static_cast<SymbolASTNode *> (sexpr->getArgument(1));
+    if (eenv.searchLocalBinding(sym->symbol))
+      throw Error(std::string("can't define in this scope"));
+
+    val = sym->codeGen();
+    builder.CreateStore(builder.CreateBitCast(sexpr->getArgument(2)->codeGenEval(),
+                                              Type::getInt8Ty(context)->getPointerTo()),
+                        LSObjGetPointerAddr(context, val, 0, 1));
+  }
+  else if (sexpr->getArgument(1)->getType() == SExprAST) {
+    // define a proc
+    formals = static_cast<SExprASTNode *> (sexpr->getArgument(1));
+    n = formals->numArgument();
+    if (n < 1 || formals->getArgument(1)->getType() != SymbolAST)
+      throw Error(std::string("bad syntax for define"));
+
+    sym = static_cast<SymbolASTNode *> (formals->getArgument(0));
+    if (eenv.searchLocalBinding(sym->symbol))
+      throw Error(std::string("can't define in this scope"));
+
+    val = sym->codeGen();
+    builder.CreateStore(builder.CreateBitCast(createFunction(sexpr, formals, 1,
+                                                             sym->symbol),
+                                              Type::getInt8Ty(context)->getPointerTo()),
+                        LSObjGetPointerAddr(context, val, 0, 1));
+  }
+  else
+    throw Error(std::string("bad syntax for define"));
+
+  return LSObjNew(context, ls_t_void);
 }
 
 static Value *handleLambda(SExprASTNode *sexpr) {

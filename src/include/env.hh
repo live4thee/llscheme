@@ -44,7 +44,7 @@ public:
   void lastScope();
 
   llvm::Value *searchBinding(const std::string &name);
-  llvm::Value *searchCurrentScopeBinding(const std::string &name);
+  llvm::Value *searchLocalBinding(const std::string &name);
 
   Binding *getGlobalBinding();
   Binding *getCurrentScopeBinding();
