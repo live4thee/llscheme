@@ -58,10 +58,13 @@ Value *BooleanASTNode::codeGen() {
 }
 
 Value *SymbolASTNode::codeGen() {
-  Constant *str, *init, *g, *s;
+  Constant *str, *s, *init;
+  Value *g;
   std::vector<Constant *> v, m, idx;
 
-  g = module->getNamedGlobal("_sym_" + symbol);
+  // N.B. local variables must be added manually, unknown symbols
+  // are treated as global.
+  g = eenv.searchBinding(symbol);
   if (g)
     return g;
 
@@ -88,8 +91,7 @@ Value *SymbolASTNode::codeGen() {
                 llvm::GlobalValue::PrivateLinkage,
                 init, "_sym_" + symbol);
 
-  if (eenv.searchBinding(symbol) == NULL)
-    eenv.addGlobalBinding(symbol, g);
+  eenv.addGlobalBinding(symbol, g);
 
   return g;
 }
