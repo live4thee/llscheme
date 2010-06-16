@@ -262,10 +262,12 @@ static Value *createFunction(SExprASTNode *def,
   Function::arg_iterator ai;
   BasicBlock *bb, *prevb;
   BasicBlock::iterator previ;
-  Value *obj, *argval;
+  Value *obj, *argval, *free;
   std::string fname;
   SymbolASTNode *arg;
   std::vector<Constant *> idx;
+  Binding *refs;
+  Binding::iterator it;
   int i, n;
 
   if (name == "")
@@ -276,7 +278,9 @@ static Value *createFunction(SExprASTNode *def,
   n = formals->numArgument() - start;
   f = Function::Create(LSFuncType, Function::PrivateLinkage, "_func_" + fname, module);
 
-  obj = LSObjFunctionInit(context, f, name);
+  obj = LSObjNew(context, ls_t_func);
+  builder.CreateStore(builder.CreateBitCast(f, Type::getInt8Ty(context)->getPointerTo()),
+                      LSObjGetPointerAddr(context, obj, 0, 1));
 
   // need to bind it if defined a name
   eenv.newScope();
@@ -309,9 +313,31 @@ static Value *createFunction(SExprASTNode *def,
   for (i = 2; i < def->numArgument(); i++)
     argval = def->getArgument(i)->codeGenEval();
 
+  // By now, we know what free args the function uses
+  refs = eenv.getCurrentRefs();
+
   builder.CreateRet(argval);
 
   builder.SetInsertPoint(prevb, previ);
+
+  if (refs->size() == 0) {
+    builder.CreateStore(Constant::getNullValue(Type::getInt8Ty(context)->getPointerTo()),
+                        LSObjGetPointerAddr(context, obj, 0, 2));
+  }
+  else {
+    free = builder.CreateCall(module->getFunction("lsrt_new_freelist"),
+                              ConstantInt::get(Type::getInt32Ty(context), refs->size()));
+    for(it = refs->begin(), i = 0; it != refs->end(); it++, i++) {
+      builder.CreateCall3(module->getFunction("lsrt_fill_freelist"),
+                          free,
+                          ConstantInt::get(Type::getInt32Ty(context), i),
+                          it->second);
+    }
+    builder.CreateStore(builder.CreateBitCast(free,
+                                              Type::getInt8Ty(context)->getPointerTo()),
+                        LSObjGetPointerAddr(context, obj, 0, 2));
+  }
+
   eenv.lastScope();
 
   llvm::verifyFunction(*f);

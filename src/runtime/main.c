@@ -51,6 +51,25 @@ struct ls_object *lsrt_new_object(int type)
   return ret;
 }
 
+/*
+ * XXX: can we just save pointers safely? Does the
+ * content need to be saved as well?
+ */
+struct ls_object **lsrt_new_freelist(int count)
+{
+  struct ls_object **ret;
+
+  ret = (struct ls_object **) malloc(count * sizeof(*ret));
+  memset(ret, 0, count * sizeof(*ret));
+  return ret;
+}
+
+void lsrt_fill_freelist(struct ls_object* freelist[],
+                        int i, struct ls_object* obj)
+{
+  freelist[i] = obj;
+}
+
 /* TODO: printf like parameter */
 void lsrt_error(const char *str)
 {

@@ -102,6 +102,21 @@ static void InitializeLSRTFunctions(void) {
 
   v.clear();
   v.push_back(Type::getInt32Ty(context));
+  ftype = FunctionType::get(LSObjType->getPointerTo()->getPointerTo(),
+                            v, false);
+  Function::Create(ftype, Function::ExternalLinkage,
+                   "lsrt_new_freelist", module);
+
+  v.clear();
+  v.push_back(LSObjType->getPointerTo()->getPointerTo());
+  v.push_back(Type::getInt32Ty(context));
+  v.push_back(LSObjType->getPointerTo());
+  ftype = FunctionType::get(Type::getVoidTy(context), v, false);
+  Function::Create(ftype, Function::ExternalLinkage,
+                   "lsrt_fill_freelist", module);
+
+  v.clear();
+  v.push_back(Type::getInt32Ty(context));
   v.push_back(Type::getInt32Ty(context));
   v.push_back(Type::getInt32Ty(context));
   ftype = FunctionType::get(Type::getVoidTy(context), v, false);
