@@ -147,26 +147,34 @@ lsrt_builtin_arith(const char op, int argc, struct ls_object *args[])
   return ret;
 }
 
-struct ls_object *lsrt_builtin_plus(int argc, struct ls_object *args[])
+struct ls_object *lsrt_builtin_plus(int argc, struct ls_object *args[],
+                                    struct ls_object *freelist[])
 {
+  UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(0, 0, argc);
   return lsrt_builtin_arith('+', argc, args);
 }
 
-struct ls_object *lsrt_builtin_minus(int argc, struct ls_object *args[])
+struct ls_object *lsrt_builtin_minus(int argc, struct ls_object *args[],
+                                     struct ls_object *freelist[])
 {
-   lsrt_check_args_count(1, 0, argc);
-   return lsrt_builtin_arith('-', argc, args);
+  UNUSED_ARGUMENT(freelist);
+  lsrt_check_args_count(1, 0, argc);
+  return lsrt_builtin_arith('-', argc, args);
 }
 
-struct ls_object *lsrt_builtin_multiply(int argc, struct ls_object *args[])
+struct ls_object *lsrt_builtin_multiply(int argc, struct ls_object *args[],
+                                        struct ls_object *freelist[])
 {
+  UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(0, 0, argc);
   return lsrt_builtin_arith('*', argc, args);
 }
 
-struct ls_object *lsrt_builtin_divide(int argc, struct ls_object *args[])
+struct ls_object *lsrt_builtin_divide(int argc, struct ls_object *args[],
+                                      struct ls_object *freelist[])
 {
+  UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 0, argc);
   return lsrt_builtin_arith('/', argc, args);
 }
@@ -222,8 +230,10 @@ static void _display(struct ls_object *lso, int fp)
   }
 }
 
-struct ls_object *lsrt_builtin_display(int argc, struct ls_object *args[])
+struct ls_object *lsrt_builtin_display(int argc, struct ls_object *args[],
+                                       struct ls_object *freelist[])
 {
+  UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 1, argc);
   _display(args[0], 0);
   printf("\n");

@@ -71,7 +71,8 @@ TARGET struct ls_object
 };
 
 TARGET typedef
-struct ls_object * (*ls_func_type) (int argc, struct ls_object *args);
+struct ls_object * (*ls_func_type) (int argc, struct ls_object *args[],
+                                    struct ls_object *freelist[]);
 
 /*
  * usage:
@@ -83,7 +84,7 @@ struct ls_object * (*ls_func_type) (int argc, struct ls_object *args);
  * symbol: u1.ptr <= the object pointing to, u2.ptr <= symbol
  * string: u1.ptr <= string, u2.val <= memory size
  * pair: u1.ptr <= car object,  u2.ptr <= cdr object
- * func: u1.ptr <= function pointer, u2 undefined
+ * func: u1.ptr <= function pointer, u2 <== free arguments
  */
 
 /* predicates */

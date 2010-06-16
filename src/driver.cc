@@ -76,6 +76,7 @@ static void InitializeLSTypes(void) {
   v.clear();
   v.push_back(Type::getInt32Ty(context));
   v.push_back(LSObjType->getPointerTo()->getPointerTo());
+  v.push_back(LSObjType->getPointerTo()->getPointerTo());
 
   ftype = FunctionType::get(LSObjType->getPointerTo(), v, false);
   type = ftype->getPointerTo();

@@ -176,7 +176,7 @@ Value *SExprASTNode::codeGen() {
 
 Value *SExprASTNode::codeGenEval() {
   int i;
-  Value *func = NULL, *addr, *val;
+  Value *func = NULL, *addr, *val, *fptr, *free;
   Constant *size;
 
   // if arg[0] is symbol:
@@ -220,7 +220,8 @@ Value *SExprASTNode::codeGenEval() {
                       ConstantInt::get(Type::getInt32Ty(context), 0),
                       ConstantInt::get(Type::getInt8Ty(context), 'f'));
   addr = LSObjGetPointerAddr(context, func, 0, 1);
-  func = builder.CreateLoad(addr);
+  fptr = builder.CreateLoad(addr);
+  free = builder.CreateLoad(LSObjGetPointerAddr(context, func, 0, 2));
 
   size = ConstantInt::get(Type::getInt32Ty(context), exp.size() - 1);
   addr = builder.CreateAlloca(LSObjType->getPointerTo(), size);
@@ -230,8 +231,9 @@ Value *SExprASTNode::codeGenEval() {
     builder.CreateStore(val, GEP1(context, addr, i - 1));
   }
 
-  func = builder.CreateBitCast(func, LSFuncPtrType);
-  return builder.CreateCall2(func, size, addr);
+  fptr = builder.CreateBitCast(fptr, LSFuncPtrType);
+  free = builder.CreateBitCast(free, LSObjType->getPointerTo()->getPointerTo());
+  return builder.CreateCall3(fptr, size, addr, free);
 }
 
 
