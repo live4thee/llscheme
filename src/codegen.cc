@@ -260,7 +260,7 @@ static Value *createFunction(SExprASTNode *def,
                              const std::string &name) {
   Function *f;
   Function::arg_iterator ai;
-  BasicBlock *bb, *prevb;
+  BasicBlock *bb, *prevb, *bbprolog;
   BasicBlock::iterator previ;
   Value *obj, *argval, *free;
   std::string fname;
@@ -313,11 +313,32 @@ static Value *createFunction(SExprASTNode *def,
   for (i = 2; i < def->numArgument(); i++)
     argval = def->getArgument(i)->codeGenEval();
 
-  // By now, we know what free args the function uses
-  refs = eenv.getCurrentRefs();
-
   builder.CreateRet(argval);
 
+  // By now, we know what free args the function uses
+  refs = eenv.getCurrentRefs();
+  ai++;
+  ai->setName("freelist");
+
+  if (refs->size() != 0) {
+    // replacing previous alloca with the real load in prolog
+    bbprolog = BasicBlock::Create(context, "prolog");
+    builder.SetInsertPoint(bbprolog);
+
+    for(it = refs->begin(), i = 0; it != refs->end(); it++, i++) {
+      argval = eenv.searchLocalBinding(it->first);
+      if (argval == NULL)
+        throw Error(std::string("internal closure error"));
+
+      argval->replaceAllUsesWith(builder.CreateLoad(GEP1(context, ai, i)));
+      delete argval;
+    }
+
+    builder.CreateBr(bb);
+    f->getBasicBlockList().push_front(bbprolog);
+  }
+
+  // putting the freelist into generated function object in parent function
   builder.SetInsertPoint(prevb, previ);
 
   if (refs->size() == 0) {
@@ -338,6 +359,7 @@ static Value *createFunction(SExprASTNode *def,
                         LSObjGetPointerAddr(context, obj, 0, 2));
   }
 
+  // it is now safe to exit the scope and discard the env lists
   eenv.lastScope();
 
   llvm::verifyFunction(*f);
