@@ -33,6 +33,7 @@ typedef std::map<const std::string, llvm::Value *> Binding;
 class ExecutionEnv {
   Binding *global;
   std::deque<Binding *> lexical;
+  std::deque<Binding *> refs;
 public:
   ExecutionEnv();
   virtual ~ExecutionEnv();
@@ -44,10 +45,10 @@ public:
   void lastScope();
 
   llvm::Value *searchBinding(const std::string &name);
+  llvm::Value *searchGlobalBinding(const std::string &name);
   llvm::Value *searchLocalBinding(const std::string &name);
 
-  Binding *getGlobalBinding();
-  Binding *getCurrentScopeBinding();
+  Binding *getCurrentRefs();
 };
 
 #endif

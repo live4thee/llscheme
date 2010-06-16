@@ -58,14 +58,14 @@ Value *BooleanASTNode::codeGen() {
   return NULL;
 }
 
-Value *SymbolASTNode::codeGen() {
+Value *SymbolASTNode::getGlobal() {
   Constant *str, *s, *init;
   Value *g;
   std::vector<Constant *> v, m, idx;
 
   // N.B. local variables must be added manually, unknown symbols
   // are treated as global.
-  g = eenv.searchBinding(symbol);
+  g = eenv.searchGlobalBinding(symbol);
   if (g)
     return g;
 
@@ -97,13 +97,26 @@ Value *SymbolASTNode::codeGen() {
   return g;
 }
 
+Value *SymbolASTNode::codeGen() {
+  Value *s;
+
+  s = eenv.searchLocalBinding(symbol);
+  if (s)
+      return s;
+
+  return getGlobal();
+}
+
 Value *SymbolASTNode::codeGenEval() {
-  Value *s = codeGen();
+  Value *s;
   Value *addr, *val;
 
   // TODO: does local variables needs another redirection like globals?
-  if (eenv.searchLocalBinding(symbol))
+  s =eenv.searchLocalBinding(symbol);
+  if (s)
       return s;
+
+  s = getGlobal();
 
   builder.CreateCall(module->getFunction("lsrt_check_symbol_unbound"), s);
   addr = LSObjGetPointerAddr(context, s, 0, 1);

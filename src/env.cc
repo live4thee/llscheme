@@ -21,19 +21,11 @@
 
 #include "env.hh"
 #include "error.hh"
+#include "driver.hh"
 
-#include <iostream>
+#include <llvm/Instructions.h>
 
 static void clearBinding(Binding *b) {
-  Binding::iterator i;
-
-/*
-  for (i = b->begin(); i != b->end(); i++) {
-    llvm::Value *val = i->second;
-    delete val;
-    val = NULL;
-  }
-*/
   b->clear();
 }
 
@@ -44,6 +36,8 @@ ExecutionEnv::ExecutionEnv() {
   global = new Binding;
   tmp = new Binding;
   lexical.push_back(tmp);
+  tmp = new Binding;
+  refs.push_back(tmp);
 }
 
 ExecutionEnv::~ExecutionEnv() {
@@ -51,6 +45,10 @@ ExecutionEnv::~ExecutionEnv() {
     Binding *b = lexical.back();
     clearBinding(b);
     lexical.pop_back();
+    delete b;
+    b = refs.back();
+    clearBinding(b);
+    refs.pop_back();
     delete b;
   }
 
@@ -67,6 +65,7 @@ void ExecutionEnv::addGlobalBinding(const std::string &name, llvm::Value *val) {
 
 void ExecutionEnv::newScope() {
   lexical.push_back(new Binding);
+  refs.push_back(new Binding);
 }
 
 void ExecutionEnv::lastScope() {
@@ -78,6 +77,10 @@ void ExecutionEnv::lastScope() {
   clearBinding(b);
   lexical.pop_back();
   delete b;
+  b = refs.back();
+  clearBinding(b);
+  refs.pop_back();
+  delete b;
 }
 
 llvm::Value *ExecutionEnv::searchBinding(const std::string &name) {
@@ -88,6 +91,16 @@ llvm::Value *ExecutionEnv::searchBinding(const std::string &name) {
   if (val)
     return val;
 
+  val = searchGlobalBinding(name);
+  if (val)
+    return val;
+
+  return NULL;
+}
+
+llvm::Value *ExecutionEnv::searchGlobalBinding(const std::string &name) {
+  Binding::iterator i;
+
   i = global->find(name);
   if (i != global->end())
     return i->second;
@@ -97,23 +110,46 @@ llvm::Value *ExecutionEnv::searchBinding(const std::string &name) {
 
 llvm::Value *ExecutionEnv::searchLocalBinding(const std::string &name) {
   Binding::iterator i;
-  std::deque<Binding *>::reverse_iterator p;
+  std::deque<Binding *>::reverse_iterator p, q;
   Binding *b;
+  llvm::Value *val;
 
-  for(p = lexical.rbegin(); p != lexical.rend(); p++) {
+  for(p = lexical.rbegin(), q = refs.rbegin();
+      p != lexical.rend(); p++, q++) {
     b = *p;
     i = b->find(name);
-    if (i != b->end())
-      return i->second;
+    if (i != b->end()) {
+      if (p != lexical.rbegin())
+        goto makeref;
+      else
+        return i->second;
+    }
   }
 
   return NULL;
+
+ makeref:
+  // we have a match, but not in our scope...
+  // make a temporary value (and not insert) and insert it in the current
+  // scope, it will later be replaced with actual load instruction, and we
+  // need to take care of the temporary alloca there
+  // the `refs' is a ref to the upper level, which is used by the code
+  // generator to construct free[] list in the function closure
+  val = i->second;
+  do {
+    p--; q--;
+    b = *q;
+    b->insert(std::pair<const std::string, llvm::Value *> (name, val));
+
+    val = new llvm::AllocaInst(LSObjType->getPointerTo());
+    b = *p;
+    b->insert(std::pair<const std::string, llvm::Value *> (name, val));
+  } while(p != lexical.rbegin());
+
+  return val;
 }
 
-Binding *ExecutionEnv::getGlobalBinding() {
-  return global;
+Binding *ExecutionEnv::getCurrentRefs() {
+  return refs.back();
 }
 
-Binding *ExecutionEnv::getCurrentScopeBinding() {
-  return lexical.back();
-}

@@ -78,6 +78,8 @@ public:
   void finePrint(std::stringstream &ss);
   llvm::Value *codeGen();
   llvm::Value *codeGenEval();
+private:
+  llvm::Value *getGlobal();
 };
 
 class StringASTNode :public ASTNode {
