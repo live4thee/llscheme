@@ -35,9 +35,9 @@ extern llvm::Module *module;
 extern llvm::IRBuilder<> builder;
 extern ExecutionEnv eenv;
 
-extern llvm::Type *LSObjType;
+extern const llvm::Type *LSObjType;
 extern llvm::FunctionType *LSFuncType;
-extern llvm::Type *LSFuncPtrType;
+extern const llvm::Type *LSFuncPtrType;
 
 extern int codegen(ASTNode *);
 

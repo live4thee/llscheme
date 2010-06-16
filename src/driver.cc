@@ -52,13 +52,13 @@ Module *module;
 IRBuilder<> builder(context);
 ExecutionEnv eenv;
 
-Type *LSObjType;
+const Type *LSObjType;
 FunctionType *LSFuncType;
-Type *LSFuncPtrType;
+const Type *LSFuncPtrType;
 
 static void InitializeLSTypes(void) {
   std::vector<const Type*> v;
-  Type *type;
+  const Type *type;
   FunctionType *ftype;
 
   /* generate ls_object type */
@@ -234,7 +234,8 @@ int codegen(ASTNode *ast) {
   codegenInit();
   codegenFinish(ast->codeGenEval());
 
-  module->print(std::cout, NULL);
+  // dump to stderr
+  module->dump();
 
   return 0;
 }

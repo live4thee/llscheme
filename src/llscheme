@@ -17,18 +17,28 @@ options:
 EOF
 }
 
-function cleanup {
-rm -f $TEMPFILE
-rm -f $TEMPFILE2
+function run_cmd {
+    [ -n $VERBOSE ] && echo "$@"
+    "$@"
 }
 
-trap cleanup QUIT INT
+function cleanup {
+    rm -f $TEMPFILE
+    rm -f $TEMPFILE2
+}
+
+trap cleanup QUIT INT EXIT
+
+# temporary solution to handle runtime and linking
+TEMPFILE=$(mktemp)
+TEMPFILE2=$(mktemp)
 
 PASSED_ARGS=
 FINEPRINT=0
 ASSEMBLE=1
 LINK=1
 OUTPUT=
+VERBOSE=
 
 while [ $# -gt 0 ]; do
     case $1 in
@@ -44,13 +54,8 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-# temporary solution to handle runtime and linking
-TEMPFILE=`mktemp`
-TEMPFILE2=`mktemp`
-
 if [ x$FINEPRINT = x1 ]; then
-    if [ x$VERBOSE = x1 ]; then echo "./llscheme.bin -d -"; fi
-    ./llscheme.bin -d
+    run_cmd ./llscheme.bin -d
     exit 0
 fi
 
@@ -63,8 +68,8 @@ if [ x$ASSEMBLE = x0 ]; then
 else
         RES=$TEMPFILE
 fi
-if [ x$VERBOSE = x1 ]; then echo "./llscheme.bin $PASSED_ARGS - $@ > $RES"; fi
-./llscheme.bin $PASSED_ARGS $@ > "$RES"
+
+run_cmd ./llscheme.bin $PASSED_ARGS $@ 2> "$RES"
 if [ x$ASSEMBLE = x0 ]; then
     exit 0
 fi
@@ -78,8 +83,8 @@ if [ x$LINK = x0 ]; then
 else
         RES=$TEMPFILE2
 fi
-if [ x$VERBOSE = x1 ]; then echo "llvm-as $TEMPFILE -f -o $RES"; fi
-llvm-as $TEMPFILE -f -o "$RES"
+
+run_cmd llvm-as $TEMPFILE -f -o "$RES"
 if [ x$LINK = x0 ]; then
     exit 0
 fi
@@ -87,5 +92,5 @@ fi
 if [ x$OUTPUT = x ]; then
     OUTPUT=a.out
 fi
-if [ x$VERBOSE = x1 ]; then echo "llvm-ld $TEMPFILE2 -Lruntime -llsrt -o $OUTPUT"; fi
-llvm-ld $TEMPFILE2 -Lruntime -llsrt -o "$OUTPUT"
+
+run_cmd llvm-ld -native $TEMPFILE2 -Lruntime -llsrt -o "$OUTPUT"
