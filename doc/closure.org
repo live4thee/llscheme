@@ -1,0 +1,79 @@
+#+TITLE: Implementing Closure
+#+STARTUP: showall
+
+* Closure
+
+A record of code address and values of free variables (environment),
+similar to object with one method and several instance variables.
+
+** Activation Records
+
+Function may return a locally defined function which may refer to
+parameters and local variables, so they cannot be allocated on the
+stack, but must be put on the heap.
+
+Activation record holds a static link to the next activation record of
+the next enclosing function.
+
+** Closure Conversion
+
+Closure conversion transforms the program so that no function appears
+to access free variables.
+
+*** First idea: lambda lifting
+Pass the values of the free variables as parameters.  For example:
+
+#+BEGIN_SRC lisp
+(lambda (x y)
+  (let ((f (lambda (a b)
+	     (+ (* a x) (* b y)))))
+    (- (f 1 2) (f 3 4))))
+#+END_SRC
+
+will be transformed to:
+
+#+BEGIN_SRC lisp
+(lambda (x y)
+  (let ((f (lambda (x y a b))
+	   (+ (* a x) (* b y))))
+    (- (f x y 1 2) (f x y 3 4))))
+#+END_SRC
+
+But *lambda lifting* won't work in the case below:
+
+#+BEGIN_SRC lisp
+(lambda (x y)
+  (let ((f (lambda (a b)
+	     (+ (* a x) (* b y)))))
+    f))
+#+END_SRC
+
+*** Second idea: pack as an object
+
+Build a structure containing the free variables and pass it to the
+function as parameter when the function is called.
+
+#+BEGIN_SRC lisp
+(lambda (x y)
+  (let  ((f (vector
+	     (lambda (self a b)
+	       (+ (* a (vector-ref self 1))
+		  (* b (vector-ref self 2))))
+	     x
+	     y)))
+    (- ((vector-ref f 0) f 1 2)
+       ((vector-ref f 0) f 3 4))))
+#+END_SRC
+
+*** Closure conversion rules
+
+#+BEGIN_SRC lisp
+(lambda (P1 ... Pn) E) =
+(vector (lambda (self P1 ... Pn) E) v ...)
+#+END_SRC
+
+where =v...= is the list of free variables of
+=(lambda (P1 ... Pn) E)=
+
+=vi = (vector-ref self i)= where =vi= is the free variables in
+position =i= of the enclosing lambda expression.
