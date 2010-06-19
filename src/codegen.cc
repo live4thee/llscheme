@@ -55,7 +55,12 @@ Value *NumberASTNode::codeGen() {
 }
 
 Value *BooleanASTNode::codeGen() {
-  return NULL;
+  Value *obj;
+
+  obj = LSObjNew(context, ls_t_boolean);
+  builder.CreateStore(ConstantInt::get(Type::getInt32Ty(context), boolean),
+                      LSObjGetValueAddr(context, obj, 0, 1));
+  return obj;
 }
 
 Value *SymbolASTNode::getGlobal() {
@@ -105,6 +110,24 @@ Value *SymbolASTNode::codeGen() {
       return s;
 
   return getGlobal();
+}
+
+Value *SymbolASTNode::codeGenNoBind() {
+  Value *obj;
+  Constant *str, *s;
+
+  obj = LSObjNew(context, ls_t_symbol);
+  str = llvm::ConstantArray::get(context, symbol);
+  s = new llvm::GlobalVariable(*module, str->getType(), true,
+                               llvm::GlobalValue::PrivateLinkage, str, "_str_snb_" + symbol);
+
+  builder.CreateStore(Constant::getNullValue(Type::getInt8Ty(context)->getPointerTo()),
+                      LSObjGetPointerAddr(context, obj, 0, 1));
+  builder.CreateStore(builder.CreateBitCast(s,
+                                            Type::getInt8Ty(context)->getPointerTo()),
+                      LSObjGetPointerAddr(context, obj, 0, 2));
+
+  return obj;
 }
 
 Value *SymbolASTNode::codeGenEval() {
@@ -170,8 +193,41 @@ static const struct _builtin_syntax {
 static const int num_builtin_syntax =
   sizeof(builtin_syntax) / sizeof(_builtin_syntax);
 
+// N.B. codeGen() and codeGenEval() of SExprAST are totally different
 Value *SExprASTNode::codeGen() {
-  return NULL;
+  Value *head, *pair, *curr;
+  unsigned int i;
+
+  if (exp.size() == 0) {
+    return LSObjNew(context, ls_t_nil);
+  }
+
+  head = pair = LSObjNew(context, ls_t_pair);
+  builder.CreateStore(builder.CreateBitCast(exp[0]->codeGenNoBind(),
+                                            Type::getInt8Ty(context)->getPointerTo()),
+                      LSObjGetPointerAddr(context, pair, 0, 1));
+
+  for (i = 1; i < exp.size(); i++) {
+    curr = LSObjNew(context, ls_t_pair);
+    builder.CreateStore(builder.CreateBitCast(exp[i]->codeGenNoBind(),
+                                              Type::getInt8Ty(context)->getPointerTo()),
+                        LSObjGetPointerAddr(context, curr, 0, 1));
+    builder.CreateStore(builder.CreateBitCast(curr,
+                                              Type::getInt8Ty(context)->getPointerTo()),
+                        LSObjGetPointerAddr(context, pair, 0, 2));
+    pair = curr;
+  }
+
+  if (rest == NULL)
+    builder.CreateStore(builder.CreateBitCast(LSObjNew(context, ls_t_nil),
+                                              Type::getInt8Ty(context)->getPointerTo()),
+                        LSObjGetPointerAddr(context, pair, 0, 2));
+  else
+    builder.CreateStore(builder.CreateBitCast(rest->codeGenNoBind(),
+                                              Type::getInt8Ty(context)->getPointerTo()),
+                        LSObjGetPointerAddr(context, pair, 0, 2));
+
+  return head;
 }
 
 Value *SExprASTNode::codeGenEval() {
@@ -190,6 +246,8 @@ Value *SExprASTNode::codeGenEval() {
   // codegen: eval the remaining args
   // codegen: call function with arg count and vectors of args
   // TODO: ( args . rest)
+  if (exp.size() == 0)
+    return codeGen();
 
   if (exp[0]->getType() == SymbolAST) {
     SymbolASTNode *node = static_cast<SymbolASTNode *>(exp[0]);
