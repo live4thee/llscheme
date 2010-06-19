@@ -278,9 +278,7 @@ static Value *createFunction(SExprASTNode *def,
   n = formals->numArgument() - start;
   f = Function::Create(LSFuncType, Function::PrivateLinkage, "_func_" + fname, module);
 
-  obj = LSObjNew(context, ls_t_func);
-  builder.CreateStore(builder.CreateBitCast(f, Type::getInt8Ty(context)->getPointerTo()),
-                      LSObjGetPointerAddr(context, obj, 0, 1));
+  obj = LSObjFunctionInit(context, f, fname);
 
   // need to bind it if defined a name
   eenv.newScope();
@@ -346,6 +344,17 @@ static Value *createFunction(SExprASTNode *def,
                         LSObjGetPointerAddr(context, obj, 0, 2));
   }
   else {
+    Value *newobj;
+
+    newobj = LSObjNew(context, ls_t_func);
+    obj->replaceAllUsesWith(newobj);
+    static_cast<llvm::GlobalVariable *> (obj)->eraseFromParent();
+    obj = newobj;
+
+    builder.CreateStore(builder.CreateBitCast(f, Type::getInt8Ty(context)->getPointerTo()),
+                        LSObjGetPointerAddr(context, obj, 0, 1));
+
+
     free = builder.CreateCall(module->getFunction("lsrt_new_freelist"),
                               ConstantInt::get(Type::getInt32Ty(context), refs->size()));
     for(it = refs->begin(), i = 0; it != refs->end(); it++, i++) {
