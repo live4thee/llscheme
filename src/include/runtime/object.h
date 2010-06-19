@@ -40,7 +40,8 @@
 #define ls_t_symbol    4
 #define ls_t_string    5
 #define ls_t_pair      6
-#define ls_t_func      7
+#define ls_t_nil       7
+#define ls_t_func      8
 
 #define ls_t_unknown   0xff
 
@@ -95,14 +96,15 @@ struct ls_object * (*ls_func_type) (int argc, struct ls_object *args[],
 #define lso_is_symbol(x)  ((x)->type == ls_t_symbol)
 #define lso_is_string(x)  ((x)->type == ls_t_string)
 #define lso_is_pair(x)    ((x)->type == ls_t_pair)
+#define lso_is_nil(x)    ((x)->type == ls_t_nil)
 #define lso_is_func(x)    ((x)->type == ls_t_func)
 
 /* accessors */
 #define lso_number_get(x) ((x)->u1.val)
 #define lso_boolean_get(x) ((x)->u1.val)
 #define lso_symbol_deref(x) ((struct ls_object *) (x)->u1.ptr)
-#define lso_symbol_name(x) ((char *) (x)->u2.val)
-#define lso_string_get(x) ((char *) (x)->u1.val)
+#define lso_symbol_name(x) ((char *) (x)->u2.ptr)
+#define lso_string_get(x) ((char *) (x)->u1.ptr)
 #define lso_string_maxsize(x) ((x)->u2.val)
 #define lso_pair_car(x) ((struct ls_object *) (x)->u1.ptr)
 #define lso_pair_cdr(x) ((struct ls_object *) (x)->u2.ptr)

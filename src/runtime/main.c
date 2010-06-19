@@ -230,7 +230,7 @@ static void _display(struct ls_object *lso, int fp)
       printf("(");
 
     _display(lso_pair_car(lso), 0);
-    if (!lso_is_void(lso_pair_cdr(lso))) {
+    if (!lso_is_nil(lso_pair_cdr(lso))) {
       if (lso_is_pair(lso_pair_cdr(lso)))
         printf(" ");
       else
@@ -240,6 +240,9 @@ static void _display(struct ls_object *lso, int fp)
 
     if (!fp)
       printf(")");
+    break;
+  case ls_t_nil:
+    printf("()");
     break;
   case ls_t_func:
     printf("<procedure %p>", lso_func_get(lso));
@@ -258,4 +261,89 @@ struct ls_object *lsrt_builtin_display(int argc, struct ls_object *args[],
   printf("\n");
 
   return lsrt_new_object(ls_t_void);
+}
+
+struct ls_object *lsrt_builtin_cons(int argc, struct ls_object *args[],
+                                    struct ls_object *freelist[])
+{
+  struct ls_object *ret;
+
+  UNUSED_ARGUMENT(freelist);
+  lsrt_check_args_count(2, 2, argc);
+
+  ret = lsrt_new_object(ls_t_pair);
+  ret->u1.ptr = args[0];
+  ret->u2.ptr = args[1];
+
+  return ret;
+}
+
+struct ls_object *lsrt_builtin_car(int argc, struct ls_object *args[],
+                                   struct ls_object *freelist[])
+{
+  struct ls_object *ret;
+
+  UNUSED_ARGUMENT(freelist);
+  lsrt_check_args_count(1, 1, argc);
+  lsrt_check_arg_type(args, 0, 'p');
+
+  return lso_pair_car(args[0]);
+}
+
+struct ls_object *lsrt_builtin_cdr(int argc, struct ls_object *args[],
+                                   struct ls_object *freelist[])
+{
+  struct ls_object *ret;
+
+  UNUSED_ARGUMENT(freelist);
+  lsrt_check_args_count(1, 1, argc);
+  lsrt_check_arg_type(args, 0, 'p');
+
+  return lso_pair_cdr(args[0]);
+}
+
+struct ls_object *lsrt_builtin_list(int argc, struct ls_object *args[],
+                                    struct ls_object *freelist[])
+{
+  struct ls_object *last, *pair;
+  int i;
+  UNUSED_ARGUMENT(freelist);
+
+  last = lsrt_new_object(ls_t_nil);
+
+  for (i = argc - 1; i >= 0; i--) {
+    pair = lsrt_new_object(ls_t_pair);
+    pair->u1.ptr = args[i];
+    pair->u2.ptr = last;
+    last = pair;
+  }
+
+  return pair;
+}
+
+struct ls_object *lsrt_builtin_length(int argc, struct ls_object *args[],
+                                      struct ls_object *freelist[])
+{
+  struct ls_object *obj, *it;
+  int n;
+
+  UNUSED_ARGUMENT(freelist);
+  lsrt_check_args_count(1, 1, argc);
+
+  obj = lsrt_new_object(ls_t_number);
+
+  for (n = 0, it = args[0];;) {
+    if (lso_is_nil(it)) {
+      lso_number(obj) = n;
+      break;
+    }
+    else if (lso_is_pair(it)) {
+      it = lso_pair_cdr(it);
+      n++;
+    }
+    else
+      lsrt_error("length requires a list");
+  }
+
+  return obj;
 }

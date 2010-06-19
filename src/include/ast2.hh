@@ -49,6 +49,7 @@ public:
   //  - for s-expr, codeGenEval evaluates the s-expr, while
   //    codeGen generates pair representation
   virtual llvm::Value *codeGen() = 0;
+  virtual llvm::Value *codeGenNoBind() { return codeGen(); }
   virtual llvm::Value *codeGenEval() { return codeGen(); }
   virtual enum ASTType getType() { return type; }
   virtual ~ASTNode() {}
@@ -77,6 +78,7 @@ public:
     :ASTNode(SymbolAST), symbol(_s) {}
   void finePrint(std::stringstream &ss);
   llvm::Value *codeGen();
+  llvm::Value *codeGenNoBind();
   llvm::Value *codeGenEval();
 private:
   llvm::Value *getGlobal();
