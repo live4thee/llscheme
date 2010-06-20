@@ -132,6 +132,12 @@ static void InitializeLSRTFunctions(void) {
   ftype = FunctionType::get(Type::getInt32Ty(context), v, false);
   Function::Create(ftype, Function::ExternalLinkage,
                    "lsrt_main_retval", module);
+
+  v.clear();
+  v.push_back(LSObjType->getPointerTo());
+  ftype = FunctionType::get(Type::getInt32Ty(context), v, false);
+  Function::Create(ftype, Function::ExternalLinkage,
+                   "lsrt_test_expr", module);
 }
 
 static const struct _builtin_proc {
@@ -142,6 +148,11 @@ static const struct _builtin_proc {
   { "-", "minus" },
   { "*", "multiply" },
   { "/", "divide" },
+  { "=", "eq"},
+  { "<", "lt"},
+  { ">", "gt"},
+  { "<=", "le"},
+  { ">=", "ge"},
   { "display", "" },
   { "cons", "" },
   { "car", "" },
