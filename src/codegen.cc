@@ -180,6 +180,7 @@ static syntaxHandler handleBegin;
 static syntaxHandler handleDefine;
 static syntaxHandler handleLambda;
 static syntaxHandler handleQuote;
+static syntaxHandler handleIf;
 
 static const struct _builtin_syntax {
   const std::string key;
@@ -189,6 +190,9 @@ static const struct _builtin_syntax {
   { "define", &handleDefine },
   { "lambda", &handleLambda },
   { "quote", &handleQuote },
+  { "if", &handleIf},
+  //  { "or", &handleOr},
+  //  { "and", &handleAnd},
 };
 static const int num_builtin_syntax =
   sizeof(builtin_syntax) / sizeof(_builtin_syntax);
@@ -499,7 +503,52 @@ static Value *handleQuote(SExprASTNode *sexpr) {
   if (sexpr->numArgument() != 2)
     throw Error(std::string("quote takes only one argument"));
 
-  return sexpr->getArgument(1)->codeGen();
+  return sexpr->getArgument(1)->codeGenNoBind();
 }
 
+static Value *handleIf(SExprASTNode *sexpr) {
+  if (sexpr->numArgument() != 3 && sexpr->numArgument() != 4)
+    throw Error(std::string("if takes 2 or 3 arguments"));
+
+  // lsrt_test_exp takes any objects and returns a boolean
+  Value *test = builder.CreateCall(module->getFunction("lsrt_test_expr"),
+                                   sexpr->getArgument(1)->codeGenEval());
+  test = builder.CreateICmpNE(test,
+                              ConstantInt::get(Type::getInt32Ty(context), 0));
+
+  Function *func = builder.GetInsertBlock()->getParent();
+
+  BasicBlock *thenbb = BasicBlock::Create(context, "then", func);
+  BasicBlock *elsebb = BasicBlock::Create(context, "else");
+  BasicBlock *mergebb = BasicBlock::Create(context, "merge");
+
+  builder.CreateCondBr(test, thenbb, elsebb);
+
+  builder.SetInsertPoint(thenbb);
+  Value *thenval = sexpr->getArgument(2)->codeGenEval();
+  builder.CreateBr(mergebb);
+  thenbb = builder.GetInsertBlock();
+
+  Value *elseval;
+
+  func->getBasicBlockList().push_back(elsebb);
+  builder.SetInsertPoint(elsebb);
+  if (sexpr->numArgument() == 4)
+    elseval = sexpr->getArgument(3)->codeGenEval();
+  else
+    elseval = LSObjNew(context, ls_t_void);
+
+  builder.CreateBr(mergebb);
+  elsebb = builder.GetInsertBlock();
+
+  func->getBasicBlockList().push_back(mergebb);
+  builder.SetInsertPoint(mergebb);
+
+  llvm::PHINode *phi = builder.CreatePHI(LSObjType->getPointerTo());
+
+  phi->addIncoming(thenval, thenbb);
+  phi->addIncoming(elseval, elsebb);
+
+  return phi;
+}
 /* vim: set et ts=2 sw=2 cin: */

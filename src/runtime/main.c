@@ -141,6 +141,13 @@ int lsrt_main_retval(struct ls_object *lso)
   return 0;
 }
 
+int lsrt_test_expr(struct ls_object *lso)
+{
+  if (lso_is_boolean(lso) && lso_boolean_get(lso) == 0)
+    return 0;
+  else
+    return 1;
+}
 
 static struct ls_object *
 lsrt_builtin_arith(const char op, int argc, struct ls_object *args[])
@@ -197,6 +204,93 @@ struct ls_object *lsrt_builtin_divide(int argc, struct ls_object *args[],
   lsrt_check_args_count(1, 0, argc);
   return lsrt_builtin_arith('/', argc, args);
 }
+
+static struct ls_object *
+lsrt_builtin_order(char op, int argc, struct ls_object *args[])
+{
+  struct ls_object *ret = lsrt_new_object(ls_t_boolean);
+  int i, n;
+
+  lso_boolean(ret) = 1;
+
+  if (argc == 0)
+    return ret;
+  else {
+    lsrt_check_arg_type(args, 0, 'n');
+    n = lso_number_get(args[0]);
+    for (i = 1; i < argc; i++) {
+      switch (op) {
+      case '=':
+        if (lso_number_get(args[i]) != n)
+          goto fail;
+        break;
+      case '<':
+        if (lso_number_get(args[i]) >= n)
+          goto fail;
+        break;
+      case '>':
+        if (lso_number_get(args[i]) <= n)
+          goto fail;
+        break;
+      case 'l':
+        if (lso_number_get(args[i]) > n)
+          goto fail;
+        break;
+      case 'g':
+        if (lso_number_get(args[i]) < n)
+          goto fail;
+        break;
+      default:
+        break;
+      }
+    }
+  }
+  return ret;
+ fail:
+  lso_boolean(ret) = 0;
+  return ret;
+}
+
+struct ls_object *lsrt_builtin_eq(int argc, struct ls_object *args[],
+                                  struct ls_object *freelist[])
+{
+  UNUSED_ARGUMENT(freelist);
+
+  return lsrt_builtin_order('=', argc, args);
+}
+
+struct ls_object *lsrt_builtin_lt(int argc, struct ls_object *args[],
+                                  struct ls_object *freelist[])
+{
+  UNUSED_ARGUMENT(freelist);
+
+  return lsrt_builtin_order('<', argc, args);
+}
+
+struct ls_object *lsrt_builtin_gt(int argc, struct ls_object *args[],
+                                  struct ls_object *freelist[])
+{
+  UNUSED_ARGUMENT(freelist);
+
+  return lsrt_builtin_order('>', argc, args);
+}
+
+struct ls_object *lsrt_builtin_le(int argc, struct ls_object *args[],
+                                  struct ls_object *freelist[])
+{
+  UNUSED_ARGUMENT(freelist);
+
+  return lsrt_builtin_order('l', argc, args);
+}
+
+struct ls_object *lsrt_builtin_ge(int argc, struct ls_object *args[],
+                                  struct ls_object *freelist[])
+{
+  UNUSED_ARGUMENT(freelist);
+
+  return lsrt_builtin_order('g', argc, args);
+}
+
 
 static void _display(struct ls_object *lso, int fp)
 {
