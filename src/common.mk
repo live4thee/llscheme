@@ -1,5 +1,11 @@
 COMMON_CFLAGS := -W -Wall
 
+# check the existence of bdw-gc
+GC_LIB := $(shell pkg-config bdw-gc --libs)
+ifneq ($(GC_LIB), )
+	COMMON_CFLAGS += -DBDWGC
+endif
+
 ifdef DEBUG
 COMMON_CFLAGS += -ggdb -DDEBUG
 else

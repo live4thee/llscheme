@@ -30,7 +30,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define UNUSED_ARGUMENT(x) (void)x
+#define UNUSED_ARGUMENT(x) (void)(x)
+
+#ifdef BDWGC
+/* The Boehm-Demers-Weiser conservative garbage collector */
+#  include <gc.h>
+#  define ls_malloc GC_malloc_atomic
+#else
+#  define ls_malloc malloc
+#endif
 /*
  * We need:
  *  - a memory mangement system (or malloc is llvm builtin?)
@@ -44,7 +52,7 @@ struct ls_object *lsrt_new_object(int type)
 {
   struct ls_object *ret;
 
-  ret = (struct ls_object *) malloc(sizeof *ret);
+  ret = (struct ls_object *) ls_malloc(sizeof *ret);
   memset(ret, 0, sizeof *ret);
   lso_set_type(ret, type);
 
@@ -59,7 +67,7 @@ struct ls_object **lsrt_new_freelist(int count)
 {
   struct ls_object **ret;
 
-  ret = (struct ls_object **) malloc(count * sizeof(*ret));
+  ret = (struct ls_object **) ls_malloc(count * sizeof(*ret));
   memset(ret, 0, count * sizeof(*ret));
   return ret;
 }
