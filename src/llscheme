@@ -1,6 +1,6 @@
 #!/bin/sh
 
-function usage {
+usage() {
     cat >&2 << EOF
 $0: simple llscheme driver
 
@@ -17,12 +17,12 @@ options:
 EOF
 }
 
-function run_cmd {
+run_cmd() {
     [ -n $VERBOSE ] && echo "$@"
     "$@"
 }
 
-function cleanup {
+cleanup() {
     rm -f $TEMPFILE
     rm -f $TEMPFILE2
 }
