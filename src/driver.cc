@@ -19,25 +19,17 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 //
 
-#include "ast2.hh"
-#include "driver.hh"
-#include "env.hh"
-
 #include <llvm/Analysis/Verifier.h>
 #include <vector>
 #include <iostream>
 
-using llvm::Type;
-using llvm::Value;
-using llvm::Constant;
-using llvm::Function;
-using llvm::FunctionType;
-using llvm::GlobalVariable;
+#include "ast2.hh"
+#include "driver.hh"
+#include "env.hh"
+
 using llvm::StructType;
 using llvm::BasicBlock;
 
-using llvm::Module;
-using llvm::IRBuilder;
 using llvm::getGlobalContext;
 using llvm::verifyFunction;
 
@@ -192,12 +184,10 @@ static void codegenInit(void) {
   InitializeLSTypes();
   InitializeLSRTFunctions();
 
-  v.clear();
   ftype = FunctionType::get(Type::getVoidTy(context), v, false);
   prolog = Function::Create(ftype, Function::InternalLinkage,
                             "_prolog", module);
 
-  v.clear();
   v.push_back(Type::getInt32Ty(context));
   v.push_back(Type::getInt8Ty(context)->getPointerTo()->getPointerTo());
   ftype = FunctionType::get(Type::getInt32Ty(context), v, false);

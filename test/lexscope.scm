@@ -3,6 +3,11 @@
     ((lambda (x) (* x x)) y)))
  5 3)
 
+((lambda (x y)
+ (- ((lambda (n) (* n y)) (+ x y))
+    ((lambda (m) (* m m)) y)))
+ 5 3)
+
 (define (a x) (lambda (y) (+ 1 x y)))
 (define b (a 2))
 (b 3)

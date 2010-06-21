@@ -31,108 +31,125 @@
 #include "env.hh"
 #include "runtime/object.h"
 
-extern llvm::Module *module;
-extern llvm::IRBuilder<> builder;
+using llvm::Type;
+using llvm::Value;
+using llvm::Constant;
+using llvm::ConstantInt;
+using llvm::ConstantExpr;
+using llvm::ConstantStruct;
+using llvm::Function;
+using llvm::FunctionType;
+using llvm::GlobalVariable;
+using llvm::LLVMContext;
+using llvm::Module;
+using llvm::IRBuilder;
+
+extern Module *module;
+extern IRBuilder<> builder;
 extern ExecutionEnv eenv;
 
-extern const llvm::Type *LSObjType;
-extern llvm::FunctionType *LSFuncType;
-extern const llvm::Type *LSFuncPtrType;
+extern const Type *LSObjType;
+extern FunctionType *LSFuncType;
+extern const Type *LSFuncPtrType;
 
 extern int codegen(ASTNode *);
 
-static inline llvm::Value *
-LSObjNew(llvm::LLVMContext &context,
-         int type) {
-  llvm::Value *t;
-  llvm::Function *f;
+// Create a ls_object of TYPE defined in runtime/object.h Return the
+// pointer to the allocated memory.  Since the ls_object is an
+// aggregate data structure, we need GEP (getelementptr) instruction
+// to access its content.
 
-  t = llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), type);
+static inline Value *
+LSObjNew(LLVMContext &context,
+         int type) {
+  Value *t;
+  Function *f;
+
+  t = ConstantInt::get(Type::getInt32Ty(context), type);
   f = module->getFunction("lsrt_new_object");
   return builder.CreateCall(f, t);
 }
 
-static inline llvm::Value *
-GEP1(llvm::LLVMContext &context,
-     llvm::Value *val, int i0) {
-  llvm::Constant *idx0 =
-    llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), i0);
-  llvm::Value *offset[] = {idx0};
+static inline Value *
+GEP1(LLVMContext &context,
+     Value *val, int i0) {
+  Constant *idx0 =
+    ConstantInt::get(Type::getInt32Ty(context), i0);
+  Value *offset[] = {idx0};
 
   return builder.CreateInBoundsGEP(val, offset, offset + 1);
 }
 
-static inline llvm::Value *
-GEP2(llvm::LLVMContext &context,
-     llvm::Value *val, int i0, int i1) {
-  llvm::Constant *idx0 =
-    llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), i0);
-  llvm::Constant *idx1 =
-    llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), i1);
-  llvm::Value *offset[] = {idx0, idx1};
+static inline Value *
+GEP2(LLVMContext &context,
+     Value *val, int i0, int i1) {
+  Constant *idx0 =
+    ConstantInt::get(Type::getInt32Ty(context), i0);
+  Constant *idx1 =
+    ConstantInt::get(Type::getInt32Ty(context), i1);
+  Value *offset[] = {idx0, idx1};
 
   return builder.CreateInBoundsGEP(val, offset, offset + 2);
 }
 
-static inline llvm::Value *
-LSObjGetTypeAddr(llvm::LLVMContext &context,
-                 llvm::Value *lso, int arrayIndex) {
+static inline Value *
+LSObjGetTypeAddr(LLVMContext &context,
+                 Value *lso, int arrayIndex) {
   return GEP2(context, lso, arrayIndex, 0);
 }
 
-static inline llvm::Value *
-GEP3(llvm::LLVMContext &context,
-     llvm::Value *val, int i0, int i1, int i2) {
-  llvm::Constant *idx0 =
-    llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), i0);
-  llvm::Constant *idx1 =
-    llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), i1);
-  llvm::Constant *idx2 =
-    llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), i2);
-  llvm::Value *offset[] = {idx0, idx1, idx2};
+static inline Value *
+GEP3(LLVMContext &context,
+     Value *val, int i0, int i1, int i2) {
+  Constant *idx0 =
+    ConstantInt::get(Type::getInt32Ty(context), i0);
+  Constant *idx1 =
+    ConstantInt::get(Type::getInt32Ty(context), i1);
+  Constant *idx2 =
+    ConstantInt::get(Type::getInt32Ty(context), i2);
+  Value *offset[] = {idx0, idx1, idx2};
 
   return builder.CreateInBoundsGEP(val, offset, offset + 3);
 }
 
-static inline llvm::Value *
-LSObjGetPointerAddr(llvm::LLVMContext &context,
-                    llvm::Value *lso, int arrayIndex, int index) {
+static inline Value *
+LSObjGetPointerAddr(LLVMContext &context,
+                    Value *lso, int arrayIndex, int index) {
   return GEP3(context, lso, arrayIndex, index, 0);
 }
 
-static inline llvm::Value *
-LSObjGetValueAddr(llvm::LLVMContext &context,
-                  llvm::Value *lso, int arraryIndex, int index) {
-  llvm::Value *addr = LSObjGetPointerAddr(context, lso, arraryIndex, index);
+static inline Value *
+LSObjGetValueAddr(LLVMContext &context,
+                  Value *lso, int arraryIndex, int index) {
+  Value *addr = LSObjGetPointerAddr(context, lso, arraryIndex, index);
 
   return builder.CreateBitCast(addr,
-                               llvm::Type::getInt32Ty(context)->getPointerTo());
+                               Type::getInt32Ty(context)->getPointerTo());
 }
 
 // Create ls_t_func object and its initializer
-static inline llvm::Value *
-LSObjFunctionInit(llvm::LLVMContext &context,
-                  llvm::Function *func, const std::string &name) {
-  llvm::GlobalVariable *g;
-  llvm::Constant *init;
-  std::vector<llvm::Constant *> v, m, idx;
+static inline Value *
+LSObjFunctionInit(LLVMContext &context,
+                  Function *func, const std::string &name) {
+  GlobalVariable *g;
+  Constant *init;
+  std::vector<Constant *> v, m, idx;
 
-  v.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), ls_t_func));
+  v.push_back(ConstantInt::get(Type::getInt32Ty(context), ls_t_func));
+  m.push_back(ConstantExpr::getBitCast(func,
+                  Type::getInt8Ty(context)->getPointerTo()));
 
+  v.push_back(ConstantStruct::get(context, m, false));
   m.clear();
-  m.push_back(llvm::ConstantExpr::getBitCast(func,
-                  llvm::Type::getInt8Ty(context)->getPointerTo()));
-  v.push_back(llvm::ConstantStruct::get(context, m, false));
 
-  m.clear();
-  idx.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), 0));
-  idx.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), 0));
+  idx.push_back(ConstantInt::get(Type::getInt32Ty(context), 0));
+  idx.push_back(ConstantInt::get(Type::getInt32Ty(context), 0));
 
-  m.push_back(llvm::Constant::getNullValue(llvm::Type::getInt8Ty(context)->getPointerTo()));
-  v.push_back(llvm::ConstantStruct::get(context, m, false));
-  init = llvm::ConstantStruct::get(context, v, false);
+  m.push_back(Constant::getNullValue(Type::getInt8Ty(context)->getPointerTo()));
+  v.push_back(ConstantStruct::get(context, m, false));
+  init = ConstantStruct::get(context, v, false);
 
-  g = new llvm::GlobalVariable(*module, LSObjType, false,
+  g = new GlobalVariable(*module, LSObjType, false,
                 llvm::GlobalValue::PrivateLinkage,
                 init, "_funcobj_" + name);
 
