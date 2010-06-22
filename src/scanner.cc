@@ -40,3 +40,5 @@ void StringScanner::match(char x) {
   if (x == ch) consume();
   else throw Error(std::string("expecting ") + x + "; found " + ch);
 }
+
+/* vim: set et ts=2 sw=2 cin: */

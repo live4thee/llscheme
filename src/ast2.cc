@@ -64,3 +64,4 @@ void SExprASTNode::finePrint(std::stringstream &ss) const {
   ss << ')';
 }
 
+/* vim: set et ts=2 sw=2 cin: */

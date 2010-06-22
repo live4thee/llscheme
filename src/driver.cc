@@ -239,3 +239,5 @@ int codegen(ASTNode *ast) {
 
   return 0;
 }
+
+/* vim: set et ts=2 sw=2 cin: */

@@ -29,3 +29,5 @@ Token Token::operator=(const Token& token) {
   text = token.text;
   return *this;
 }
+
+/* vim: set et ts=2 sw=2 cin: */

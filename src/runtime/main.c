@@ -259,3 +259,5 @@ struct ls_object *lsrt_builtin_display(int argc, struct ls_object *args[],
 
   return lsrt_new_object(ls_t_void);
 }
+
+/* vim: set et ts=2 sw=2 cin: */

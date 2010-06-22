@@ -231,3 +231,5 @@ const char* Lexer::tokenNames[] = {
   "n/a", "<EOF>", "LPAREN", "ID", "NUMBER", "RPAREN",
   "PERIOD", "STRING", "BOOL", "QUOTE"
 };
+
+/* vim: set et ts=2 sw=2 cin: */

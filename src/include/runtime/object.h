@@ -176,5 +176,7 @@ lso_mk_func(ls_func_type f)
       { (void *)(const void *) f }, { 0 } });
 }
 
-#endif /* LLSCHEME_RUNTIME */
+#endif /* _LLSCHEME_RUNTIME */
 #endif /* OBJECT_H_ */
+
+/* vim: set et ts=2 sw=2 cin: */

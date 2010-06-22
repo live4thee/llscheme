@@ -139,3 +139,5 @@ LSObjFunctionInit(llvm::LLVMContext &context,
   return g;
 }
 #endif
+
+/* vim: set et ts=2 sw=2 cin: */

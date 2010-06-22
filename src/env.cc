@@ -153,3 +153,4 @@ Binding *ExecutionEnv::getCurrentRefs() {
   return refs.back();
 }
 
+/* vim: set et ts=2 sw=2 cin: */

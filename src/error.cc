@@ -29,3 +29,5 @@ Error::~Error() throw () {}
 const char* Error::what() const throw () {
   return _msg.c_str();
 }
+
+/* vim: set et ts=2 sw=2 cin: */

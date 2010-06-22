@@ -49,3 +49,5 @@ private:
 };
 
 #endif
+
+/* vim: set et ts=2 sw=2 cin: */
