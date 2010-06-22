@@ -25,6 +25,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <cstdlib>
 
 #include <llvm/DerivedTypes.h>
 
@@ -40,33 +41,36 @@ protected:
 public:
   ASTNode(enum ASTType _t = UnknownAST) :type(_t) {}
 
-  virtual void finePrint(std::stringstream &ss) = 0;
+  virtual void finePrint(std::stringstream &ss) const = 0;
   // codeGen generates code to represent the object, while
   // codeGenEval does an additional evaluation, for example:
-  //  - two functions are the same for numbers, booleans and strings
+  //  - they behave the same for numbers, booleans and strings
   //  - for symbol, codeGen returns the symbol object, while
   //    codeGenEval returns the object bound to the symbol
   //  - for s-expr, codeGenEval evaluates the s-expr, while
   //    codeGen generates pair representation
   virtual llvm::Value *codeGen() = 0;
   virtual llvm::Value *codeGenEval() { return codeGen(); }
-  virtual enum ASTType getType() { return type; }
+  virtual enum ASTType getType() const { return type; }
   virtual ~ASTNode() {}
 };
 
+// TODO: floating point and big number
 class NumberASTNode :public ASTNode {
 public:
   int val;
-  NumberASTNode(const std::string &_s);
-  void finePrint(std::stringstream &ss);
+  NumberASTNode(const std::string &_s)
+    :ASTNode(NumberAST), val(std::atoi(_s.c_str())) {}
+  void finePrint(std::stringstream &ss) const;
   llvm::Value *codeGen();
 };
 
 class BooleanASTNode :public ASTNode {
 public:
-  int boolean;
-  BooleanASTNode(const std::string &_s);
-  void finePrint(std::stringstream &ss);
+  bool boolean;
+  BooleanASTNode(const std::string &_s)
+    :ASTNode(BooleanAST), boolean(_s == "#t") {}
+  void finePrint(std::stringstream &ss) const;
   llvm::Value *codeGen();
 };
 
@@ -75,7 +79,7 @@ public:
   std::string symbol;
   SymbolASTNode(const std::string &_s)
     :ASTNode(SymbolAST), symbol(_s) {}
-  void finePrint(std::stringstream &ss);
+  void finePrint(std::stringstream &ss) const;
   llvm::Value *codeGen();
   llvm::Value *codeGenEval();
 private:
@@ -87,7 +91,7 @@ public:
   std::string str;
   StringASTNode(const std::string &_s)
     :ASTNode(StringAST), str(_s) {}
-  void finePrint(std::stringstream &ss);
+  void finePrint(std::stringstream &ss) const;
   llvm::Value *codeGen();
 };
 
@@ -98,7 +102,7 @@ public:
   SExprASTNode()
     :ASTNode(SExprAST), rest(0) {}
 
-  void finePrint(std::stringstream &ss);
+  void finePrint(std::stringstream &ss) const;
   llvm::Value *codeGen();
   llvm::Value *codeGenEval();
   void addArgument(ASTNode *arg) {
@@ -109,11 +113,11 @@ public:
     rest = r;
   }
 
-  int numArgument() {
+  int numArgument() const {
     return exp.size();
   }
 
-  bool hasRest() {
+  bool hasRest() const {
     return rest != NULL;
   }
 

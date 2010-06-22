@@ -22,43 +22,28 @@
 #include <cstdlib>
 #include "ast2.hh"
 
-NumberASTNode::NumberASTNode(const std::string &_s)
-  :ASTNode(NumberAST)
-{
-  val = std::atoi(_s.c_str());
-}
-
-BooleanASTNode::BooleanASTNode(const std::string &_s)
-  :ASTNode(BooleanAST)
-{
-  if (_s == "#t")
-    boolean = 1;
-  else
-    boolean = 0;
-}
-
 // TODO: line breaking with proper column setting
 
-void NumberASTNode::finePrint(std::stringstream &ss) {
+void NumberASTNode::finePrint(std::stringstream &ss) const {
   ss << val;
 }
 
-void BooleanASTNode::finePrint(std::stringstream &ss) {
+void BooleanASTNode::finePrint(std::stringstream &ss) const {
   if (boolean)
     ss << "#t";
   else
     ss << "#f";
 }
 
-void SymbolASTNode::finePrint(std::stringstream &ss) {
+void SymbolASTNode::finePrint(std::stringstream &ss) const {
   ss << symbol;
 }
 
-void StringASTNode::finePrint(std::stringstream &ss) {
+void StringASTNode::finePrint(std::stringstream &ss) const {
   ss << '"' << str << '"';
 }
 
-void SExprASTNode::finePrint(std::stringstream &ss) {
+void SExprASTNode::finePrint(std::stringstream &ss) const {
   int size = exp.size();
   int i;
   ss << '(';
@@ -78,4 +63,4 @@ void SExprASTNode::finePrint(std::stringstream &ss) {
 
   ss << ')';
 }
-  
+
