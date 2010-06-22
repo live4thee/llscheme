@@ -40,7 +40,7 @@ Parser::~Parser() {
 
 void Parser::consume(void) {
 #ifdef DEBUG
-  std::cerr << "consumed `" << lookahead[c_index].text << "'" << std::endl;
+  std::cout << "consumed `" << lookahead[c_index].text << "'" << std::endl;
 #endif
   lookahead[c_index] = input->nextToken();
   c_index = (c_index + 1) % n_lookahead;
@@ -63,6 +63,9 @@ void Parser::match(int tkType) {
 			       "; found " + peekToken(1).text));
 }
 
+// TODO:
+// 1. clean up other members like in Parser class;
+// 2. display line/column number when parser failed.
 ASTNode *Parser::exp(void)
 {
   int tk1 = peekTokenType(1);

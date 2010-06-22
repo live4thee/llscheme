@@ -21,40 +21,55 @@
 
 #include <iostream>
 #include <sstream>
+#include <cstdlib>
+
+#include <unistd.h>
+
 #include "parser.hh"
 #include "ast2.hh"
 
 extern int codegen(ASTNode *);
 
+#define PROGRAM_NAME "llscheme"
+
+static bool printTrace = false;
+static bool dumpASTNodes = false;
+
+static void usage(int exit_status)
+{
+  std::cout << "usage: " PROGRAM_NAME "[ OPTION ] \n"
+            << " '-d': just dump the AST nodes and exit\n"
+            << " '-p': print trace information when running executable\n"
+            << std::endl;
+  std::exit(exit_status);
+}
+
 int main(int argc, char *argv[])
 {
+  int opt = -1;
+  while ((opt = getopt(argc, argv, "dp")) != -1) {
+    switch (opt) {
+    case 'd': dumpASTNodes = true; break;
+    case 'p': printTrace = true; break;
+    default:
+      usage(EXIT_FAILURE);
+    }
+  }
+
   std::stringstream ss, ss1;
   ss << std::cin.rdbuf();
-  int display = 0;
 
   Scanner *scanner = new StringScanner(ss.str());
   Lexer *lexer = new Lexer(scanner);
   Parser parser = Parser(lexer, 4);
   SExprASTNode *ast = new SExprASTNode();
 
-#if 0
-  Token token = lexer->nextToken();
-
-  while (token.type != EOF_TYPE) {
-    std::cout << token.type << ", " << token.text << std::endl;
-    token = lexer->nextToken();
-  }
-#endif
-
-  if (argc == 2 && std::string(argv[1]) == "-p")
-    display = 1;
-
   ast->addArgument(new SymbolASTNode("begin"));
 
   // parser a sexp
   while (parser.peekTokenType(1) != EOF_TYPE) {
     SExprASTNode *ast2;
-    if (display) {
+    if (printTrace) {
       ast2 = new SExprASTNode();
       ast2->addArgument(new SymbolASTNode("display"));
       ast2->addArgument(parser.exp());
@@ -64,7 +79,7 @@ int main(int argc, char *argv[])
       ast->addArgument(parser.exp());
   }
 
-  if (argc == 2 && std::string(argv[1]) == "-d") {
+  if (dumpASTNodes) {
     ast->finePrint(ss1);
     std::cout << ss1.rdbuf() << "\n";
   } else {
