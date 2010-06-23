@@ -93,5 +93,4 @@ if [ x$OUTPUT = x ]; then
     OUTPUT=a.out
 fi
 
-gc_opt=$(pkg-config bdw-gc --libs 2>/dev/null)
-run_cmd llvm-ld -native $TEMPFILE2 -Lruntime -llsrt $gc_opt -o "$OUTPUT"
+run_cmd llvm-ld -native $TEMPFILE2 -Lruntime -llsrt -lgc -o "$OUTPUT"

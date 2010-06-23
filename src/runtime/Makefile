@@ -1,5 +1,3 @@
-include ../common.mk
-
 SOURCE := $(wildcard *.c)
 OBJECT := $(SOURCE:.c=.o)
 

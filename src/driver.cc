@@ -215,12 +215,11 @@ static void codegenInit(void) {
 
   builder.CreateCall(prolog, args.begin(), args.end(), "");
 
-#ifdef BDWGC
+  /* Init bdw GC libary */
   ftype = FunctionType::get(Type::getVoidTy(context), false);
   Function* gc_init_func = Function::Create(ftype, Function::ExternalLinkage,
       "GC_init", module);
   builder.CreateCall(gc_init_func, "");
-#endif
 }
 
 static void codegenFinish(Value *value) {

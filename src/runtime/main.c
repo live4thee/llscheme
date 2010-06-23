@@ -24,21 +24,18 @@
 
 #define _LLSCHEME_RUNTIME
 
-#include "runtime/object.h"
-#include <malloc.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#define UNUSED_ARGUMENT(x) (void)(x)
-
-#ifdef BDWGC
 /* The Boehm-Demers-Weiser conservative garbage collector */
-#  include <gc.h>
-#  define ls_malloc GC_malloc_atomic
-#else
-#  define ls_malloc malloc
-#endif
+#include <gc/gc.h>
+
+#include "runtime/object.h"
+
+#define UNUSED_ARGUMENT(x) (void)(x)
+#define ls_malloc GC_malloc_atomic
+
 /*
  * We need:
  *  - a memory mangement system (or malloc is llvm builtin?)

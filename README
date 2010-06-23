@@ -1,0 +1,32 @@
+llscheme - A Scheme to LLVM Compiler
+====================================
+
+Dependencies
+------------
+1. LLVM C++ API and tools, http://llvm.org/
+2. BDW-GC library, http://www.hpl.hp.com/personal/Hans_Boehm/gc/
+
+
+Installation
+------------
+
+This source archive uses the GNU autotools to build. Ensure that the
+standard GNU build environment is available, including autoconf,
+automake, etc.
+
+To build:
+
+    ./autogen.sh
+    make && make -C src/runtime
+
+TODO
+----
+
+1. Compile runtime and generate library with libtools;
+2. GMP library integration;
+3. Implement let/let*/letrec;
+4. Support String operation;
+5. Basic type inference system;
+6. Implement set!, I/O sub-routines;
+7. Continuations;
+8. Hygienic macro.
