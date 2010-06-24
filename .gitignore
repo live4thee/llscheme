@@ -14,6 +14,7 @@ ncscope.*
 *.orig
 *~
 \#*#
+core
 
 *.pyc
 *.ll
@@ -40,3 +41,11 @@ Makefile
 aclocal.m4
 libtool.m4
 lt*.m4
+
+llscheme
+*.la
+*.lo
+*.gz
+*.bz2
+*.xz
+*.lzma

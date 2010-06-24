@@ -17,3 +17,13 @@ llscheme_bin_SOURCES = ast2.cc \
 		       parser.cc \
 		       scanner.cc \
 		       token.cc
+
+noinst_HEADERS = include/driver.hh \
+                 include/error.hh \
+                 include/env.hh \
+                 include/token.hh \
+                 include/ast2.hh \
+                 include/lexer.hh \
+                 include/scanner.hh \
+                 include/parser.hh \
+                 include/ast.hh
