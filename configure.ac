@@ -48,9 +48,11 @@ fi
 AC_CONFIG_FILES([
   Makefile
   src/Makefile
-  src/llscheme
   src/runtime/Makefile
 ])
+AC_CONFIG_FILES([
+  src/llscheme
+], [chmod +x src/llscheme])
 AC_OUTPUT
 
 echo
