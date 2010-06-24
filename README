@@ -17,12 +17,12 @@ automake, etc.
 To build:
 
     ./autogen.sh
-    make && make -C src/runtime
+    make
+    sudo make install
 
 TODO
 ----
 
-1. Compile runtime and generate library with libtools;
 2. GMP library integration;
 3. Implement let/let*/letrec;
 4. Support String operation;

@@ -10,8 +10,7 @@ AC_PROG_CXX
 AM_PROG_LIBTOOL
 
 # check for clang and llvm tools
-AC_CHECK_PROG(CLANG, clang, clang)
-AC_CHECK_PROG(LLVMAR, llvm-ar, llvm-ar)
+AC_CHECK_PROG(LLVMAS, llvm-as, llvm-as)
 AC_CHECK_PROG(LLVMLD, llvm-ld, llvm-ld)
 
 # get for llvm library and include location
@@ -49,6 +48,8 @@ fi
 AC_CONFIG_FILES([
   Makefile
   src/Makefile
+  src/llscheme
+  src/runtime/Makefile
 ])
 AC_OUTPUT
 

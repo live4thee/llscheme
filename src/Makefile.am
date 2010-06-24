@@ -1,3 +1,7 @@
+SUBDIRS = runtime
+
+dist_bin_SCRIPTS = llscheme
+
 bin_PROGRAMS = llscheme.bin
 
 llscheme_bin_CXXFLAGS = -I./include $(LLVM_CPPFLAGS)

@@ -4,16 +4,18 @@ usage() {
     cat >&2 << EOF
 $0: simple llscheme driver
 
-usage: cat <.scm> | llscheme -[hcSdvo]
+usage: cat <.scm> | llscheme -[cdhopsvL]
 
 options:
-    -h             show this message
-    -c             do not link, output a.o
-    -S             do not assemble, output a.s
-    -d             dump asttree
-    -p             add (display) in every s-expr
-    -v             verbose
-    -o <file>      output file name
+    -h             Show this message
+    -c             Compile and assemble, but do not link
+    -S             Compile only; do not assemble or link
+    -v             Verbose
+    -o <file>      Place the output into <file>
+    -L <searchdir> Search the path <searchdir> for runtime library
+    -d             Dump ASTTree and exit
+    -native        Generate a native machine code executable
+    -p             Print result of every SExpr
 EOF
 }
 
@@ -29,6 +31,15 @@ cleanup() {
 
 trap cleanup QUIT INT EXIT
 
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+
+# set search path for llvm-ld
+LLVM_LIB_SEARCH_PATH=@libdir@
+
+# get installdir of llschem.bin
+LLSCHEME_BIN=@bindir@/llscheme.bin
+
 # temporary solution to handle runtime and linking
 TEMPFILE=$(mktemp)
 TEMPFILE2=$(mktemp)
@@ -39,6 +50,8 @@ ASSEMBLE=1
 LINK=1
 OUTPUT=
 VERBOSE=
+SEARCHDIR=
+NATIVE=
 
 while [ $# -gt 0 ]; do
     case $1 in
@@ -46,16 +59,18 @@ while [ $# -gt 0 ]; do
         -d) FINEPRINT=1; PASSED_ARGS="-d" ;;
         -S) ASSEMBLE=0 ;;
         -c) LINK=0 ;;
-        -o) shift; OUTPUT=$1 ;;
+        -o) shift; OUTPUT="$1" ;;
         -p) PASSED_ARGS="-p" ;;
         -v) VERBOSE=1 ;;
-         *) break ;;
+        -L) shift; LLVM_LIB_SEARCH_PATH="$1":$LLVM_LIB_SEARCH_PATH ;;
+   -native) NATIVE='-native' ;;
+         *) usage; exit 1 ;;
     esac
     shift
 done
 
 if [ x$FINEPRINT = x1 ]; then
-    run_cmd ./llscheme.bin -d
+    run_cmd $LLSCHEME_BIN -d
     exit 0
 fi
 
@@ -69,7 +84,7 @@ else
         RES=$TEMPFILE
 fi
 
-run_cmd ./llscheme.bin $PASSED_ARGS $@ 2> "$RES"
+run_cmd $LLSCHEME_BIN $PASSED_ARGS $@ 2> "$RES"
 if [ x$ASSEMBLE = x0 ]; then
     exit 0
 fi
@@ -89,8 +104,8 @@ if [ x$LINK = x0 ]; then
     exit 0
 fi
 
-if [ x$OUTPUT = x ]; then
+if [ x"$OUTPUT" = x ]; then
     OUTPUT=a.out
 fi
 
-run_cmd llvm-ld -native $TEMPFILE2 -Lruntime -llsrt -lgc -o "$OUTPUT"
+run_cmd llvm-ld $NATIVE $TEMPFILE2 -llsrt -lgc -o "$OUTPUT"
