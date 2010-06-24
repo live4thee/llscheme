@@ -214,7 +214,8 @@ static struct ls_object *
 lsrt_builtin_order(char op, int argc, struct ls_object *args[])
 {
   struct ls_object *ret = lsrt_new_object(ls_t_boolean);
-  int i, n;
+  int i;
+  uint32_t n;
 
   lso_boolean(ret) = 1;
 
@@ -380,8 +381,6 @@ struct ls_object *lsrt_builtin_cons(int argc, struct ls_object *args[],
 struct ls_object *lsrt_builtin_car(int argc, struct ls_object *args[],
                                    struct ls_object *freelist[])
 {
-  struct ls_object *ret;
-
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 1, argc);
   lsrt_check_arg_type(args, 0, 'p');
@@ -392,8 +391,6 @@ struct ls_object *lsrt_builtin_car(int argc, struct ls_object *args[],
 struct ls_object *lsrt_builtin_cdr(int argc, struct ls_object *args[],
                                    struct ls_object *freelist[])
 {
-  struct ls_object *ret;
-
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 1, argc);
   lsrt_check_arg_type(args, 0, 'p');
@@ -404,7 +401,7 @@ struct ls_object *lsrt_builtin_cdr(int argc, struct ls_object *args[],
 struct ls_object *lsrt_builtin_list(int argc, struct ls_object *args[],
                                     struct ls_object *freelist[])
 {
-  struct ls_object *last, *pair;
+  struct ls_object *last, *pair = NULL;
   int i;
   UNUSED_ARGUMENT(freelist);
 
