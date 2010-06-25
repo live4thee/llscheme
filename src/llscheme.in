@@ -108,5 +108,4 @@ if [ x"$OUTPUT" = x ]; then
     OUTPUT=a.out
 fi
 
-# TODO: remove -disable-opt and identify appropriate args
-run_cmd @LLVM_LD@ $NATIVE $TEMPFILE2 -disable-opt -llsrt @TARGET_LIBS@ -o "$OUTPUT"
+run_cmd @LLVM_LD@ $NATIVE $TEMPFILE2 -llsrt @TARGET_LIBS@ -o "$OUTPUT"

@@ -1,11 +1,10 @@
 #! /bin/sh
 
-set -x
 srcdir=`dirname $0`
 [ -z "$srcdir" ] && srcdir=.
 
 ORIGDIR=`pwd`
-cd $srcdir; mkdir -p m4
+cd $srcdir
 
 autoreconf -v --install || exit 1
 cd $ORIGDIR || exit $?
