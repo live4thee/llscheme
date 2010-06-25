@@ -99,7 +99,7 @@ else
         RES=$TEMPFILE2
 fi
 
-run_cmd llvm-as $TEMPFILE -f -o "$RES"
+run_cmd @LLVM_AS@ $TEMPFILE -f -o "$RES"
 if [ x$LINK = x0 ]; then
     exit 0
 fi
@@ -108,4 +108,5 @@ if [ x"$OUTPUT" = x ]; then
     OUTPUT=a.out
 fi
 
-run_cmd llvm-ld $NATIVE $TEMPFILE2 -llsrt -lgc -o "$OUTPUT"
+# TODO: remove -disable-opt and identify appropriate args
+run_cmd @LLVM_LD@ $NATIVE $TEMPFILE2 -disable-opt -llsrt @TARGET_LIBS@ -o "$OUTPUT"
