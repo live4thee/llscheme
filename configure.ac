@@ -21,7 +21,7 @@ fi
 
 LLVM_CPPFLAGS=`${LLVM_CONFIG} --cppflags`
 LLVM_LDFLAGS=`${LLVM_CONFIG} --ldflags`
-LLVM_LIBS=`${LLVM_CONFIG} --libs core`
+LLVM_LIBS=`${LLVM_CONFIG} --libs core jit native`
 LLVM_LIBS="${LLVM_LDFLAGS} ${LLVM_LIBS}"
 
 AC_SUBST(LLVM_CPPFLAGS)

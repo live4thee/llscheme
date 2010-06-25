@@ -6,6 +6,9 @@ Dependencies
 1. LLVM C++ API and tools, http://llvm.org/
 2. BDW-GC library, http://www.hpl.hp.com/personal/Hans_Boehm/gc/
 
+llscheme is developed with LLVM 2.6 and 2.7, and we are not sure
+whether it will compile on other versions.
+
 
 Installation
 ------------

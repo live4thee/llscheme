@@ -20,6 +20,11 @@
 //
 
 #include <llvm/Analysis/Verifier.h>
+#include <llvm/ExecutionEngine/ExecutionEngine.h>
+#include <llvm/ExecutionEngine/JIT.h>
+#include <llvm/Target/TargetSelect.h>
+#include <llvm/Target/TargetData.h>
+
 #include <vector>
 #include <iostream>
 
@@ -31,6 +36,7 @@ using llvm::StructType;
 using llvm::BasicBlock;
 
 using llvm::getGlobalContext;
+using llvm::ExecutionEngine;
 using llvm::verifyFunction;
 
 // qhe: I'm getting sick of it, it's too long and everywhere.
@@ -47,6 +53,8 @@ ExecutionEnv eenv;
 const Type *LSObjType;
 FunctionType *LSFuncType;
 const Type *LSFuncPtrType;
+
+static ExecutionEngine* JIT;
 
 static void InitializeLSTypes(void) {
   std::vector<const Type*> v;
@@ -239,11 +247,26 @@ static void codegenFinish(Value *value) {
   builder.CreateRetVoid();
 }
 
+static void codegenInitJIT(Module* mod) {
+  std::string errmsg;
+
+  llvm::InitializeNativeTarget();
+  JIT = ExecutionEngine::create(
+      mod, false, &errmsg, llvm::CodeGenOpt::Aggressive, false);
+  if (!JIT) {
+    std::cout << "warning: " << errmsg << std::endl;
+    return;
+  }
+
+  mod->setDataLayout(JIT->getTargetData()->getStringRepresentation());
+}
+
 /* mater driver function called by main() */
 int codegen(ASTNode *ast) {
   module = new Module("lls", getGlobalContext());
 
   codegenInit();
+  codegenInitJIT(module);
   codegenFinish(ast->codeGenEval());
 
   // dump to stderr

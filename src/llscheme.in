@@ -56,11 +56,11 @@ NATIVE=
 while [ $# -gt 0 ]; do
     case $1 in
         -h | --help) usage; exit 0 ;;
-        -d) FINEPRINT=1; PASSED_ARGS="-d" ;;
+        -d) FINEPRINT=1; PASSED_ARGS="$PASSED_ARGS -d" ;;
         -S) ASSEMBLE=0 ;;
         -c) LINK=0 ;;
         -o) shift; OUTPUT="$1" ;;
-        -p) PASSED_ARGS="-p" ;;
+        -p) PASSED_ARGS="$PASSED_ARGS -p" ;;
         -v) VERBOSE=1 ;;
         -L) shift; LLVM_LIB_SEARCH_PATH="$1":$LLVM_LIB_SEARCH_PATH ;;
    -native) NATIVE='-native' ;;
@@ -70,7 +70,7 @@ while [ $# -gt 0 ]; do
 done
 
 if [ x$FINEPRINT = x1 ]; then
-    run_cmd $LLSCHEME_BIN -d
+    run_cmd $LLSCHEME_BIN $PASSED_ARGS
     exit 0
 fi
 
