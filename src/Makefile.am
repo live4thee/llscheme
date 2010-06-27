@@ -15,7 +15,7 @@ llscheme_bin_SOURCES = ast.cc \
 		       lexer.cc \
 		       main.cc \
 		       parser.cc \
-		       scanner.cc \
+		       codestream.cc \
 		       token.cc
 
 noinst_HEADERS = include/driver.hh \
@@ -24,5 +24,5 @@ noinst_HEADERS = include/driver.hh \
                  include/token.hh \
                  include/ast.hh \
                  include/lexer.hh \
-                 include/scanner.hh \
+                 include/codestream.hh \
                  include/parser.hh

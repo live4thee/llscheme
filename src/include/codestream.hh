@@ -19,33 +19,41 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 //
 
-#ifndef SCANNER_HH_
-#define SCANNER_HH_
+#ifndef CODESTREAM_HH_
+#define CODESTREAM_HH_
 
 #include <string>
-#include "token.hh"
+#include <istream>
 
-class Scanner {
-public:
-  virtual ~Scanner() {};
-
-  virtual char curChar(void) const = 0;
-  virtual void consume(void) = 0;
-  virtual void match(char x) = 0;
+struct Cursor {
+  long cur_line;
+  long cur_column;
 };
 
-class StringScanner: public Scanner {
-public:
-  StringScanner(const std::string& input);
 
-  char curChar(void) const;
+class CodeStream {
+public:
+  virtual ~CodeStream() {};
+
+  virtual char getchar(void) const = 0;
+  virtual const Cursor& cursor(void) const = 0;
+
+  virtual void consume(void) = 0;
+};
+
+
+class CodeStreamStream: public CodeStream {
+public:
+  CodeStreamStream(std::istream* ins);
+
+  char getchar(void) const;
+  virtual const Cursor& cursor(void) const;
   void consume(void);
-  void match(char x);
 
 private:
-  const std::string _input;
-  const size_t _length;
-  size_t _index;
+  std::istream* m_is;
+  Cursor m_cursor;
+  char m_ch;
 };
 
 #endif

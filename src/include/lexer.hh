@@ -23,7 +23,8 @@
 #define LEXER_HH_
 
 #include <string>
-#include "scanner.hh"
+#include "codestream.hh"
+#include "token.hh"
 
 typedef enum {EOF_TYPE = 1, LPAREN, ID, NUMBER, RPAREN,
               PERIOD, STRING, BOOL, QUOTE} tokenType;
@@ -31,7 +32,7 @@ typedef enum {RDX_DEC, RDX_HEX} radixType;
 
 class Lexer {
 public:
-  Lexer(Scanner *s) { scanner = s; }
+  Lexer(CodeStream *s) { cs = s; }
 
   const char* getTokenName(int tokenType) const;
   Token nextToken(void);
@@ -53,10 +54,9 @@ private:
   void skipComment(void);
   static const char* tokenNames[];
 
-  Scanner *scanner;
-  char curChar(void) { return scanner->curChar(); }
-  void consume(void) { return scanner->consume(); }
-
+  CodeStream *cs;
+  char curChar(void) { return cs->getchar(); }
+  void consume(void) { return cs->consume(); }
 };
 
 #endif

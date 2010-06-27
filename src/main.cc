@@ -56,11 +56,8 @@ int main(int argc, char *argv[])
     }
   }
 
-  std::stringstream ss, ss1;
-  ss << std::cin.rdbuf();
-
-  Scanner *scanner = new StringScanner(ss.str());
-  Lexer *lexer = new Lexer(scanner);
+  CodeStream *cs = new CodeStreamStream(&std::cin);
+  Lexer *lexer = new Lexer(cs);
   Parser parser = Parser(lexer, 4);
   SExprASTNode *ast = new SExprASTNode();
 
@@ -79,16 +76,17 @@ int main(int argc, char *argv[])
       ast->addArgument(parser.exp());
   }
 
+  std::stringstream ss;
   if (dumpASTNodes) {
-    ast->finePrint(ss1);
-    std::cout << ss1.rdbuf() << "\n";
+    ast->finePrint(ss);
+    std::cout << ss.rdbuf() << "\n";
   } else {
     codegen(ast);
   }
 
   delete ast;
   delete lexer;
-  delete scanner;
+  delete cs;
 
   return 0;
 }

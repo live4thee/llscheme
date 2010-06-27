@@ -19,26 +19,34 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 //
 
-#include "scanner.hh"
-#include "error.hh"
+#include "codestream.hh"
 
-StringScanner::StringScanner(const std::string& input):
-  _input(input), _length(input.length()), _index(0) {}
-
-char StringScanner::curChar(void) const {
-  if (_index < _length)
-    return _input.at(_index);
-  return -1;
+CodeStreamStream::CodeStreamStream(std::istream* is)
+: m_is(is) {
+  m_cursor.cur_line = 1;
+  m_cursor.cur_column = 1;
+  m_ch = m_is->get();
 }
 
-void StringScanner::consume(void) {
-  _index++;
+char CodeStreamStream::getchar(void) const {
+  return m_ch;
 }
 
-void StringScanner::match(char x) {
-  const char ch = curChar();
-  if (x == ch) consume();
-  else throw Error(std::string("expecting ") + x + "; found " + ch);
+void CodeStreamStream::consume(void) {
+  if (!m_is->eof()) {
+    if (m_ch == '\n') {
+      m_cursor.cur_line++;
+      m_cursor.cur_column = 1;
+    } else {
+      m_cursor.cur_column++;
+    }
+
+    m_ch = m_is->get();
+  }
+}
+
+const Cursor& CodeStreamStream::cursor(void) const {
+  return m_cursor;
 }
 
 /* vim: set et ts=2 sw=2 cin: */

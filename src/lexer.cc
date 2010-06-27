@@ -32,7 +32,7 @@
 //   * detach public and private interfaces so updating the private
 //     part doesn't cause a global recompiliation
 //   * review how <delimiters> works
-//   * scanner read ahead and better error message
+//   * codestream read ahead and better error message
 //   * more readable lexer?
 
 const char* Lexer::getTokenName(int tokenType) const {
