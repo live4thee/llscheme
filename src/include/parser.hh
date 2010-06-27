@@ -24,7 +24,7 @@
 
 #include <vector>
 #include "lexer.hh"
-#include "ast2.hh"
+#include "ast.hh"
 
 class Parser {
 public:

@@ -1,8 +1,8 @@
 // -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 2; -*-
 //
 // Copyright (C)
-//         2010 David Lee <live4thee@gmail.com>
 //         2010 Qing He <qing.x.he@gmail.com>
+//         2010 David Lee <live4thee@gmail.com>
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,72 +22,119 @@
 #ifndef AST_HH_
 #define AST_HH_
 
+#include <vector>
+#include <string>
+#include <sstream>
+#include <cstdlib>
+
+#include <llvm/DerivedTypes.h>
+
 // We need some type identification system similar to RTTI...
 
 enum ASTType {
-  NumberAST, SymbolAST, LambdaAST, FormalAST, ExprAST, QuoteAST, ProcCallAST, DefineAST,
-  ArgAST, IfExprAST,
+  NumberAST, BooleanAST, SymbolAST, StringAST, SExprAST, UnknownAST
 };
 
 class ASTNode {
+protected:
   enum ASTType type;
 public:
-  virtual enum ASTType getType() = 0;
+  ASTNode(enum ASTType _t = UnknownAST) :type(_t) {}
+
+  virtual void finePrint(std::stringstream &ss) const = 0;
+  // codeGen generates code to represent the object, while
+  // codeGenEval does an additional evaluation, for example:
+  //  - they behave the same for numbers, booleans and strings
+  //  - for symbol, codeGen returns the symbol object, while
+  //    codeGenEval returns the object bound to the symbol
+  //  - for s-expr, codeGenEval evaluates the s-expr, while
+  //    codeGen generates pair representation
+  virtual llvm::Value *codeGen() = 0;
+  virtual llvm::Value *codeGenNoBind() { return codeGen(); }
+  virtual llvm::Value *codeGenEval() { return codeGen(); }
+  virtual enum ASTType getType() const { return type; }
   virtual ~ASTNode() {}
 };
 
+// TODO: floating point and big number
 class NumberASTNode :public ASTNode {
-  int val;
 public:
-  NumberASTNode(int _v)
-    :val(_v), type(NumberAST) {}
+  int val;
+  NumberASTNode(const std::string &_s)
+    :ASTNode(NumberAST), val(std::atoi(_s.c_str())) {}
+  void finePrint(std::stringstream &ss) const;
+  llvm::Value *codeGen();
+};
+
+class BooleanASTNode :public ASTNode {
+public:
+  bool boolean;
+  BooleanASTNode(const std::string &_s)
+    :ASTNode(BooleanAST), boolean(_s == "#t") {}
+  void finePrint(std::stringstream &ss) const;
+  llvm::Value *codeGen();
 };
 
 class SymbolASTNode :public ASTNode {
+public:
   std::string symbol;
-public:
-  SymbolASTNode(std::string str)
-    :symbol(str), type(SymbolAST) {}
+  SymbolASTNode(const std::string &_s)
+    :ASTNode(SymbolAST), symbol(_s) {}
+  void finePrint(std::stringstream &ss) const;
+  llvm::Value *codeGen();
+  llvm::Value *codeGenNoBind();
+  llvm::Value *codeGenEval();
+private:
+  llvm::Value *getGlobal();
 };
 
-// (x y . z)  =>  Args[]<-x,y, rest arg<-z
-class FormalASTNode :public ASTNode {
-  std::vector<SymbolASTNode *> args;
-  //TODO: how to represent rest args?
+class StringASTNode :public ASTNode {
 public:
-  FormalASTNode()
-    :type(FormalAST) {}
-
-  void addArgument(SymbolASTNode *arg);
-  int numArgument();
-  SymbolASTNode *getArgument(int i);
+  std::string str;
+  StringASTNode(const std::string &_s)
+    :ASTNode(StringAST), str(_s) {}
+  void finePrint(std::stringstream &ss) const;
+  llvm::Value *codeGen();
 };
 
-class LambdaASTNode :public ASTNode {
-  FormalASTNode *args;
-  ASTNode *expr;  //expression
+class SExprASTNode :public ASTNode {
+  std::vector<ASTNode *> exp;
+  ASTNode *rest;
 public:
-  LambdaAST(FormalASTNode *formal, ASTNode *block)
-    :args(formal), expr(block), type(LambdaAST) {}
-};
+  SExprASTNode()
+    :ASTNode(SExprAST), rest(0) {}
 
-class ArgASTNode :public ASTNode {
-  std::vector<ASTNode *> args;
-public:
-  ArgASTNode()
-    :type(ArgAST) {}
+  void finePrint(std::stringstream &ss) const;
+  llvm::Value *codeGen();
+  llvm::Value *codeGenEval();
+  void addArgument(ASTNode *arg) {
+    exp.push_back(arg);
+  }
 
-  void addArgument(ASTNode *arg);
-  int numArgument();
-  ASTNode *getArgument(int i);
-};
+  void setRest(ASTNode *r) {
+    rest = r;
+  }
 
-class ProcCallASTNode :public ASTNode {
-  ASTNode *callee;   // can be symbol or expression
-  ArgASTNode *args;
-public:
-  ProcCallASTNode(ASTNode *_c, ArgASTNode *_a)
-    :callee(_c), args(_a), type(ProcCallAST) {}
+  int numArgument() const {
+    return exp.size();
+  }
+
+  bool hasRest() const {
+    return rest != NULL;
+  }
+
+  std::vector<ASTNode *> &getArguments() {
+    return exp;
+  }
+
+  ASTNode *getArgument(int i) {
+    return exp[i];
+  }
+
+  ASTNode *getRest() {
+    return rest;
+  }
 };
-  
 #endif
+
+/* vim: set et ts=2 sw=2 cin: */

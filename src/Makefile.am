@@ -7,7 +7,7 @@ bin_PROGRAMS = llscheme.bin
 llscheme_bin_CXXFLAGS = -I$(srcdir)/include $(LLVM_CPPFLAGS)
 llscheme_bin_LDADD = $(LLVM_LIBS)
 
-llscheme_bin_SOURCES = ast2.cc \
+llscheme_bin_SOURCES = ast.cc \
 		       codegen.cc \
 		       driver.cc \
 		       env.cc \
@@ -22,8 +22,7 @@ noinst_HEADERS = include/driver.hh \
                  include/error.hh \
                  include/env.hh \
                  include/token.hh \
-                 include/ast2.hh \
+                 include/ast.hh \
                  include/lexer.hh \
                  include/scanner.hh \
-                 include/parser.hh \
-                 include/ast.hh
+                 include/parser.hh

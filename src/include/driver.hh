@@ -27,7 +27,7 @@
 #include <llvm/Module.h>
 #include <llvm/Support/IRBuilder.h>
 
-#include "ast2.hh"
+#include "ast.hh"
 #include "env.hh"
 #include "runtime/object.h"
 

@@ -22,7 +22,7 @@
 #include <iostream>
 #include "parser.hh"
 #include "error.hh"
-#include "ast2.hh"
+#include "ast.hh"
 
 Parser::Parser(Lexer* input, int k) {
   this->input = input;
