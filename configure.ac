@@ -10,8 +10,8 @@ AC_PROG_CXX
 AM_PROG_LIBTOOL
 
 # check for clang and llvm tools
-AC_CHECK_PROG(LLVMAS, llvm-as, llvm-as)
-AC_CHECK_PROG(LLVMLD, llvm-ld, llvm-ld)
+AC_CHECK_PROG(LLVM_AS, llvm-as, llvm-as)
+AC_CHECK_PROG(LLVM_LD, llvm-ld, llvm-ld)
 
 # get for llvm library and include location
 AC_PATH_PROG(LLVM_CONFIG, llvm-config, no)
@@ -30,19 +30,22 @@ AC_SUBST(LLVM_LIBS)
 # check for bdw-gc
 # http://www.hpl.hp.com/personal/Hans_Boehm/gc/
 have_gc=no
-AC_SEARCH_LIBS([GC_malloc_atomic], [gc], [have_gc=yes])
+AC_SUBST([TARGET_LIBS])
+LSC_SEARCH_TARGET_LIBS([GC_malloc_atomic], [gc], [have_gc=yes])
 
 if test "x${have_gc}" = xyes; then
   AC_CHECK_HEADERS([gc/gc.h], [], [have_gc=no])
 fi
 
 if test "x${have_gc}" = xno; then
-  echo "-------------------------------------------------------------------"
-  echo " The bdw-gc library and header file is required to build llscheme. "
-  echo " Stopping... Check 'config.log' for more information.              "
-  echo "-------------------------------------------------------------------"
-  (exit 1); exit 1;
+  AC_MSG_FAILURE([
+-------------------------------------------------------------------
+ The bdw-gc library and header file is required to build llscheme.
+ Stopping... Check 'config.log' for more information.
+-------------------------------------------------------------------
+])
 fi
+
 
 # write output
 AC_CONFIG_FILES([
@@ -55,6 +58,9 @@ AC_CONFIG_FILES([
 ], [chmod +x src/llscheme])
 AC_OUTPUT
 
-echo
-echo "llscheme is now configured"
-echo
+AC_MSG_NOTICE([
+
+llscheme is now configured
+
+])
+
