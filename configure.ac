@@ -24,6 +24,12 @@ LLVM_LDFLAGS=`${LLVM_CONFIG} --ldflags`
 LLVM_LIBS=`${LLVM_CONFIG} --libs core jit native`
 LLVM_LIBS="${LLVM_LDFLAGS} ${LLVM_LIBS}"
 
+# Determine the LLVM version.
+llvm_version=`${LLVM_CONFIG} --version`
+if test x${llvm_version} = x"2.6"; then
+  LLVM_CPPFLAGS="-DLLVM26=1 $LLVM_CPPFLAGS"
+fi
+
 AC_SUBST(LLVM_CPPFLAGS)
 AC_SUBST(LLVM_LIBS)
 

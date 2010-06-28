@@ -251,8 +251,14 @@ static void codegenInitJIT(Module* mod) {
   std::string errmsg;
 
   llvm::InitializeNativeTarget();
+
+#if LLVM26
+  JIT = llvm::EngineBuilder(mod).setErrorStr(&errmsg).create();
+#else
   JIT = ExecutionEngine::create(
       mod, false, &errmsg, llvm::CodeGenOpt::Aggressive, false);
+#endif
+
   if (!JIT) {
     std::cout << "warning: " << errmsg << std::endl;
     return;
