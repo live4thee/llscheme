@@ -89,7 +89,7 @@ static void InitializeLSRTFunctions(void) {
   std::vector<const Type*> v;
   FunctionType *ftype;
 
-  v.push_back(Type::getInt8Ty(context)->getPointerTo());
+  v.push_back(Type::getInt8PtrTy(context));
   ftype = FunctionType::get(Type::getVoidTy(context), v, false);
   Function::Create(ftype, Function::ExternalLinkage,
                    "lsrt_error", module);
@@ -99,6 +99,12 @@ static void InitializeLSRTFunctions(void) {
   ftype = FunctionType::get(LSObjType->getPointerTo(), v, false);
   Function::Create(ftype, Function::ExternalLinkage,
                    "lsrt_new_object", module);
+
+  v.clear();
+  v.push_back(Type::getInt8PtrTy(context));
+  ftype = FunctionType::get(LSObjType->getPointerTo(), v, false);
+  Function::Create(ftype, Function::ExternalLinkage,
+                   "lsrt_new_bignum", module);
 
   v.clear();
   v.push_back(Type::getInt32Ty(context));

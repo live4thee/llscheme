@@ -68,6 +68,21 @@ struct ls_object *lsrt_new_number(uint32_t num)
   return ret;
 }
 
+/* create a bignum ls_object with given a number string */
+struct ls_object *lsrt_new_bignum(const char* str)
+{
+  struct ls_object *ret;
+
+  ret = (struct ls_object *) ls_malloc(sizeof *ret);
+  memset(ret, 0, sizeof *ret);
+
+  // init a base10 big number
+  lso_set_type(ret, ls_t_bignum);
+  mpz_init_set_str(lso_bignum_get(ret), str, 10);
+
+  return ret;
+}
+
 /*
  * XXX: can we just save pointers safely? Does the
  * content need to be saved as well?
@@ -164,6 +179,35 @@ int lsrt_test_expr(struct ls_object *lso)
     return 0;
   else
     return 1;
+}
+
+static void
+lso_negative(struct ls_object* dstobj, const struct ls_object* srcobj)
+{
+  if (lso_is_number(srcobj)) {
+    lso_number(dstobj) = - (lso_number_get(srcobj));
+  } else if (lso_is_bignum(srcobj)) {
+    mpz_init(lso_bignum_get(dstobj));
+    mpz_neg(lso_bignum_get(dstobj), lso_bignum_get(srcobj));
+  } else {
+    lsrt_error("unsupported type detected");
+  }
+}
+
+static void
+lso_reciprocal(struct ls_object* dstobj, const struct ls_object* srcobj)
+{
+  if (lso_is_number(srcobj)) {
+    lso_number(dstobj) = 1 / (lso_number_get(srcobj));
+  } else if (lso_is_bignum(srcobj)) {
+    mpz_t one;
+    mpz_init_set_str(one, "1", 10);
+    mpz_init(lso_bignum_get(dstobj));
+    mpz_tdiv_q(lso_bignum_get(dstobj), one, lso_bignum_get(srcobj));
+    mpz_clear(one);
+  } else {
+    lsrt_error("unsupported type detected");
+  }
 }
 
 static struct ls_object *

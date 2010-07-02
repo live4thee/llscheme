@@ -28,6 +28,10 @@ void NumberASTNode::finePrint(std::stringstream &ss) const {
   ss << val;
 }
 
+void BignumASTNode::finePrint(std::stringstream &ss) const {
+  ss << val;
+}
+
 void BooleanASTNode::finePrint(std::stringstream &ss) const {
   if (boolean)
     ss << "#t";

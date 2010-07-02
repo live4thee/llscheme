@@ -46,6 +46,17 @@ if test "x${have_gc}" = xno; then
 ])
 fi
 
+# check for gmp-dev
+AC_CHECK_HEADERS([gmp.h], [have_gmp=yes], [have_gmp=no])
+
+if test "x${have_gmp}" = xno; then
+  AC_MSG_FAILURE([
+-------------------------------------------------------------------
+ The gmp-dev library and header file is required to build llscheme.
+ Stopping... Check 'config.log' for more information.
+-------------------------------------------------------------------
+])
+fi
 
 # write output
 AC_CONFIG_FILES([

@@ -31,7 +31,7 @@
 
 #include "ast.hh"
 
-// TODO: floating point and big number
+// TODO: floating point
 class NumberASTNode :public ASTNode {
 public:
   int val;
@@ -44,6 +44,24 @@ public:
 
   ASTNode *acceptMutable(ASTVisitorMutable &v) {
     return v.visitNumberAST(this);
+  }
+
+  void finePrint(std::stringstream &ss) const;
+  llvm::Value *codeGen();
+};
+
+class BignumASTNode :public ASTNode {
+public:
+  std::string val;
+  BignumASTNode(const std::string &_s)
+    :ASTNode(BignumAST), val(_s) {}
+
+  void accept(ASTVisitor &v) {
+    v.visitBignumAST(this);
+  }
+
+  ASTNode *acceptMutable(ASTVisitorMutable &v) {
+    return v.visitBignumAST(this);
   }
 
   void finePrint(std::stringstream &ss) const;

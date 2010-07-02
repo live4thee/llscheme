@@ -27,19 +27,24 @@
 #include <llvm/Module.h>
 #include <llvm/Support/IRBuilder.h>
 
+#include <iostream>
 #include "astnodes.hh"
 #include "env.hh"
 #include "runtime/object.h"
 
 using llvm::Type;
 using llvm::Value;
+using llvm::ArrayType;
+using llvm::IntegerType;
 using llvm::Constant;
 using llvm::ConstantInt;
 using llvm::ConstantExpr;
+using llvm::ConstantArray;
 using llvm::ConstantStruct;
 using llvm::Function;
 using llvm::FunctionType;
 using llvm::GlobalVariable;
+using llvm::GlobalValue;
 using llvm::LLVMContext;
 using llvm::Module;
 using llvm::IRBuilder;
@@ -68,6 +73,28 @@ LSObjNew(LLVMContext &context,
   t = ConstantInt::get(Type::getInt32Ty(context), type);
   f = module->getFunction("lsrt_new_object");
   return builder.CreateCall(f, t);
+}
+
+static inline Value *
+LSObjNewBignum(LLVMContext &context,
+               std::string& num)
+{
+  Function *f;
+
+  Constant *c = ConstantArray::get(context, num.c_str(), true);
+  GlobalVariable *v = new GlobalVariable(*module,
+      ArrayType::get(IntegerType::get(context, 8), num.size()+1),
+      true, GlobalValue::PrivateLinkage, c, ".numstr");
+
+  std::vector<Constant*> indices;
+  Constant *idx = ConstantInt::get(Type::getInt32Ty(context), 0);
+  indices.push_back(idx);
+  indices.push_back(idx);
+
+  Constant *ptr = ConstantExpr::getGetElementPtr(v, &indices[0], indices.size());
+  f = module->getFunction("lsrt_new_bignum");
+
+  return builder.CreateCall(f, ptr);
 }
 
 static inline Value *
@@ -136,8 +163,7 @@ LSObjFunctionInit(LLVMContext &context,
   std::vector<Constant *> v, m, idx;
 
   v.push_back(ConstantInt::get(Type::getInt32Ty(context), ls_t_func));
-  m.push_back(ConstantExpr::getBitCast(func,
-                  Type::getInt8Ty(context)->getPointerTo()));
+  m.push_back(ConstantExpr::getBitCast(func, Type::getInt8PtrTy(context)));
 
   v.push_back(ConstantStruct::get(context, m, false));
   m.clear();
@@ -145,12 +171,12 @@ LSObjFunctionInit(LLVMContext &context,
   idx.push_back(ConstantInt::get(Type::getInt32Ty(context), 0));
   idx.push_back(ConstantInt::get(Type::getInt32Ty(context), 0));
 
-  m.push_back(Constant::getNullValue(Type::getInt8Ty(context)->getPointerTo()));
+  m.push_back(Constant::getNullValue(Type::getInt8PtrTy(context)));
   v.push_back(ConstantStruct::get(context, m, false));
   init = ConstantStruct::get(context, v, false);
 
   g = new GlobalVariable(*module, LSObjType, false,
-                llvm::GlobalValue::PrivateLinkage,
+                GlobalValue::PrivateLinkage,
                 init, "_funcobj_" + name);
 
   return g;

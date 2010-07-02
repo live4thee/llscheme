@@ -54,6 +54,10 @@ Value *NumberASTNode::codeGen() {
   return obj;
 }
 
+Value *BignumASTNode::codeGen() {
+  return LSObjNewBignum(context, val);
+}
+
 Value *BooleanASTNode::codeGen() {
   Value *obj;
 
