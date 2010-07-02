@@ -26,7 +26,7 @@
 #include <unistd.h>
 
 #include "parser.hh"
-#include "ast.hh"
+#include "astnodes.hh"
 
 extern int codegen(ASTNode *);
 

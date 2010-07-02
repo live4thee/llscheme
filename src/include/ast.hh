@@ -22,24 +22,84 @@
 #ifndef AST_HH_
 #define AST_HH_
 
-#include <vector>
-#include <string>
-#include <sstream>
-#include <cstdlib>
-
 #include <llvm/DerivedTypes.h>
 
-// We need some type identification system similar to RTTI...
+//--------------------------------------------------------------------
+// types
+//--------------------------------------------------------------------
 
 enum ASTType {
-  NumberAST, BooleanAST, SymbolAST, StringAST, SExprAST, UnknownAST
+  NumberAST, BooleanAST, SymbolAST, StringAST, SExprAST, VectorAST,
+  UnknownAST = 255,
 };
+
+class ASTNode;
+class NumberASTNode;
+class BooleanASTNode;
+class SymbolASTNode;
+class StringASTNode;
+class SExprASTNode;
+class VectorASTNode;
+
+//--------------------------------------------------------------------
+// visitors and mutable visitors:
+//--------------------------------------------------------------------
+
+//   Apart from common visitors, we introduce here a special type
+// of mutable visitors, to allow the transformation of AST. The
+// new ASTNode is returned as a pointer instead of void, while the
+// old ASTNode is saved in `lastGen' for further reference.
+//
+//   The caller is responsible for installing the new pointer, and
+// taking care of the old replaced ASTNode (in lastGen) if necessary.
+// Generally, the visitor is in charge to traverse.
+
+template <typename T>
+class _ASTVisitor {
+public:
+  virtual T visitNumberAST(NumberASTNode *node);
+  virtual T visitBooleanAST(BooleanASTNode *node);
+  virtual T visitSymbolAST(SymbolASTNode *node);
+  virtual T visitStringAST(StringASTNode *node);
+  virtual T visitSExprAST(SExprASTNode *node);
+  virtual T visitVectorAST(VectorASTNode *node);
+protected:
+  _ASTVisitor() {}
+};
+
+typedef _ASTVisitor<void> ASTVisitor;
+typedef _ASTVisitor<ASTNode *> ASTVisitorMutable;
+
+//--------------------------------------------------------------------
+// node base class
+//--------------------------------------------------------------------
 
 class ASTNode {
 protected:
-  enum ASTType type;
+  const enum ASTType type;
+  ASTNode *lastGen;
+
 public:
-  ASTNode(enum ASTType _t = UnknownAST) :type(_t) {}
+  ASTNode(enum ASTType _t = UnknownAST) :type(_t), lastGen(NULL) {}
+  virtual ~ASTNode() {}
+
+  // lastGen never preserve during copy
+  ASTNode(ASTNode &n) :type(n.type), lastGen(NULL) {}
+
+  enum ASTType getType() const {
+    return type;
+  }
+
+  ASTNode *getLastGen() const {
+    return lastGen;
+  }
+
+  void setLastGen(ASTNode *l) {
+    lastGen = l;
+  }
+
+  virtual void accept(ASTVisitor &v) = 0;
+  virtual ASTNode *acceptMutable(ASTVisitorMutable &v) = 0;
 
   virtual void finePrint(std::stringstream &ss) const = 0;
   // codeGen generates code to represent the object, while
@@ -52,89 +112,8 @@ public:
   virtual llvm::Value *codeGen() = 0;
   virtual llvm::Value *codeGenNoBind() { return codeGen(); }
   virtual llvm::Value *codeGenEval() { return codeGen(); }
-  virtual enum ASTType getType() const { return type; }
-  virtual ~ASTNode() {}
 };
 
-// TODO: floating point and big number
-class NumberASTNode :public ASTNode {
-public:
-  int val;
-  NumberASTNode(const std::string &_s)
-    :ASTNode(NumberAST), val(std::atoi(_s.c_str())) {}
-  void finePrint(std::stringstream &ss) const;
-  llvm::Value *codeGen();
-};
-
-class BooleanASTNode :public ASTNode {
-public:
-  bool boolean;
-  BooleanASTNode(const std::string &_s)
-    :ASTNode(BooleanAST), boolean(_s == "#t") {}
-  void finePrint(std::stringstream &ss) const;
-  llvm::Value *codeGen();
-};
-
-class SymbolASTNode :public ASTNode {
-public:
-  std::string symbol;
-  SymbolASTNode(const std::string &_s)
-    :ASTNode(SymbolAST), symbol(_s) {}
-  void finePrint(std::stringstream &ss) const;
-  llvm::Value *codeGen();
-  llvm::Value *codeGenNoBind();
-  llvm::Value *codeGenEval();
-private:
-  llvm::Value *getGlobal();
-};
-
-class StringASTNode :public ASTNode {
-public:
-  std::string str;
-  StringASTNode(const std::string &_s)
-    :ASTNode(StringAST), str(_s) {}
-  void finePrint(std::stringstream &ss) const;
-  llvm::Value *codeGen();
-};
-
-class SExprASTNode :public ASTNode {
-  std::vector<ASTNode *> exp;
-  ASTNode *rest;
-public:
-  SExprASTNode()
-    :ASTNode(SExprAST), rest(0) {}
-
-  void finePrint(std::stringstream &ss) const;
-  llvm::Value *codeGen();
-  llvm::Value *codeGenEval();
-  void addArgument(ASTNode *arg) {
-    exp.push_back(arg);
-  }
-
-  void setRest(ASTNode *r) {
-    rest = r;
-  }
-
-  int numArgument() const {
-    return exp.size();
-  }
-
-  bool hasRest() const {
-    return rest != NULL;
-  }
-
-  std::vector<ASTNode *> &getArguments() {
-    return exp;
-  }
-
-  ASTNode *getArgument(int i) {
-    return exp[i];
-  }
-
-  ASTNode *getRest() {
-    return rest;
-  }
-};
 #endif
 
 /* vim: set et ts=2 sw=2 cin: */

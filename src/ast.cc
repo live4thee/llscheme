@@ -20,7 +20,7 @@
 //
 
 #include <cstdlib>
-#include "ast.hh"
+#include "astnodes.hh"
 
 // TODO: line breaking with proper column setting
 

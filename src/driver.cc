@@ -28,7 +28,7 @@
 #include <vector>
 #include <iostream>
 
-#include "ast.hh"
+#include "astnodes.hh"
 #include "driver.hh"
 #include "env.hh"
 

@@ -23,6 +23,7 @@ noinst_HEADERS = include/driver.hh \
                  include/env.hh \
                  include/token.hh \
                  include/ast.hh \
+                 include/astnodes.hh \
                  include/lexer.hh \
                  include/codestream.hh \
                  include/parser.hh
