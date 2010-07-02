@@ -56,6 +56,18 @@ struct ls_object *lsrt_new_object(int type)
   return ret;
 }
 
+struct ls_object *lsrt_new_number(uint32_t num)
+{
+  struct ls_object *ret;
+
+  ret = (struct ls_object *) ls_malloc(sizeof *ret);
+  memset(ret, 0, sizeof *ret);
+  lso_set_type(ret, ls_t_number);
+  lso_number(ret) = num;
+
+  return ret;
+}
+
 /*
  * XXX: can we just save pointers safely? Does the
  * content need to be saved as well?
@@ -157,12 +169,35 @@ int lsrt_test_expr(struct ls_object *lso)
 static struct ls_object *
 lsrt_builtin_arith(const char op, int argc, struct ls_object *args[])
 {
-  struct ls_object *ret = lsrt_new_object(ls_t_number);
-  int i;
+  struct ls_object *ret = NULL;
+  int i = 0;
 
-  lso_number(ret) = lso_number_get(args[0]);
+  /* '/' and '-' requires at least one operand */
+  if ((op == '/' || op == '-') && (argc == 0))
+    lsrt_error("invalid number of operand");
 
-  for (i = 1; i < argc; i++) {
+  switch (op) {
+    case '+': ret = lsrt_new_number(0); break;
+    case '*': ret = lsrt_new_number(1); break;
+
+    case '-': if (argc == 1) {
+                return lsrt_new_number(- lso_number_get(args[0]));
+              }
+              ret = lsrt_new_number(lso_number_get(args[0]));
+              i = 1;
+              break;
+
+    case '/': if (argc == 1) {
+                return lsrt_new_number(1 / lso_number_get(args[0]));
+              }
+              ret = lsrt_new_number(lso_number_get(args[0]));
+              i = 1;
+              break;
+    default:
+      lsrt_error("invalid operator");
+  }
+
+  for (; i < argc; i++) {
     lsrt_check_arg_type(args, i, 'n');
     switch (op) {
     case '+': lso_number(ret) += lso_number_get(args[i]); break;
@@ -170,8 +205,6 @@ lsrt_builtin_arith(const char op, int argc, struct ls_object *args[])
     case '*': lso_number(ret) *= lso_number_get(args[i]); break;
       /* this is however wrong, we need rationals */
     case '/': lso_number(ret) /= lso_number_get(args[i]); break;
-    default:
-      break;
     }
   }
 
