@@ -45,7 +45,7 @@ lso_negative(struct ls_object* dstobj, const struct ls_object* srcobj)
   } else {
     lsrt_error("unsupported type detected");
   }
-}        
+}
 
 static void
 lso_reciprocal(struct ls_object* dstobj, const struct ls_object* srcobj)

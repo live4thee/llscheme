@@ -1,6 +1,7 @@
 lib_LTLIBRARIES = liblsrt.la
 
 liblsrt_la_CPPFLAGS = -W -Wall -I$(top_srcdir)/src/include -I$(srcdir)/include
+liblsrt_la_LDFLAGS = -lgmp @TARGET_LIBS@
 liblsrt_la_SOURCES = utils.c \
                      number.c \
                      pairlist.c \

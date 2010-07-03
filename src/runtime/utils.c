@@ -24,6 +24,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <gmp.h>
 
 #include "utils.h"
 #include "runtime/object.h"
@@ -37,6 +38,20 @@
  */
 
 /* TODO: more sophisticated GC memory allocator */
+static void* ls_realloc(void* ptr, size_t old_size, size_t new_size)
+{
+  if(old_size == new_size)
+    return ptr;
+
+  return GC_realloc(ptr, new_size);
+}
+
+void lsrt_memory_init(void)
+{
+  GC_init();
+  mp_set_memory_functions(ls_malloc, ls_realloc, NULL);
+}
+
 struct ls_object *lsrt_new_object(int type)
 {
   struct ls_object *ret;

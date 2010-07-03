@@ -108,4 +108,4 @@ if [ x"$OUTPUT" = x ]; then
     OUTPUT=a.out
 fi
 
-run_cmd @LLVM_LD@ $NATIVE $TEMPFILE2 -llsrt -lgmp @TARGET_LIBS@ -o "$OUTPUT"
+run_cmd @LLVM_LD@ $NATIVE $TEMPFILE2 -llsrt -o "$OUTPUT"

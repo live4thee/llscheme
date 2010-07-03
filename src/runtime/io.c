@@ -23,6 +23,7 @@
 /* This file is part of the runtime */
 
 #include <stdio.h>
+#include <gmp.h>
 
 #include "utils.h"
 #include "runtime/object.h"
@@ -51,7 +52,7 @@ static void _display(struct ls_object *lso, int fp)
       printf("#f");
     break;
   case ls_t_bignum:
-    printf("<bignum>");
+    mpz_out_str(stdout, 10, lso_bignum_get(lso));
     break;
   case ls_t_symbol:
     if (lso_symbol_name(lso))

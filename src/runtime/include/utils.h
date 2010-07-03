@@ -33,6 +33,8 @@
 #define UNUSED_ARGUMENT(x) (void)(x)
 #define ls_malloc GC_malloc_atomic
 
+void lsrt_memory_init(void);
+
 struct ls_object *lsrt_new_object(int type);
 struct ls_object *lsrt_new_number(uint32_t num);
 struct ls_object **lsrt_new_freelist(int count);
