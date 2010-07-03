@@ -77,14 +77,21 @@ typedef _ASTVisitor<ASTNode *> ASTVisitorMutable;
 class ASTNode {
 protected:
   const enum ASTType type;
+  int refcnt;
   ASTNode *lastGen;
 
 public:
-  ASTNode(enum ASTType _t = UnknownAST) :type(_t), lastGen(NULL) {}
+  ASTNode(enum ASTType _t = UnknownAST) :type(_t), lastGen(NULL), refcnt(0) {}
   virtual ~ASTNode() {}
 
   // lastGen never preserve during copy
-  ASTNode(ASTNode &n) :type(n.type), lastGen(NULL) {}
+  ASTNode(ASTNode &n) :type(n.type), lastGen(NULL), refcnt(0) {}
+
+  void get() { refcnt++; }
+  static void unLink(ASTNode *n) {
+    if (--n->refcnt <= 0)
+      delete n;
+  }
 
   enum ASTType getType() const {
     return type;
@@ -114,6 +121,9 @@ public:
   virtual llvm::Value *codeGenEval() { return codeGen(); }
 };
 
+static void PutASTNode(ASTNode *n) {
+  ASTNode::unLink(n);
+}
 #endif
 
 /* vim: set et ts=2 sw=2 cin: */

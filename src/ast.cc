@@ -44,21 +44,21 @@ void StringASTNode::finePrint(std::stringstream &ss) const {
 }
 
 void SExprASTNode::finePrint(std::stringstream &ss) const {
-  int size = exp.size();
+  int size = args.size();
   int i;
   ss << '(';
 
   if (size != 0) {
-    exp[0]->finePrint(ss);
+    args[0]->finePrint(ss);
     for (i = 1; i < size; i++) {
       ss << ' ';
-      exp[i]->finePrint(ss);
+      args[i]->finePrint(ss);
     }
   }
 
-  if (rest) {
+  if (last) {
     ss << " . ";
-    rest->finePrint(ss);
+    last->finePrint(ss);
   }
 
   ss << ')';

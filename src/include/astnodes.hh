@@ -73,6 +73,8 @@ public:
   std::string symbol;
   SymbolASTNode(const std::string &_s)
     :ASTNode(SymbolAST), symbol(_s) {}
+  SymbolASTNode(SymbolASTNode &n)
+    :ASTNode(n), symbol(n.symbol) {}
 
   void accept(ASTVisitor &v) {
     v.visitSymbolAST(this);
@@ -95,6 +97,8 @@ public:
   std::string str;
   StringASTNode(const std::string &_s)
     :ASTNode(StringAST), str(_s) {}
+  StringASTNode(StringASTNode &n)
+    :ASTNode(n), str(n.str) {}
 
   void accept(ASTVisitor &v) {
     v.visitStringAST(this);
@@ -109,11 +113,48 @@ public:
 };
 
 class SExprASTNode :public ASTNode {
-  std::vector<ASTNode *> exp;
-  ASTNode *rest;
+  std::vector<ASTNode *> args;
+  ASTNode *last;
 public:
+
+  typedef std::vector<ASTNode *>::iterator arg_iterator;
+  typedef std::vector<ASTNode *>::const_iterator const_arg_iterator;
+
   SExprASTNode()
-    :ASTNode(SExprAST), rest(0) {}
+    :ASTNode(SExprAST), last(NULL) {}
+
+  SExprASTNode(SExprASTNode &n) :ASTNode(n) {
+    arg_iterator i;
+    for (i = n.arg_begin(); i != n.arg_end(); i++) {
+      ASTNode *a = *i;
+      a->get();
+      args.push_back(a);
+    }
+    if (n.last) {
+      n.last->get();
+      last = n.last;
+    }
+  }
+
+  arg_iterator arg_begin() {
+    return args.begin();
+  }
+
+  const_arg_iterator arg_begin() const {
+    return args.begin();
+  }
+
+  arg_iterator arg_end() {
+    return args.end();
+  }
+
+  const_arg_iterator arg_end() const {
+    return args.end();
+  }
+
+  int args_size() const {
+    return args.size();
+  }
 
   void accept(ASTVisitor &v) {
     v.visitSExprAST(this);
@@ -123,36 +164,38 @@ public:
     return v.visitSExprAST(this);
   }
 
-  void finePrint(std::stringstream &ss) const;
-  llvm::Value *codeGen();
-  llvm::Value *codeGenEval();
   void addArgument(ASTNode *arg) {
-    exp.push_back(arg);
-  }
-
-  void setRest(ASTNode *r) {
-    rest = r;
+    arg->get();
+    args.push_back(arg);
   }
 
   int numArgument() const {
-    return exp.size();
-  }
-
-  bool hasRest() const {
-    return rest != NULL;
-  }
-
-  std::vector<ASTNode *> &getArguments() {
-    return exp;
+    return args.size();
   }
 
   ASTNode *getArgument(int i) {
-    return exp[i];
+    return args[i];
   }
 
-  ASTNode *getRest() {
-    return rest;
+  bool hasLast() const {
+    return last != NULL;
   }
+
+  ASTNode *getLast() {
+    return last;
+  }
+
+  void setLast(ASTNode *r) {
+    if (last != NULL && last != r) {
+      PutASTNode(last);
+      last = r;
+      r->get();
+    }
+  }
+
+  void finePrint(std::stringstream &ss) const;
+  llvm::Value *codeGen();
+  llvm::Value *codeGenEval();
 };
 #endif
 

@@ -202,18 +202,18 @@ Value *SExprASTNode::codeGen() {
   Value *head, *pair, *curr;
   unsigned int i;
 
-  if (exp.size() == 0) {
+  if (args.size() == 0) {
     return LSObjNew(context, ls_t_nil);
   }
 
   head = pair = LSObjNew(context, ls_t_pair);
-  builder.CreateStore(builder.CreateBitCast(exp[0]->codeGenNoBind(),
+  builder.CreateStore(builder.CreateBitCast(args[0]->codeGenNoBind(),
                                             Type::getInt8Ty(context)->getPointerTo()),
                       LSObjGetPointerAddr(context, pair, 0, 1));
 
-  for (i = 1; i < exp.size(); i++) {
+  for (i = 1; i < args.size(); i++) {
     curr = LSObjNew(context, ls_t_pair);
-    builder.CreateStore(builder.CreateBitCast(exp[i]->codeGenNoBind(),
+    builder.CreateStore(builder.CreateBitCast(args[i]->codeGenNoBind(),
                                               Type::getInt8Ty(context)->getPointerTo()),
                         LSObjGetPointerAddr(context, curr, 0, 1));
     builder.CreateStore(builder.CreateBitCast(curr,
@@ -222,12 +222,12 @@ Value *SExprASTNode::codeGen() {
     pair = curr;
   }
 
-  if (rest == NULL)
+  if (last == NULL)
     builder.CreateStore(builder.CreateBitCast(LSObjNew(context, ls_t_nil),
                                               Type::getInt8Ty(context)->getPointerTo()),
                         LSObjGetPointerAddr(context, pair, 0, 2));
   else
-    builder.CreateStore(builder.CreateBitCast(rest->codeGenNoBind(),
+    builder.CreateStore(builder.CreateBitCast(last->codeGenNoBind(),
                                               Type::getInt8Ty(context)->getPointerTo()),
                         LSObjGetPointerAddr(context, pair, 0, 2));
 
@@ -249,12 +249,12 @@ Value *SExprASTNode::codeGenEval() {
   // codegen: runtime error situation if arg[0] isn't resolved to function
   // codegen: eval the remaining args
   // codegen: call function with arg count and vectors of args
-  // TODO: ( args . rest)
-  if (exp.size() == 0)
+  // TODO: ( args . last)
+  if (args.size() == 0)
     return codeGen();
 
-  if (exp[0]->getType() == SymbolAST) {
-    SymbolASTNode *node = static_cast<SymbolASTNode *>(exp[0]);
+  if (args[0]->getType() == SymbolAST) {
+    SymbolASTNode *node = static_cast<SymbolASTNode *>(args[0]);
     // syntax
     for (i = 0; i < num_builtin_syntax; i++) {
       if (node->symbol == builtin_syntax[i].key)
@@ -262,11 +262,11 @@ Value *SExprASTNode::codeGenEval() {
     }
 
     // procs
-    func = exp[0]->codeGenEval();
+    func = args[0]->codeGenEval();
   }
-  else if (exp[0]->getType() == SExprAST) {
+  else if (args[0]->getType() == SExprAST) {
     // possibly lambdas
-    func = exp[0]->codeGenEval();
+    func = args[0]->codeGenEval();
   }
   else {
     throw Error(std::string("not a function"));
@@ -285,11 +285,11 @@ Value *SExprASTNode::codeGenEval() {
   fptr = builder.CreateLoad(addr);
   free = builder.CreateLoad(LSObjGetPointerAddr(context, func, 0, 2));
 
-  size = ConstantInt::get(Type::getInt32Ty(context), exp.size() - 1);
+  size = ConstantInt::get(Type::getInt32Ty(context), args.size() - 1);
   addr = builder.CreateAlloca(LSObjType->getPointerTo(), size);
 
   for (i = 1; i < numArgument(); i++) {
-    val = exp[i]->codeGenEval();
+    val = args[i]->codeGenEval();
     builder.CreateStore(val, GEP1(context, addr, i - 1));
   }
 
@@ -311,7 +311,7 @@ static Value *handleBegin(SExprASTNode *sexpr) {
     v = sexpr->getArgument(i)->codeGenEval();
   }
 
-  if (sexpr->hasRest())
+  if (sexpr->hasLast())
     throw Error(std::string("unexpected `.' in begin"));
 
   return v;
