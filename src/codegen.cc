@@ -27,6 +27,7 @@
 #include <llvm/Analysis/Verifier.h>
 #include <vector>
 #include <iostream>
+#include <cctype>
 
 using llvm::Type;
 using llvm::Constant;
@@ -46,8 +47,16 @@ using llvm::verifyFunction;
 
 static inline bool
 numberFitsInt32(const std::string &val) {
-  // TODO: refine to support inexact, rational and complex
-  return val.size() <= 9;
+  std::string::const_iterator i;
+
+  if (val.size() > 9)
+    return false;
+
+  for(i = val.begin(); i != val.end(); i++)
+    if (!std::isdigit(*i))
+      return false;
+
+  return true;
 }
 
 Value *NumberASTNode::codeGen() {

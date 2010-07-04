@@ -63,7 +63,7 @@ Token Lexer::nextToken(void) {
     case '#':
       return getPoundSpecial();
     default:
-      if (isDigit()) return getSimpleNumber();
+      if (isDigit()) return getNumber();
       if (isInitial()) return getIdentifier();
       throw Error(std::string("invalid character: ") + ch);
     }
@@ -91,22 +91,17 @@ Token Lexer::getPeculiarIdentifier(void) {
   id += ch;
   consume();
   if (!isDelimiter())
-    throw Error(std::string("invalid identifier start with ") + ch);
+    return getNumber(id);
 
   return Token(ID, id);
 }
 
-Token Lexer::getSimpleNumber(void) {
-  std::string number = "";
-
-  // TODO: handling real number with '.'
+Token Lexer::getNumber(std::string number) {
+  // TODO: syntax check
   do {
     number += curChar();
     consume();
-  } while (isDigit());
-
-  if (!isDelimiter())
-    throw Error(std::string("invalid number ") + curChar());
+  } while (!isDelimiter());
 
   return Token(NUMBER, number);
 }
@@ -124,6 +119,8 @@ Token Lexer::getDot(void) {
         return Token(ID, "...");
     }
   }
+  else
+    return getNumber(".");
 
   throw Error(std::string("invalid token starting with ."));
 }
@@ -162,6 +159,13 @@ Token Lexer::getPoundSpecial()
     if (!isDelimiter())
       throw Error(std::string("invalid special # " + curChar()));
     return Token(BOOL, special);
+  case 'b':
+  case 'o':
+  case 'd':
+  case 'x':
+  case 'i':
+  case 'e':
+    return getNumber("#");
   default:
     throw Error(std::string("invalid special #" + curChar()));
   }

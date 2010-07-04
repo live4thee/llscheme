@@ -46,10 +46,16 @@ static void* ls_realloc(void* ptr, size_t old_size, size_t new_size)
   return GC_realloc(ptr, new_size);
 }
 
+static void ls_free_mp(void *ptr, size_t size)
+{
+  UNUSED_ARGUMENT(ptr);
+  UNUSED_ARGUMENT(size);
+}
+
 void lsrt_memory_init(void)
 {
   GC_init();
-  mp_set_memory_functions(ls_malloc, ls_realloc, NULL);
+  mp_set_memory_functions(ls_malloc, ls_realloc, ls_free_mp);
 }
 
 struct ls_object *lsrt_new_object(int type)
@@ -131,8 +137,7 @@ void lsrt_check_arg_type(struct ls_object *args[], int i, char c)
       lsrt_error("fucntion argument type mismatch");
     break;
   case 'n':
-    if (!lso_is_number(args[i]) &&
-        !lso_is_bignum(args[i]))
+    if (!lso_is_number(args[i]))
       lsrt_error("expected number");
     break;
   case 'f':
@@ -161,8 +166,8 @@ void lsrt_check_symbol_unbound(struct ls_object *arg)
 
 int lsrt_main_retval(struct ls_object *lso)
 {
-  if (lso_is_number(lso))
-    return lso_number_get(lso);
+  if (lso_is_simplenumber(lso))
+    return lso_simplenumber_get(lso);
 
   if (lso_is_boolean(lso))
     return !!lso_boolean_get(lso) - 1;

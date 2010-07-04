@@ -40,7 +40,7 @@ public:
 private:
   Token getIdentifier(void);
   Token getPeculiarIdentifier(void);
-  Token getSimpleNumber(void);
+  Token getNumber(std::string number = "");
   Token getDot(void);
   Token getPoundSpecial(void);
   Token getString(void);

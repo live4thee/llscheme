@@ -36,23 +36,25 @@
  * Section 6.6.3 Output
  **********************************************************/
 
+char *_ntos(struct ls_object *number);
+
 static void _display(struct ls_object *lso, int fp)
 {
-  switch (lso->type) {
+  switch (lso_type(lso)) {
   case ls_t_void:
     printf("<void>");
     break;
   case ls_t_number:
-    printf("%d", lso_number_get(lso));
+    if (lso_is_simplenumber(lso))
+      printf("%d", lso_simplenumber_get(lso));
+    else
+      printf("%s", _ntos(lso));
     break;
   case ls_t_boolean:
     if (lso_boolean_get(lso))
       printf("#t");
     else
       printf("#f");
-    break;
-  case ls_t_bignum:
-    mpz_out_str(stdout, 10, lso_bignum_get(lso));
     break;
   case ls_t_symbol:
     if (lso_symbol_name(lso))
