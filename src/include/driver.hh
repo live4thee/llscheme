@@ -76,56 +76,6 @@ LSObjNew(LLVMContext &context,
 }
 
 static inline Value *
-LSObjNewBignum(LLVMContext &context,
-               std::string& num)
-{
-  Function *f;
-
-  // TODO: reuse StringASTNode when we have full string support
-  Constant *c = ConstantArray::get(context, num.c_str(), true);
-  GlobalVariable *s = new GlobalVariable(*module,
-      ArrayType::get(IntegerType::get(context, 8), num.size()+1),
-      true, GlobalValue::PrivateLinkage, c, ".numstr");
-
-  std::vector<Constant*> indices;
-  Constant *idx = ConstantInt::get(Type::getInt32Ty(context), 0);
-  indices.push_back(idx);
-  indices.push_back(idx);
-
-  Constant *ptr = ConstantExpr::getGetElementPtr(s, &indices[0], indices.size());
-
-  std::vector<Constant *> v, m;
-
-  v.push_back(ConstantInt::get(Type::getInt32Ty(context), ls_t_string));
-  m.push_back(ptr);
-
-  v.push_back(ConstantStruct::get(context, m, false));
-  m.clear();
-
-  m.push_back(Constant::getNullValue(Type::getInt8Ty(context)->getPointerTo()));
-  v.push_back(ConstantStruct::get(context, m, false));
-  Constant *init = ConstantStruct::get(context, v, false);
-
-  GlobalVariable *g = new GlobalVariable(*module, LSObjType, false,
-                                         GlobalValue::PrivateLinkage,
-                                         init, "_strobj_");
-
-  f = module->getFunction("lsrt_builtin_string2number");
-
-  Value *addr = builder.CreateAlloca(LSObjType->getPointerTo(),
-                              ConstantInt::get(Type::getInt32Ty(context), 1));
-  indices.clear();
-  indices.push_back(idx);
-  builder.CreateStore(ConstantExpr::getGetElementPtr(g, &indices[0], indices.size()),
-                      addr);
-
-  return builder.CreateCall3(f,
-                             ConstantInt::get(Type::getInt32Ty(context), 1),
-                             addr,
-                             Constant::getNullValue(LSObjType->getPointerTo()->getPointerTo()));
-}
-
-static inline Value *
 GEP1(LLVMContext &context,
      Value *val, int i0) {
   Constant *idx0 =
@@ -182,6 +132,62 @@ LSObjGetValueAddr(LLVMContext &context,
                                Type::getInt32Ty(context)->getPointerTo());
 }
 
+static inline Value *
+LSObjSimpleNumberInit(LLVMContext &context, int val)
+{
+  std::vector<Constant *> v, m;
+
+  v.push_back(ConstantInt::get(Type::getInt32Ty(context), ls_t_number));
+  m.push_back(ConstantExpr::getIntToPtr(ConstantInt::get(Type::getInt32Ty(context), val),
+                                        Type::getInt8Ty(context)->getPointerTo()));
+
+  v.push_back(ConstantStruct::get(context, m, false));
+  m.clear();
+
+  m.push_back(Constant::getNullValue(Type::getInt8Ty(context)->getPointerTo()));
+  v.push_back(ConstantStruct::get(context, m, false));
+  Constant *init = ConstantStruct::get(context, v, false);
+
+  GlobalVariable *g = new GlobalVariable(*module, LSObjType, true,
+                                         GlobalValue::PrivateLinkage,
+                                         init, "_numobj_");
+  return g;
+}
+
+static inline Value *
+LSObjStringInit(LLVMContext &context, std::string& str)
+{
+  Constant *c = ConstantArray::get(context, str.c_str(), true);
+  GlobalVariable *s = new GlobalVariable(*module,
+      ArrayType::get(IntegerType::get(context, 8), str.size()+1),
+      true, GlobalValue::PrivateLinkage, c, ".numstr");
+
+  std::vector<Constant*> indices;
+  Constant *idx = ConstantInt::get(Type::getInt32Ty(context), 0);
+  indices.push_back(idx);
+  indices.push_back(idx);
+
+  Constant *ptr = ConstantExpr::getGetElementPtr(s, &indices[0], indices.size());
+
+  std::vector<Constant *> v, m;
+
+  v.push_back(ConstantInt::get(Type::getInt32Ty(context), ls_t_string));
+  m.push_back(ptr);
+
+  v.push_back(ConstantStruct::get(context, m, false));
+  m.clear();
+
+  m.push_back(Constant::getNullValue(Type::getInt8Ty(context)->getPointerTo()));
+  v.push_back(ConstantStruct::get(context, m, false));
+  Constant *init = ConstantStruct::get(context, v, false);
+
+  GlobalVariable *g = new GlobalVariable(*module, LSObjType, true,
+                                         GlobalValue::PrivateLinkage,
+                                         init, "_strobj_");
+
+  return g;
+}
+
 // Create ls_t_func object and its initializer
 static inline Value *
 LSObjFunctionInit(LLVMContext &context,
@@ -203,7 +209,7 @@ LSObjFunctionInit(LLVMContext &context,
   v.push_back(ConstantStruct::get(context, m, false));
   init = ConstantStruct::get(context, v, false);
 
-  g = new GlobalVariable(*module, LSObjType, false,
+  g = new GlobalVariable(*module, LSObjType, true,
                 GlobalValue::PrivateLinkage,
                 init, "_funcobj_" + name);
 

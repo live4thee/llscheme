@@ -100,9 +100,6 @@ static void InitializeLSRTFunctions(void) {
   Function::Create(ftype, Function::ExternalLinkage,
                    "lsrt_new_object", module);
 
-  Function::Create(LSFuncType, Function::ExternalLinkage,
-                   "lsrt_builtin_string2number", module);
-
   v.clear();
   v.push_back(Type::getInt32Ty(context));
   ftype = FunctionType::get(LSObjType->getPointerTo()->getPointerTo(),

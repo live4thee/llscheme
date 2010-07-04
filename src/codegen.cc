@@ -56,12 +56,16 @@ Value *NumberASTNode::codeGen() {
 
   if (numberFitsInt32(val)) {
     num = std::atoi(val.c_str());
-    obj = LSObjNew(context, ls_t_number);
-    addr = LSObjGetValueAddr(context, obj, 0, 1);
-    builder.CreateStore(ConstantInt::get(Type::getInt32Ty(context), num), addr);
+    obj = LSObjSimpleNumberInit(context, num);
   }
-  else
-    obj = LSObjNewBignum(context, val);
+  else {
+    SExprASTNode sexp;
+    sexp.addArgument(new SymbolASTNode("string->number"));
+    sexp.addArgument(new StringASTNode(val));
+    obj = sexp.codeGenEval();
+    // N.B. no need to explicitly delete arguments, they are automatically
+    // destructed by refcnt system
+  }
 
   return obj;
 }
@@ -162,7 +166,7 @@ Value *SymbolASTNode::codeGenEval() {
 }
 
 Value *StringASTNode::codeGen() {
-  return NULL;
+  return LSObjStringInit(context, str);
 }
 
 // N.B. syntax can be implemented using handlers, but not
