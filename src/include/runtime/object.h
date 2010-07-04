@@ -26,7 +26,6 @@
 #define OBJECT_H_
 
 #include <stdint.h>
-#include <gmp.h>
 
 #ifdef __cplusplus
 # define TARGET extern "C"
