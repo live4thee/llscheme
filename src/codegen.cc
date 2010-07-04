@@ -44,18 +44,26 @@ using llvm::verifyFunction;
 
 #define context getGlobalContext()
 
-Value *NumberASTNode::codeGen() {
-  Value *obj, *addr;
-
-  obj = LSObjNew(context, ls_t_number);
-  addr = LSObjGetValueAddr(context, obj, 0, 1);
-  builder.CreateStore(ConstantInt::get(Type::getInt32Ty(context), val), addr);
-
-  return obj;
+static inline bool
+numberFitsInt32(const std::string &val) {
+  // TODO: refine to support inexact, rational and complex
+  return val.size() <= 9;
 }
 
-Value *BignumASTNode::codeGen() {
-  return LSObjNewBignum(context, val);
+Value *NumberASTNode::codeGen() {
+  Value *obj, *addr;
+  int num;
+
+  if (numberFitsInt32(val)) {
+    num = std::atoi(val.c_str());
+    obj = LSObjNew(context, ls_t_number);
+    addr = LSObjGetValueAddr(context, obj, 0, 1);
+    builder.CreateStore(ConstantInt::get(Type::getInt32Ty(context), num), addr);
+  }
+  else
+    obj = LSObjNewBignum(context, val);
+
+  return obj;
 }
 
 Value *BooleanASTNode::codeGen() {

@@ -105,12 +105,6 @@ Token Lexer::getSimpleNumber(void) {
     consume();
   } while (isDigit());
 
-  // TODO: implicit conversion without `L' as hint
-  if (curChar() == 'L' || curChar() == 'l') {
-    consume();
-    return Token(BIGNUMBER, number);
-  }
-
   if (!isDelimiter())
     throw Error(std::string("invalid number ") + curChar());
 

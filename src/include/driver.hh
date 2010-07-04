@@ -81,8 +81,9 @@ LSObjNewBignum(LLVMContext &context,
 {
   Function *f;
 
+  // TODO: reuse StringASTNode when we have full string support
   Constant *c = ConstantArray::get(context, num.c_str(), true);
-  GlobalVariable *v = new GlobalVariable(*module,
+  GlobalVariable *s = new GlobalVariable(*module,
       ArrayType::get(IntegerType::get(context, 8), num.size()+1),
       true, GlobalValue::PrivateLinkage, c, ".numstr");
 
@@ -91,10 +92,37 @@ LSObjNewBignum(LLVMContext &context,
   indices.push_back(idx);
   indices.push_back(idx);
 
-  Constant *ptr = ConstantExpr::getGetElementPtr(v, &indices[0], indices.size());
-  f = module->getFunction("lsrt_new_bignum");
+  Constant *ptr = ConstantExpr::getGetElementPtr(s, &indices[0], indices.size());
 
-  return builder.CreateCall(f, ptr);
+  std::vector<Constant *> v, m;
+
+  v.push_back(ConstantInt::get(Type::getInt32Ty(context), ls_t_string));
+  m.push_back(ptr);
+
+  v.push_back(ConstantStruct::get(context, m, false));
+  m.clear();
+
+  m.push_back(Constant::getNullValue(Type::getInt8Ty(context)->getPointerTo()));
+  v.push_back(ConstantStruct::get(context, m, false));
+  Constant *init = ConstantStruct::get(context, v, false);
+
+  GlobalVariable *g = new GlobalVariable(*module, LSObjType, false,
+                                         GlobalValue::PrivateLinkage,
+                                         init, "_strobj_");
+
+  f = module->getFunction("lsrt_builtin_string2number");
+
+  Value *addr = builder.CreateAlloca(LSObjType->getPointerTo(),
+                              ConstantInt::get(Type::getInt32Ty(context), 1));
+  indices.clear();
+  indices.push_back(idx);
+  builder.CreateStore(ConstantExpr::getGetElementPtr(g, &indices[0], indices.size()),
+                      addr);
+
+  return builder.CreateCall3(f,
+                             ConstantInt::get(Type::getInt32Ty(context), 1),
+                             addr,
+                             Constant::getNullValue(LSObjType->getPointerTo()->getPointerTo()));
 }
 
 static inline Value *
@@ -163,7 +191,7 @@ LSObjFunctionInit(LLVMContext &context,
   std::vector<Constant *> v, m, idx;
 
   v.push_back(ConstantInt::get(Type::getInt32Ty(context), ls_t_func));
-  m.push_back(ConstantExpr::getBitCast(func, Type::getInt8PtrTy(context)));
+  m.push_back(ConstantExpr::getBitCast(func, Type::getInt8Ty(context)->getPointerTo()));
 
   v.push_back(ConstantStruct::get(context, m, false));
   m.clear();
@@ -171,7 +199,7 @@ LSObjFunctionInit(LLVMContext &context,
   idx.push_back(ConstantInt::get(Type::getInt32Ty(context), 0));
   idx.push_back(ConstantInt::get(Type::getInt32Ty(context), 0));
 
-  m.push_back(Constant::getNullValue(Type::getInt8PtrTy(context)));
+  m.push_back(Constant::getNullValue(Type::getInt8Ty(context)->getPointerTo()));
   v.push_back(ConstantStruct::get(context, m, false));
   init = ConstantStruct::get(context, v, false);
 

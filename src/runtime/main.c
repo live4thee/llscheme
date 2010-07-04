@@ -68,21 +68,6 @@ struct ls_object *lsrt_new_number(uint32_t num)
   return ret;
 }
 
-/* create a bignum ls_object with given a number string */
-struct ls_object *lsrt_new_bignum(const char* str)
-{
-  struct ls_object *ret;
-
-  ret = (struct ls_object *) ls_malloc(sizeof *ret);
-  memset(ret, 0, sizeof *ret);
-
-  // init a base10 big number
-  lso_set_type(ret, ls_t_bignum);
-  mpz_init_set_str(lso_bignum_get(ret), str, 10);
-
-  return ret;
-}
-
 /*
  * XXX: can we just save pointers safely? Does the
  * content need to be saved as well?
@@ -146,6 +131,11 @@ void lsrt_check_arg_type(struct ls_object *args[], int i, char c)
   case 'f':
     if (!lso_is_func(args[i]) || lso_func_get(args[i]) == NULL)
       lsrt_error("expected function");
+    break;
+  case 's':
+    if (!lso_is_string(args[i]) || lso_string_get(args[i]) == NULL)
+      lsrt_error("expected string");
+    break;
   default:
     break;
   }
@@ -519,6 +509,30 @@ struct ls_object *lsrt_builtin_length(int argc, struct ls_object *args[],
   }
 
   return obj;
+}
+
+/* create a bignum ls_object with given a number string */
+struct ls_object *lsrt_builtin_string2number(int argc, struct ls_object *args[],
+                                             struct ls_object *freelist[])
+{
+  struct ls_object *ret;
+  mpz_t *n;
+
+  UNUSED_ARGUMENT(freelist);
+  lsrt_check_args_count(1, 1, argc);
+  lsrt_check_arg_type(args, 0, 's');
+
+  ret = (struct ls_object *) ls_malloc(sizeof *ret);
+  memset(ret, 0, sizeof *ret);
+
+  // TODO: inexact, rational and complex numbers
+  // init a base10 big number
+  lso_set_type(ret, ls_t_bignum);
+  n = (mpz_t *) ls_malloc(sizeof *n);
+  ret->u1.ptr = n;
+  mpz_init_set_str(*n, lso_string_get(args[0]), 10);
+
+  return ret;
 }
 
 /* vim: set et ts=2 sw=2 cin: */

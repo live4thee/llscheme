@@ -89,7 +89,7 @@ static void InitializeLSRTFunctions(void) {
   std::vector<const Type*> v;
   FunctionType *ftype;
 
-  v.push_back(Type::getInt8PtrTy(context));
+  v.push_back(Type::getInt8Ty(context)->getPointerTo());
   ftype = FunctionType::get(Type::getVoidTy(context), v, false);
   Function::Create(ftype, Function::ExternalLinkage,
                    "lsrt_error", module);
@@ -100,11 +100,8 @@ static void InitializeLSRTFunctions(void) {
   Function::Create(ftype, Function::ExternalLinkage,
                    "lsrt_new_object", module);
 
-  v.clear();
-  v.push_back(Type::getInt8PtrTy(context));
-  ftype = FunctionType::get(LSObjType->getPointerTo(), v, false);
-  Function::Create(ftype, Function::ExternalLinkage,
-                   "lsrt_new_bignum", module);
+  Function::Create(LSFuncType, Function::ExternalLinkage,
+                   "lsrt_builtin_string2number", module);
 
   v.clear();
   v.push_back(Type::getInt32Ty(context));
@@ -173,6 +170,7 @@ static const struct _builtin_proc {
   { "cdr", "" },
   { "list", "" },
   { "length", "" },
+  { "string->number", "string2number" },
 };
 static const int num_builtin_proc =
   sizeof(builtin_proc) / sizeof(_builtin_proc);

@@ -34,6 +34,7 @@
 # define TARGET
 #endif
 
+/* TODO: use bitmask to represent inexact and complex */
 #define ls_t_void      0
 #define ls_t_number    1
 #define ls_t_boolean   2
@@ -64,7 +65,6 @@ TARGET struct ls_object
   uint32_t type;
   union {
     void *ptr;
-    mpz_t bignum;
     uint32_t val;
   } u1;
   union {
@@ -103,7 +103,7 @@ struct ls_object * (*ls_func_type) (int argc, struct ls_object *args[],
 
 /* accessors */
 #define lso_number_get(x) ((x)->u1.val)
-#define lso_bignum_get(x) ((x)->u1.bignum)
+#define lso_bignum_get(x) (*((mpz_t *) ((x)->u1.ptr)))
 #define lso_boolean_get(x) ((x)->u1.val)
 #define lso_symbol_deref(x) ((struct ls_object *) (x)->u1.ptr)
 #define lso_symbol_name(x) ((char *) (x)->u2.ptr)

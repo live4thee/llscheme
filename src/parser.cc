@@ -84,10 +84,6 @@ ASTNode *Parser::exp(void)
     ast = new NumberASTNode(peekToken(1).text);
     consume();
     return ast;
-  case BIGNUMBER:
-    ast = new BignumASTNode(peekToken(1).text);
-    consume();
-    return ast;
   case ID:
     ast = new SymbolASTNode(peekToken(1).text);
     consume();

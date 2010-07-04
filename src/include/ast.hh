@@ -30,12 +30,11 @@
 
 enum ASTType {
   NumberAST, BooleanAST, SymbolAST, StringAST, SExprAST, VectorAST,
-  BignumAST, UnknownAST = 255,
+  UnknownAST = 255,
 };
 
 class ASTNode;
 class NumberASTNode;
-class BignumASTNode;
 class BooleanASTNode;
 class SymbolASTNode;
 class StringASTNode;
@@ -59,7 +58,6 @@ template <typename T>
 class _ASTVisitor {
 public:
   virtual T visitNumberAST(NumberASTNode *node);
-  virtual T visitBignumAST(BignumASTNode *node);
   virtual T visitBooleanAST(BooleanASTNode *node);
   virtual T visitSymbolAST(SymbolASTNode *node);
   virtual T visitStringAST(StringASTNode *node);

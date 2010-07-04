@@ -26,7 +26,7 @@
 #include "codestream.hh"
 #include "token.hh"
 
-typedef enum {EOF_TYPE = 1, LPAREN, ID, NUMBER, BIGNUMBER, RPAREN,
+typedef enum {EOF_TYPE = 1, LPAREN, ID, NUMBER, RPAREN,
               PERIOD, STRING, BOOL, QUOTE} tokenType;
 typedef enum {RDX_DEC, RDX_HEX} radixType;
 
