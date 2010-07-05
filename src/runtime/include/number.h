@@ -221,19 +221,13 @@ __add_overflow_p(int a, int b, int* res)
 static bool
 __mul_overflow_p(int a, int b, int* res)
 {
-#define __ls_abs(x) ({typeof(x) _x = (x); _x > 0 ? _x : -_x;})
-	uint64_t x = (uint64_t)(unsigned)__ls_abs(a) *
-               (uint64_t)(unsigned)__ls_abs(b);
-#undef __ls_abs
+  int64_t x = (int64_t) a * b;
+  int y = (int) (x >> 31);
 
-  /* Maybe too regid here, INT_MIN will be treated as overflow. */
-  if (x >= 0x80000000)
+  if (y != 0 && y != -1)
     return true;
 
-  *res = x & 0xffffffff;
-  if ((a > 0) != (b > 0))
-    *res = - *res;
-
+  *res = (int) x;
   return false;
 }
 
