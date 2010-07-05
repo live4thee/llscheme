@@ -40,11 +40,13 @@
 #define ls_t_number    1
 
 #define ls_num_complex       0x10000
+#define ls_num_re_shift      8
 #define ls_num_re_mask       0xff00
 #define ls_num_re_small      0x000
 #define ls_num_re_big        0x100
 #define ls_num_re_rational   0x200
 #define ls_num_re_inexact    0x300
+#define ls_num_im_shift      12
 #define ls_num_im_mask       0xff0000
 #define ls_num_im_small      0x0000
 #define ls_num_im_big        0x1000

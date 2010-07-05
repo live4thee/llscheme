@@ -8,4 +8,5 @@ liblsrt_la_SOURCES = utils.c \
                      io.c
 
 noinst_HEADERS = ../include/runtime/object.h \
-                 include/utils.h
+                 include/utils.h \
+                 include/number.h

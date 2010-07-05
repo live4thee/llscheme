@@ -25,6 +25,9 @@
 #define _LLSCHEME_RUNTIME
 #endif
 
+#ifndef RUNTIME_UTILS_H_
+#define RUNTIME_UTILS_H_
+
 /* The Boehm-Demers-Weiser conservative garbage collector */
 #include <gc/gc.h>
 
@@ -57,4 +60,5 @@ int lsrt_test_expr(struct ls_object *lso);
       int, struct ls_object *[], struct ls_object*[])
 #define BUILTIN_LIB(_n,_s)  BUILTIN((_n),_s)
 
+#endif
 /* vim: set et ts=2 sw=2 cin: */

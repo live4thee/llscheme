@@ -21,13 +21,14 @@
 
 /* This file is part of the runtime */
 
-#include "utils.h"
-#include "runtime/object.h"
-
 #include <gmp.h>
 #include <string.h>
 #include <ctype.h>
 #include <malloc.h>
+
+#include "utils.h"
+#include "number.h"
+#include "runtime/object.h"
 
 /**********************************************************
  * Section 6.2. Numbers
@@ -66,6 +67,7 @@ lso_reciprocal(struct ls_object* dstobj, const struct ls_object* srcobj)
   }
 }
 */
+
 static struct ls_object *
 _arith(const char op, int argc, struct ls_object *args[])
 {
@@ -426,12 +428,8 @@ void _ston(struct ls_object *obj, const char *num, int defradix)
   char *end;
   char saved;
   int exactness = -1, radix = -1;
-  int flag1, flag2, allowre = 1, allowim = 1, type;
-  mpz_t *z;
-  mpq_t *q;
-  mpf_t *f;
-  int v;
-  void *last = NULL;
+  int flag, flag2, allowre = 1, allowim = 1;
+  struct ls_real re = { 0, { 0 } };
 
   /* prefix */
   while (*ptr == '#') {
@@ -469,43 +467,41 @@ void _ston(struct ls_object *obj, const char *num, int defradix)
 
  restart:
   /* default to big integer */
-  type = 1;
-  z = NULL;
-  q = NULL;
-  f = NULL;
-  v = 0;
+  re.type = 1;
 
   /* parsing */
-  flag1 = _ston_parse_real(ptr, &end, radix);
-  if (!(flag1 & stonf_valid))
+  flag = _ston_parse_real(ptr, &end, radix);
+  if (!(flag & stonf_valid))
     goto err;
+
   if (*end == '/') {
-    type = 2;
+    re.type = 2;
     flag2 = _ston_parse_real(end + 1, &end, radix);
     /* sanity for rational */
     if (!(flag2 & stonf_valid))
       goto err;
-    if ((flag1 & stonf_decimal) ||
+    if ((flag & stonf_decimal) ||
         (flag2 & stonf_signed) ||
         (flag2 & stonf_decimal))
       goto err;
   }
-  if (flag1 & stonf_decimal)
-    type = 3;
+
+  if (flag & stonf_decimal)
+    re.type = 3;
 
   if ((*end == 'i' && allowim == 0) ||
       (*end != 'i' && allowre == 0))
     goto err;
 
   /* generating initial result */
-  if ((*end == 'i' && (flag1 & stonf_iunit))) {
-    type = 0;
-    if (!(flag1 & stonf_signed))
+  if ((*end == 'i' && (flag & stonf_iunit))) {
+    re.type = 0;
+    if (!(flag & stonf_signed))
       goto err;
     if (*ptr == '+')
-      v = 1;
+      re.v = 1;
     else
-      v = -1;
+      re.v = -1;
   }
 
   saved = *end;
@@ -513,16 +509,16 @@ void _ston(struct ls_object *obj, const char *num, int defradix)
 
   if (*ptr == '+')  /* tackle around strange behavior of mpx_set_str */
       ptr++;
-  switch (type) {
+  switch (re.type) {
   case 1:
-    last = z = (mpz_t *) ls_malloc(sizeof *z);
-    mpz_init(*z);
-    mpz_set_str(*z, ptr, radix);
+    re.z = (mpz_t *) ls_malloc(sizeof *re.z);
+    mpz_init(*re.z);
+    mpz_set_str(*re.z, ptr, radix);
     break;
   case 2:
-    last = q = (mpq_t *) ls_malloc(sizeof *q);
-    mpq_init(*q);
-    mpq_set_str(*q, ptr, radix);
+    re.q = (mpq_t *) ls_malloc(sizeof *re.q);
+    mpq_init(*re.q);
+    mpq_set_str(*re.q, ptr, radix);
     break;
   case 3:
     if (exactness == 1) {
@@ -530,21 +526,21 @@ void _ston(struct ls_object *obj, const char *num, int defradix)
        * unfortunately, #e<decimal> has to be handled here manually,
        * the result inexact->exact is normally not acceptable
        */
-      type = 2;
-      last = q = (mpq_t *) ls_malloc(sizeof *q);
-      mpq_init(*q);
-      _lsrt_mpq_set_decimal(*q, ptr, radix);
+      re.type = 2;
+      re.q = (mpq_t *) ls_malloc(sizeof *re.q);
+      mpq_init(*re.q);
+      _lsrt_mpq_set_decimal(*re.q, ptr, radix);
     } else {
-      last = f = (mpf_t *) ls_malloc(sizeof *f);
+      re.f = (mpf_t *) ls_malloc(sizeof *re.f);
       /*
        * TODO: gmp only guarantees that result prec is no lower
        * than specified, check R5RS requirement
        */
-      if (flag1 & stonf_prec_mask)
-        mpf_init2(*f, flag1 & stonf_prec_mask);
+      if (flag & stonf_prec_mask)
+        mpf_init2(*re.f, flag & stonf_prec_mask);
       else
-        mpf_init(*f);
-      mpf_set_str(*f, ptr, radix);
+        mpf_init(*re.f);
+      mpf_set_str(*re.f, ptr, radix);
     }
     break;
   }
@@ -552,100 +548,22 @@ void _ston(struct ls_object *obj, const char *num, int defradix)
   *end = saved;
 
   /* canonicalize and transform */
-  if (type == 1 && ((flag1 & stonf_pound) || exactness == 0)) {
-    last = f = (mpf_t *) ls_malloc(sizeof *f);
-    mpf_init(*f);
-    mpf_set_z(*f, *z);
-    mpz_clear(*z);
-    ls_free(z);
-    type = 3;
-  }
-  if (type == 2 && ((flag1 & stonf_pound) || exactness == 0)) {
-    last = f = (mpf_t *) ls_malloc(sizeof *f);
-    mpf_init(*f);
-    mpf_set_q(*f, *q);
-    mpq_clear(*q);
-    ls_free(q);
-    type = 3;
-  }
-  if (type == 3 && exactness == 1) {
-    last = q = (mpq_t *) ls_malloc(sizeof *q);
-    mpq_init(*q);
-    mpq_set_d(*q, mpf_get_d(*f));
-    mpf_clear(*f);
-    ls_free(f);
-    type = 2;
-  }
-  if (type == 2 && exactness != 0) {
-    mpq_canonicalize(*q);
-    if (mpz_cmp_si(mpq_denref(*q), 1) == 0) {
-      last = z = (mpz_t *) ls_malloc(sizeof *z);
-      mpz_init(*z);
-      mpz_set_q(*z, *q);
-      mpq_clear(*q);
-      ls_free(q);
-      type = 1;
-    }
-  }
-  if (type == 1 && exactness != 0) {
-    if (mpz_fits_sint_p(*z)) {
-      v = mpz_get_si(*z);
-      mpz_clear(*z);
-      ls_free(z);
-      type = 0;
-    }
-  }
+  if (exactness == 0 ||
+      ((flag & stonf_pound) && exactness != 1))
+    _re_promote(&re, 3, 0);
+
+  _re_canonicalize(&re);
 
   /* store */
   if (*end == 'i') {
-    if (!(flag1 & stonf_signed))  /* imaginary must be signed */
+    if (!(flag & stonf_signed))  /* imaginary must be signed */
       goto err;
     allowim = 0;
-    obj->type |= (type << 12) | ls_num_complex;
-    switch (type) {
-    case 0:
-      if (v == 0) {
-        obj->type &= ~(ls_num_complex | ls_num_im_mask);
-        obj->u2.val = 0;
-      }
-      else
-        obj->u2.val = v;
-      break;
-    case 1:
-      obj->u2.ptr = z;
-      break;
-    case 2:
-      obj->u2.ptr = q;
-      break;
-    case 3:
-      if (mpf_cmp_si(*f, 0) == 0) {
-        obj->type &= ~(ls_num_complex | ls_num_im_mask);
-        obj->u2.val = 0;
-        mpf_clear(*f);
-        ls_free(f);
-      }
-      else
-        obj->u2.ptr = f;
-      break;
-    }
+    _re_update_lso_im(obj, &re);
     end++;
   } else {
     allowre = 0;
-    switch (type) {
-    case 0:
-      obj->u1.val = v;
-      break;
-    case 1:
-      obj->u1.ptr = z;
-      break;
-    case 2:
-      obj->u1.ptr = q;
-      break;
-    case 3:
-      obj->u1.ptr = f;
-      break;
-    }
-    obj->type |= type << 8;
+    _re_update_lso_re(obj, &re);
   }
 
   if (*end) {
@@ -658,9 +576,7 @@ void _ston(struct ls_object *obj, const char *num, int defradix)
 
  err:
   free(dup);
-  if (last)
-    ls_free(last);
-
+  _re_clear(&re);
   lso_set_type(obj, ls_t_boolean);
   obj->u1.val = 0;
 }
