@@ -169,25 +169,6 @@ _re_canonicalize(struct ls_real *dst)
   }
 }
 
-#define MP_ARITH_CASE(_n, _i)                                           \
-  case _n: {                                                            \
-    switch(op) {                                                        \
-    case '+':                                                           \
-      mp ## _i ## _add(*dst->_i, *dst->_i, *op2->_i);                   \
-      break;                                                            \
-    case '-':                                                           \
-      mp ## _i ## _sub(*dst->_i, *dst->_i, *op2->_i);                   \
-      break;                                                            \
-    case '*':                                                           \
-      mp ## _i ## _mul(*dst->_i, *dst->_i, *op2->_i);                   \
-      break;                                                            \
-    case '/':                                                           \
-      mp ## _i ## _div(*dst->_i, *dst->_i, *op2->_i);                   \
-      break;                                                            \
-    }                                                                   \
-    break;                                                              \
-  }
-
 
 /* Check signed overflow of `a - b', `a + b' and `a * b'.
  *
@@ -216,23 +197,65 @@ _re_canonicalize(struct ls_real *dst)
  * a - b = -2147483646, overflow = 0
  */
 static bool
-__minus_overflow_p(int a, int b)
+__minus_overflow_p(int a, int b, int* res)
 {
-  return ((a < 0) == (b > 0) && ((a - b < 0) != (a < 0)));
+  int t = a - b;
+  if ((a < 0) == (b > 0) && ((t < 0) != (a < 0)))
+    return true;
+
+  *res = t;
+  return false;
 }
 
 static bool
-__add_overflow_p(int a, int b)
+__add_overflow_p(int a, int b, int* res)
 {
-  return ((a < 0) == (b < 0) && ((a + b < 0) != (a < 0)));
+  int t = a + b;
+  if ((a < 0) == (b < 0) && ((t < 0) != (a < 0)))
+    return true;
+
+  *res = t;
+  return false;
 }
 
-/* Will false report iff. `a * b == INT_MIN' */
 static bool
-__mul_overflow_p(int a, int b)
+__mul_overflow_p(int a, int b, int* res)
 {
-  return abs(a) * abs(b) < 0;
+#define __ls_abs(x) ({typeof(x) _x = (x); _x > 0 ? _x : -_x;})
+	uint64_t x = (uint64_t)(unsigned)__ls_abs(a) *
+               (uint64_t)(unsigned)__ls_abs(b);
+#undef __ls_abs
+
+  /* Maybe too regid here, INT_MIN will be treated as overflow. */
+  if (x >= 0x80000000)
+    return true;
+
+  *res = x & 0xffffffff;
+  if ((a > 0) != (b > 0))
+    *res = - *res;
+
+  return false;
 }
+
+#define MP_ARITH_CASE(_n, _i)                                           \
+  case _n: {                                                            \
+    switch(op) {                                                        \
+    case '+':                                                           \
+      mp ## _i ## _add(*dst->_i, *dst->_i, *op2->_i);                   \
+      break;                                                            \
+    case '-':                                                           \
+      mp ## _i ## _sub(*dst->_i, *dst->_i, *op2->_i);                   \
+      break;                                                            \
+    case '*':                                                           \
+      mp ## _i ## _mul(*dst->_i, *dst->_i, *op2->_i);                   \
+      break;                                                            \
+    case '/':                                                           \
+      mp ## _i ## _div(*dst->_i, *dst->_i, *op2->_i);                   \
+      break;                                                            \
+    }                                                                   \
+    break;                                                              \
+  }
+
 
 
 static void
@@ -249,15 +272,11 @@ _re_arith2(const char op, struct ls_real *dst, struct ls_real *src)
 
     switch (op) {
     case '-':
-      if (!__minus_overflow_p(a, b))
-        dst->v -= b;
-      else
+      if (__minus_overflow_p(a, b, &dst->v))
         need_promote = 1;
       break;
     case '+':
-      if (!__add_overflow_p(a, b))
-        dst->v += b;
-      else
+      if (__add_overflow_p(a, b, &dst->v))
         need_promote = 1;
       break;
     case '/':
@@ -267,10 +286,8 @@ _re_arith2(const char op, struct ls_real *dst, struct ls_real *src)
         dst->v /= b;
       break;
     case '*':
-      if (__mul_overflow_p(a, b))
+      if (__mul_overflow_p(a, b, &dst->v))
           need_promote = 1;
-      else
-        dst->v *= src->v;
     }
 
     if (!need_promote)
