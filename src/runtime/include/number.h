@@ -188,7 +188,7 @@ _re_canonicalize(struct ls_real *dst)
 static void
 _re_arith2(const char op, struct ls_real *dst, struct ls_real *src)
 {
-  int nf;
+  int nf = 0;
   struct ls_real tmp = *src;
   struct ls_real *op2 = &tmp;
 
@@ -218,31 +218,55 @@ _re_arith2(const char op, struct ls_real *dst, struct ls_real *src)
 #undef MP_ARITH_CASE
 
 /*
- * after ref is taken, the content of lso is invalid,
- * the user must explicitly update back
+ * duplicating instead of reference for better usability
  */
 static void
-_re_get_lso_re_ref(struct ls_real *dst, struct ls_object *obj)
+_re_get_lso_re(struct ls_real *dst, struct ls_object *obj)
 {
-  dst->type = lso_number_type_re(obj);
-  dst->content = obj->u1.ptr;
+  struct ls_real tmp;
+
+  tmp.type = lso_number_type_re(obj);
+  tmp.content = obj->u1.ptr;
+
+  _re_duplicate(dst, &tmp);
 }
 
 static void
-_re_get_lso_im_ref(struct ls_real *dst, struct ls_object *obj)
+_re_get_lso_im(struct ls_real *dst, struct ls_object *obj)
 {
+  struct ls_real tmp;
+
   if (lso_is_complex(obj)) {
-    dst->type = lso_number_type_im(obj);
-    dst->content = obj->u2.ptr;
+    tmp.type = lso_number_type_im(obj);
+    tmp.content = obj->u2.ptr;
   } else {
-    dst->type = 0;
-    dst->v = 0;
+    tmp.type = 0;
+    tmp.v = 0;
   }
+
+  _re_duplicate(dst, &tmp);
 }
 
 static void
 _re_update_lso_re(struct ls_object *obj, struct ls_real *src)
 {
+  int type = lso_number_type_re(obj);
+
+  switch(type) {
+  case 1:
+    mpz_clear(*(mpz_t *)obj->u1.ptr);
+    ls_free(obj->u1.ptr);
+    break;
+  case 2:
+    mpq_clear(*(mpq_t *)obj->u1.ptr);
+    ls_free(obj->u1.ptr);
+    break;
+  case 3:
+    mpf_clear(*(mpf_t *)obj->u1.ptr);
+    ls_free(obj->u1.ptr);
+    break;
+  }
+
   obj->type &= ~ls_num_re_mask;
   obj->type |= src->type << ls_num_re_shift;
   obj->u1.ptr = src->content;
@@ -251,7 +275,24 @@ _re_update_lso_re(struct ls_object *obj, struct ls_real *src)
 static void
 _re_update_lso_im(struct ls_object *obj, struct ls_real *src)
 {
-  obj->type &= ~(ls_num_complex | ls_num_re_mask);
+  int type = lso_number_type_im(obj);
+
+  switch(type) {
+  case 1:
+    mpz_clear(*(mpz_t *)obj->u2.ptr);
+    ls_free(obj->u2.ptr);
+    break;
+  case 2:
+    mpq_clear(*(mpq_t *)obj->u2.ptr);
+    ls_free(obj->u2.ptr);
+    break;
+  case 3:
+    mpf_clear(*(mpf_t *)obj->u2.ptr);
+    ls_free(obj->u2.ptr);
+    break;
+  }
+
+  obj->type &= ~(ls_num_complex | ls_num_im_mask);
   obj->type |= src->type << ls_num_im_shift;
   obj->u2.ptr = src->content;
 
@@ -275,6 +316,53 @@ _re_new_lso_re_im(struct ls_real *re, struct ls_real *im)
   }
 
   return lso;
+}
+
+static void
+_re_neg(struct ls_real *dst)
+{
+  switch(dst->type) {
+  case 0:
+    dst->v = 0 - dst->v;
+    break;
+  case 1:
+    mpz_neg(*dst->z, *dst->z);
+    break;
+  case 2:
+    mpq_neg(*dst->q, *dst->q);
+    break;
+  case 3:
+    mpf_neg(*dst->f, *dst->f);
+    break;
+  }
+}
+
+static void
+_re_sqrt(struct ls_real *dst)
+{
+  if (dst->type == 0)
+    _re_promote(dst, 1, 1);
+
+  if (dst->type == 1) {
+    if (mpz_perfect_square_p(*dst->z)) {
+      mpz_sqrt(*dst->z, *dst->z);
+      _re_canonicalize(dst);
+    } else
+      _re_promote(dst, 3, 1);
+  }
+
+  if (dst->type == 2) {
+    if (mpz_perfect_square_p(mpq_numref(*dst->q)) &&
+        mpz_perfect_square_p(mpq_denref(*dst->q))) {
+      mpz_sqrt(mpq_numref(*dst->q), mpq_numref(*dst->q));
+      mpz_sqrt(mpq_denref(*dst->q), mpq_denref(*dst->q));
+      /* no need to canonicalize, it's guaranteed :-) */
+    } else
+      _re_promote(dst, 3, 1);
+  }
+
+  if (dst->type == 3)
+    mpf_sqrt(*dst->f, *dst->f);
 }
 
 #endif

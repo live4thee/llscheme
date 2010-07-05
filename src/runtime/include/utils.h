@@ -41,6 +41,7 @@ void lsrt_memory_init(void);
 
 struct ls_object *lsrt_new_object(int type);
 struct ls_object *lsrt_new_number(uint32_t num);
+struct ls_object *lsrt_duplicate_number(struct ls_object *num);
 struct ls_object **lsrt_new_freelist(int count);
 void lsrt_fill_freelist(struct ls_object* freelist[],
                         int i, struct ls_object* obj);

@@ -34,6 +34,17 @@
  * Section 6.2. Numbers
  **********************************************************/
 
+struct ls_object *
+lsrt_duplicate_number(struct ls_object *num)
+{
+  struct ls_real re, im;
+
+  _re_get_lso_re(&re, num);
+  _re_get_lso_im(&im, num);
+
+  return _re_new_lso_re_im(&re, &im);
+}
+
 /**********************************************************
  * Section 6.2.5 Numerical operations
  **********************************************************/
@@ -68,6 +79,77 @@ lso_reciprocal(struct ls_object* dstobj, const struct ls_object* srcobj)
 }
 */
 
+static void
+_arith2(const char op, struct ls_object *dst, struct ls_object *src)
+{
+  struct ls_real dr, sr, di, si;
+  int complex;
+
+  complex = lso_is_complex(dst) || lso_is_complex(src);
+
+  _re_get_lso_re(&dr, dst);
+  _re_get_lso_re(&sr, src);
+  _re_get_lso_im(&di, dst);
+  _re_get_lso_im(&si, src);
+
+  switch(op) {
+  case '+':
+  case '-':
+    _re_arith2(op, &dr, &sr);
+    if (complex)
+      _re_arith2(op, &di, &si);
+    break;
+  case '/':
+    if (!complex) {
+      _re_arith2(op, &dr, &sr);
+      break;
+    } else {
+      struct ls_real r, i;
+      _re_duplicate(&r, &sr);
+      _re_duplicate(&i, &si);
+
+      _re_arith2('*', &r, &sr);    /* c^2 */
+      _re_arith2('*', &i, &si);    /* d^2 */
+      _re_arith2('+', &r, &i);     /* c^2 + d^2 */
+
+      _re_neg(&si);
+
+      _re_arith2('/', &sr, &r);    /* src.re = c / (c^2 + d^2) */
+      _re_arith2('/', &si, &r);    /* src.im = -di / (c^2 + d^2) */
+
+      _re_clear(&r);
+      _re_clear(&i);
+    }
+    /* FALLTHROUGH */
+  case '*':
+    if (!complex) {
+      _re_arith2('*', &dr, &sr);
+    } else {
+      struct ls_real r, i;
+      _re_duplicate(&r, &dr);
+      _re_duplicate(&i, &di);
+
+      _re_arith2('*', &dr, &sr);    /* ac  */
+      _re_arith2('*', &di, &sr);    /* bci */
+
+      _re_arith2('*', &r, &si);     /* adi */
+      _re_arith2('*', &i, &si);     /* bd  */
+
+      _re_arith2('-', &dr, &i);     /* dst.re = ac - bd */
+      _re_arith2('+', &di, &r);     /* dst.im = (ad + bc)i */
+
+      _re_clear(&r);
+      _re_clear(&i);
+    }
+    break;
+  }
+
+  _re_update_lso_re(dst, &dr);
+  _re_update_lso_im(dst, &di);
+  _re_clear(&sr);
+  _re_clear(&si);
+}
+
 static struct ls_object *
 _arith(const char op, int argc, struct ls_object *args[])
 {
@@ -83,17 +165,21 @@ _arith(const char op, int argc, struct ls_object *args[])
     case '*': ret = lsrt_new_number(1); break;
 
     case '-': if (argc == 1) {
-                return lsrt_new_number(- lso_simplenumber_get(args[0]));
+                ret = lsrt_new_number(0);
+              } else {
+                lsrt_check_arg_type(args, 0, 'n');
+                ret = lsrt_duplicate_number(args[0]);
+                i = 1;
               }
-              ret = lsrt_new_number(lso_simplenumber_get(args[0]));
-              i = 1;
               break;
 
     case '/': if (argc == 1) {
-                return lsrt_new_number(1 / lso_simplenumber_get(args[0]));
+                ret = lsrt_new_number(1);
+              } else {
+                lsrt_check_arg_type(args, 0, 'n');
+                ret = lsrt_duplicate_number(args[0]);
+                i = 1;
               }
-              ret = lsrt_new_number(lso_simplenumber_get(args[0]));
-              i = 1;
               break;
     default:
       lsrt_error("invalid operator");
@@ -101,13 +187,7 @@ _arith(const char op, int argc, struct ls_object *args[])
 
   for (; i < argc; i++) {
     lsrt_check_arg_type(args, i, 'n');
-    switch (op) {
-    case '+': lso_number(ret) += lso_simplenumber_get(args[i]); break;
-    case '-': lso_number(ret) -= lso_simplenumber_get(args[i]); break;
-    case '*': lso_number(ret) *= lso_simplenumber_get(args[i]); break;
-      /* this is however wrong, we need rationals */
-    case '/': lso_number(ret) /= lso_simplenumber_get(args[i]); break;
-    }
+    _arith2(op, ret, args[i]);
   }
 
   return ret;
