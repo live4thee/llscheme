@@ -209,7 +209,7 @@ LSObjFunctionInit(LLVMContext &context,
   v.push_back(ConstantStruct::get(context, m, false));
   init = ConstantStruct::get(context, v, false);
 
-  g = new GlobalVariable(*module, LSObjType, true,
+  g = new GlobalVariable(*module, LSObjType, false,
                 GlobalValue::PrivateLinkage,
                 init, "_funcobj_" + name);
 
