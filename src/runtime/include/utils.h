@@ -34,7 +34,7 @@
 #include <runtime/object.h>
 
 #define UNUSED_ARGUMENT(x) (void)(x)
-#define ls_malloc GC_malloc_atomic
+#define ls_malloc GC_malloc
 #define ls_free(x) do {} while(0)
 
 void lsrt_memory_init(void);

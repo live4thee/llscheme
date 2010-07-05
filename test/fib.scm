@@ -6,7 +6,7 @@
        (+ (fib1 (- n 1))
 	  (fib1 (- n 2))))))
 
-(fib1 5)
+(fib1 30)
 
 (define (fib2 n)
   (fib-iter 1 0 n))
@@ -16,4 +16,4 @@
       b
       (fib-iter (+ a b) a (- count 1))))
 
-(fib2 40)
+(fib2 100)
