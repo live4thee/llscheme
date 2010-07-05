@@ -24,6 +24,8 @@
 #ifndef RUNTIME_NUMBER_H_
 #define RUNTIME_NUMBER_H_
 
+#include <limits.h>
+
 #include "utils.h"
 
 /* lsrt's representation of real numbers */
@@ -192,8 +194,52 @@ _re_arith2(const char op, struct ls_real *dst, struct ls_real *src)
   struct ls_real tmp = *src;
   struct ls_real *op2 = &tmp;
 
-  if (dst->type == 0 && op2->type == 0)
-    _re_promote(dst, 1, 1);
+  if (dst->type == 0 && op2->type == 0) {
+  /* do best to stay in machine integer */
+    int need_promote = 0;
+    int a = dst->v, b = src->v;
+
+    switch (op) {
+    case '-':
+      if (b != INT_MIN)
+          b = -b;
+      else {
+        need_promote = 1;
+        break;
+      }
+      /* PASSTHROUGH */
+    case '+':
+      if (a > 0 && b > 0 && a > (INT_MAX - b))
+        need_promote = 1;
+      else if (a < 0 && b < 0 && a < (INT_MIN - b))
+        need_promote = 1;
+      if (!need_promote)
+        dst->v += b;
+      break;
+    case '/':
+      if (a % b != 0)
+        need_promote = 1;
+      else
+        dst->v /= b;
+      break;
+    case '*':
+      if (b == INT_MIN)
+        need_promote = 1;
+      if (b < 0)
+         b = -b;
+      if (b != 0) 
+        if ((a > 0 && a > (INT_MAX / b)) ||
+            (a < 0 && a < (INT_MAX / b)))
+          need_promote = 1;
+      if (!need_promote)
+        dst->v *= src->v;
+    }
+
+    if (need_promote)
+      _re_promote(dst, 1, 1);
+    else
+      return;
+  }
 
   if (dst->type < op2->type)
     _re_promote(dst, op2->type, 1);
