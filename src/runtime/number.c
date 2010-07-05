@@ -252,20 +252,21 @@ struct ls_object *lsrt_builtin_ge(int argc, struct ls_object *args[],
 
 static int _ston_isdigit(char ch, int radix)
 {
+  static char *cstr = ".0123456789aAbBcCdDeEfF";
+  char *res;
+  int req;
 
   if (ch == 0)
     return 0;
 
-  switch (radix) {
-  case 2:
-    return !!strchr("01.", ch);
-  case 8:
-    return !!strchr("01234567.", ch);
-  case 10:
-    return !!strchr("0123456789.", ch);
-  case 16:
-    return !!strchr("0123456789abcdefABCDEF.", ch);
-  }
+  if (radix <= 10)
+    req = radix;
+  else
+    req = 2 * radix - 10;
+
+  res = strchr(cstr, ch);
+  if (res)
+    return (res - cstr) <= req;
 
   return 0;
 }
@@ -342,7 +343,11 @@ static int _ston_parse_real(char *ptr, char **out, int radix)
   flag |= iunit? stonf_iunit: 0;
   flag |= decimal? stonf_decimal: 0;
   flag |= pound? stonf_pound: 0;
-  flag |= precision & stonf_prec_mask;
+  flag |= stonf_prec_mask &
+    (precision == 's'? 16 :
+     precision == 'f'? 32 :
+     precision == 'd'? 64 :
+     precision == 'l'? 128 : 0);
 
   *out = ptr;
   return flag;
@@ -351,6 +356,68 @@ static int _ston_parse_real(char *ptr, char **out, int radix)
   flag = 0;
   return flag;
 
+}
+
+/* not canonicalized */
+void _lsrt_mpq_set_decimal(mpq_t q, const char *ptr, int radix)
+{
+  mpz_t num, dec, exp;
+  mpq_t addend;
+  int ex, expdigits;
+  int s, e;
+  char ch = '+';
+
+  if (radix != 10)
+    lsrt_error("exact decimal number not in base 10 not supported");
+
+  mpz_init_set_ui(num, 0);
+  mpz_init_set_ui(dec, 0);
+  mpz_init(exp);
+  mpq_init(addend);
+
+  e = 0;
+  sscanf(ptr, "%[+-]%n", &ch, &e);
+  ptr += e;
+
+  e = 0;
+  gmp_sscanf(ptr, "%Zd%n", num, &e);
+  ptr += e;
+
+  s = 0;
+  e = 0;
+  expdigits = 0;
+  gmp_sscanf(ptr, ".%n%Zd%n", &s, dec, &e);
+  ptr += e;
+  if (e >= s)
+    expdigits = e - s;
+
+  s = 0;
+  e = 0;
+  ex = 0;
+  sscanf(ptr, "@%n%d%n", &s, &ex, &e);
+  if (e - s >= 5 || ex >= 256)
+    lsrt_error("decimal number out of range");
+
+  mpz_set(mpq_numref(q), dec);
+  mpz_ui_pow_ui(mpq_denref(q), radix, expdigits);
+  mpq_set_z(addend, num);
+  mpq_add(q, q, addend);
+
+  if (ex > 0) {
+    mpz_ui_pow_ui(exp, 10, ex);   /* exponent is always in radix 10 */
+    mpz_mul(mpq_numref(q), mpq_numref(q), exp);
+  } else if (ex < 0) {
+    mpz_ui_pow_ui(exp, 10, -ex);
+    mpz_mul(mpq_denref(q), mpq_denref(q), exp);
+  }
+
+  if (ch == '-')
+    mpz_neg(mpq_numref(q), mpq_numref(q));
+
+  mpq_clear(addend);
+  mpz_clear(exp);
+  mpz_clear(num);
+  mpz_clear(dec);
 }
 
 void _ston(struct ls_object *obj, const char *num, int defradix)
@@ -458,9 +525,27 @@ void _ston(struct ls_object *obj, const char *num, int defradix)
     mpq_set_str(*q, ptr, radix);
     break;
   case 3:
-    last = f = (mpf_t *) ls_malloc(sizeof *f);
-    mpf_init(*f);
-    mpf_set_str(*f, ptr, radix);
+    if (exactness == 1) {
+      /*
+       * unfortunately, #e<decimal> has to be handled here manually,
+       * the result inexact->exact is normally not acceptable
+       */
+      type = 2;
+      last = q = (mpq_t *) ls_malloc(sizeof *q);
+      mpq_init(*q);
+      _lsrt_mpq_set_decimal(*q, ptr, radix);
+    } else {
+      last = f = (mpf_t *) ls_malloc(sizeof *f);
+      /*
+       * TODO: gmp only guarantees that result prec is no lower
+       * than specified, check R5RS requirement
+       */
+      if (flag1 & stonf_prec_mask)
+        mpf_init2(*f, flag1 & stonf_prec_mask);
+      else
+        mpf_init(*f);
+      mpf_set_str(*f, ptr, radix);
+    }
     break;
   }
 
@@ -486,8 +571,7 @@ void _ston(struct ls_object *obj, const char *num, int defradix)
   if (type == 3 && exactness == 1) {
     last = q = (mpq_t *) ls_malloc(sizeof *q);
     mpq_init(*q);
-    // TODO: default mpq_set_f is insane!! see #e0.1
-    mpq_set_f(*q, *f);
+    mpq_set_d(*q, mpf_get_d(*f));
     mpf_clear(*f);
     ls_free(f);
     type = 2;
