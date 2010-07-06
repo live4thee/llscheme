@@ -24,7 +24,8 @@
 #ifndef RUNTIME_NUMBER_H_
 #define RUNTIME_NUMBER_H_
 
-#include <limits.h>
+#include <stdbool.h>
+#include <stdlib.h>
 
 #include "utils.h"
 
@@ -187,6 +188,53 @@ _re_canonicalize(struct ls_real *dst)
     break;                                                              \
   }
 
+
+/* Check signed overflow of `a - b', `a + b' and `a * b'.
+ *
+ * a = -1, b = 2147483647 (INT_MAX)
+ * a + b = 2147483646, overflow = 0
+ * a - b = -2147483648, overflow = 0
+ *
+ * a = -2, b = 2147483647
+ * a + b = 2147483645, overflow = 0
+ * a - b = 2147483647, overflow = 1
+ *
+ * a = 2, b = -2147483647
+ * a + b = -2147483645, overflow = 0
+ * a - b = -2147483647, overflow = 1
+ *
+ * a = 2147483647, b = 1
+ * a + b = -2147483648, overflow = 1
+ * a - b = 2147483646, overflow = 0
+ *
+ * a = -2147483647, b = -2
+ * a + b = 2147483647, overflow = 1
+ * a - b = -2147483645, overflow = 0
+ *
+ * a = -2147483647, b = -1
+ * a + b = -2147483648, overflow = 0
+ * a - b = -2147483646, overflow = 0
+ */
+static bool
+__minus_overflow_p(int a, int b)
+{
+  return ((a < 0) == (b > 0) && ((a - b < 0) != (a < 0)));
+}
+
+static bool
+__add_overflow_p(int a, int b)
+{
+  return ((a < 0) == (b < 0) && ((a + b < 0) != (a < 0)));
+}
+
+/* Will false report iff. `a * b == INT_MIN' */
+static bool
+__mul_overflow_p(int a, int b)
+{
+  return abs(a) * abs(b) < 0;
+}
+
+
 static void
 _re_arith2(const char op, struct ls_real *dst, struct ls_real *src)
 {
@@ -201,20 +249,16 @@ _re_arith2(const char op, struct ls_real *dst, struct ls_real *src)
 
     switch (op) {
     case '-':
-      if (b != INT_MIN)
-          b = -b;
-      else {
+      if (!__minus_overflow_p(a, b))
+        dst->v -= b;
+      else
         need_promote = 1;
-        break;
-      }
-      /* PASSTHROUGH */
+      break;
     case '+':
-      if (a > 0 && b > 0 && a > (INT_MAX - b))
-        need_promote = 1;
-      else if (a < 0 && b < 0 && a < (INT_MIN - b))
-        need_promote = 1;
-      if (!need_promote)
+      if (!__add_overflow_p(a, b))
         dst->v += b;
+      else
+        need_promote = 1;
       break;
     case '/':
       if (a % b != 0)
@@ -223,22 +267,15 @@ _re_arith2(const char op, struct ls_real *dst, struct ls_real *src)
         dst->v /= b;
       break;
     case '*':
-      if (b == INT_MIN)
-        need_promote = 1;
-      if (b < 0)
-         b = -b;
-      if (b != 0) 
-        if ((a > 0 && a > (INT_MAX / b)) ||
-            (a < 0 && a < (INT_MAX / b)))
+      if (__mul_overflow_p(a, b))
           need_promote = 1;
-      if (!need_promote)
+      else
         dst->v *= src->v;
     }
 
-    if (need_promote)
-      _re_promote(dst, 1, 1);
-    else
+    if (!need_promote)
       return;
+    _re_promote(dst, 1, 1);
   }
 
   if (dst->type < op2->type)
