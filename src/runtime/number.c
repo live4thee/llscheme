@@ -83,9 +83,9 @@ static void
 _arith2(const char op, struct ls_object *dst, struct ls_object *src)
 {
   struct ls_real dr, sr, di, si;
-  int complex;
+  int is_complex;
 
-  complex = lso_is_complex(dst) || lso_is_complex(src);
+  is_complex = lso_is_complex(dst) || lso_is_complex(src);
 
   _re_get_lso_re(&dr, dst);
   _re_get_lso_re(&sr, src);
@@ -96,11 +96,11 @@ _arith2(const char op, struct ls_object *dst, struct ls_object *src)
   case '+':
   case '-':
     _re_arith2(op, &dr, &sr);
-    if (complex)
+    if (is_complex)
       _re_arith2(op, &di, &si);
     break;
   case '/':
-    if (!complex) {
+    if (!is_complex) {
       _re_arith2(op, &dr, &sr);
       break;
     } else {
@@ -122,7 +122,7 @@ _arith2(const char op, struct ls_object *dst, struct ls_object *src)
     }
     /* FALLTHROUGH */
   case '*':
-    if (!complex) {
+    if (!is_complex) {
       _re_arith2('*', &dr, &sr);
     } else {
       struct ls_real r, i;
@@ -684,7 +684,7 @@ struct ls_object *lsrt_builtin_string2number(int argc, struct ls_object *args[],
 
 char *_ntos(struct ls_object *number, int radix)
 {
-  int complex, type1, type2;
+  int is_complex, type_re, type_im;
   char fmt[20];
   char *str;
   int len, n;
@@ -695,13 +695,13 @@ char *_ntos(struct ls_object *number, int radix)
   /* TODO: radix other than 10 */
   UNUSED_ARGUMENT(radix);
 
-  complex = lso_is_complex(number);
-  type1 = lso_number_type_re(number);
-  type2 = lso_number_type_im(number);
+  is_complex = lso_is_complex(number);
+  type_re = lso_number_type_re(number);
+  type_im = lso_number_type_im(number);
 
-  switch(type1) {
+  switch(type_re) {
   case 0:
-    if (complex && number->u1.val == 0) {
+    if (is_complex && number->u1.val == 0) {
       arg1 = &n;     /* simply placeholder */
       strcpy(fmt, "%n");
     } else {
@@ -727,8 +727,8 @@ char *_ntos(struct ls_object *number, int radix)
     break;
   }
 
-  if (complex) {
-    switch(type2) {
+  if (is_complex) {
+    switch(type_im) {
     case 0:
       arg2 = (void *)((long) number->u2.val);
       if (number->u2.val == 1) {
