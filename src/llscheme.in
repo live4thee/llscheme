@@ -76,7 +76,7 @@ fi
 
 if [ x$ASSEMBLE = x0 ]; then
     if [ x$OUTPUT = x ]; then
-        RES=a.s
+        RES=a.ll
     else
         RES=$OUTPUT
     fi
