@@ -197,7 +197,7 @@ _re_canonicalize(struct ls_real *dst)
  * a - b = -2147483646, overflow = 0
  */
 static bool
-__minus_overflow_p(int a, int b, int* res)
+__sub_overflow_p(int a, int b, int* res)
 {
   int t = a - b;
   if ((a < 0) == (b > 0) && ((t < 0) != (a < 0)))
@@ -231,47 +231,133 @@ __mul_overflow_p(int a, int b, int* res)
   return false;
 }
 
-#define MP_ARITH_CASE(_n, _i)                                           \
+/*
+ * ls_real arithmetic: _re_arith2
+ *   for efficiency consideration, _re_arith2 is a little complex,
+ * since there are many different situations to handle.
+ *   below macros seems a little cryptic, but it reduces the redundency
+ * and makes things easier than not
+ */
+static inline unsigned int
+__si_to_ui(int si, int *sgn)
+{
+  if (si > 0) {
+    *sgn = 1;
+    return (unsigned) si;
+  }
+
+  if (si < 0) {
+    *sgn = -1;
+    return (unsigned)(-(si + 1)) + 1;   /* INT_MIN */
+  }
+
+  *sgn = 0;
+  return 0;
+}
+
+#define ls_mpz_div         mpz_divexact
+#define ls_mpz_div_ui      mpz_divexact_ui
+#define ls_mpq_div         mpq_div
+#define ls_mpf_div         mpf_div
+#define ls_mpf_div_ui      mpf_div_ui
+
+#define MP_ARITH_CASE_SIGN(_n, _sfx, _i, _op2, _sgn)                    \
   case _n: {                                                            \
     switch(op) {                                                        \
     case '+':                                                           \
-      mp ## _i ## _add(*dst->_i, *dst->_i, *op2->_i);                   \
+      if (_sgn != -1)                                                   \
+        mp ## _i ## _add ## _sfx(*dst->_i, *dst->_i, _op2);             \
+      else                                                              \
+        mp ## _i ## _sub ## _sfx(*dst->_i, *dst->_i, _op2);             \
       break;                                                            \
     case '-':                                                           \
-      mp ## _i ## _sub(*dst->_i, *dst->_i, *op2->_i);                   \
+      if (_sgn != -1)                                                   \
+        mp ## _i ## _sub ## _sfx(*dst->_i, *dst->_i, _op2);             \
+      else                                                              \
+        mp ## _i ## _add ## _sfx(*dst->_i, *dst->_i, _op2);             \
       break;                                                            \
     case '*':                                                           \
-      mp ## _i ## _mul(*dst->_i, *dst->_i, *op2->_i);                   \
+      mp ## _i ## _mul ## _sfx(*dst->_i, *dst->_i, _op2);               \
+      if (_sgn == -1)                                                   \
+        mp ## _i ## _neg(*dst->_i, *dst->_i);                           \
       break;                                                            \
     case '/':                                                           \
-      mp ## _i ## _div(*dst->_i, *dst->_i, *op2->_i);                   \
+      ls_mp ## _i ## _div ## _sfx(*dst->_i, *dst->_i, _op2);            \
+      if (_sgn == -1)                                                   \
+        mp ## _i ## _neg(*dst->_i, *dst->_i);                           \
       break;                                                            \
     }                                                                   \
     break;                                                              \
   }
 
+#define MP_ARITH_RATIONAL_CASE_SIGN(_sfx, _op2, _sgn)                   \
+  case 2: {                                                             \
+    switch(op) {                                                        \
+    case '+':                                                           \
+      if (_sgn != -1)                                                   \
+        mpz_addmul ## _sfx(mpq_numref(*dst->q),                         \
+                           mpq_denref(*dst->q), _op2);                  \
+      else                                                              \
+        mpz_submul ## _sfx(mpq_numref(*dst->q),                         \
+                           mpq_denref(*dst->q), _op2);                  \
+      break;                                                            \
+    case '-':                                                           \
+      if (_sgn != -1)                                                   \
+        mpz_submul ## _sfx(mpq_numref(*dst->q),                         \
+                           mpq_denref(*dst->q), _op2);                  \
+      else                                                              \
+        mpz_addmul ## _sfx(mpq_numref(*dst->q),                         \
+                           mpq_denref(*dst->q), _op2);                  \
+      break;                                                            \
+    case '*':                                                           \
+      mpz_mul ## _sfx(mpq_numref(*dst->q), mpq_numref(*dst->q), _op2);  \
+      if (_sgn == -1)                                                   \
+        mpz_neg(mpq_numref(*dst->q), mpq_numref(*dst->q));              \
+      break;                                                            \
+    case '/':                                                           \
+      mpz_mul ## _sfx(mpq_denref(*dst->q), mpq_denref(*dst->q), _op2);  \
+      if (_sgn == -1)                                                   \
+        mpz_neg(mpq_denref(*dst->q), mpq_denref(*dst->q));              \
+      break;                                                            \
+    }                                                                   \
+    break;                                                              \
+  }
 
+/* rely on compiler to cut off the unused conditional for constant _sgn */
+#define MP_ARITH_CASE(_n, _sfx, _i, _op2)       \
+  MP_ARITH_CASE_SIGN(_n, _sfx, _i, _op2, 1)
+#define MP_ARITH_RATIONAL_CASE(_sfx, _op2)      \
+  MP_ARITH_RATIONAL_CASE_SIGN(_sfx, _op2, 1)
 
+/*
+ *   avoid allocation as much as possible, i.e. avoid unnecessary
+ * _re_promote
+ */
 static void
 _re_arith2(const char op, struct ls_real *dst, struct ls_real *src)
 {
-  int nf = 0;
+  /* changing src is not allowed */
+  int need_free = 0;
   struct ls_real tmp = *src;
   struct ls_real *op2 = &tmp;
 
-  if (dst->type == 0 && op2->type == 0) {
-  /* do best to stay in machine integer */
+  /* do best to stay in plain integer */
+  if (dst->type == 0 && src->type == 0) {
     int need_promote = 0;
     int a = dst->v, b = src->v;
 
     switch (op) {
-    case '-':
-      if (__minus_overflow_p(a, b, &dst->v))
-        need_promote = 1;
-      break;
     case '+':
       if (__add_overflow_p(a, b, &dst->v))
         need_promote = 1;
+      break;
+    case '-':
+      if (__sub_overflow_p(a, b, &dst->v))
+        need_promote = 1;
+      break;
+    case '*':
+      if (__mul_overflow_p(a, b, &dst->v))
+          need_promote = 1;
       break;
     case '/':
       if (a % b != 0)
@@ -279,37 +365,82 @@ _re_arith2(const char op, struct ls_real *dst, struct ls_real *src)
       else
         dst->v /= b;
       break;
-    case '*':
-      if (__mul_overflow_p(a, b, &dst->v))
-          need_promote = 1;
     }
 
     if (!need_promote)
       return;
-    _re_promote(dst, 1, 1);
+
+    if (op == '/')
+      _re_promote(dst, 2, 1);
+    else
+      _re_promote(dst, 1, 1);
   }
 
-  if (dst->type < op2->type)
-    _re_promote(dst, op2->type, 1);
+  /* promote to mpq if src is {int, mpz} but not divisible */
+  if (op == '/' && dst->type == 1) {
+    if (src->type == 0) {
+      int sgn;
+      if (!mpz_divisible_ui_p(*dst->z, __si_to_ui(src->v, &sgn)))
+        _re_promote(dst, 2, 1);
+    } else if (src->type == 1) {
+      if (!mpz_divisible_p(*dst->z, *src->z))
+        _re_promote(dst, 2, 1);
+    }
+  }
 
-  if (op == '/' && dst->type == 1)
-    _re_promote(dst, 2, 1);
+  /* if src is integer, we don't bother create any gmp referent */
+  if (src->type == 0) {
+    int si = src->v;
+    unsigned int ui;
+    int sgn;
+    ui = __si_to_ui(si, &sgn);
+    switch (dst->type) {
+      MP_ARITH_CASE_SIGN(1, _ui, z, ui, sgn);
+      MP_ARITH_RATIONAL_CASE_SIGN(_ui, ui, sgn);
+      MP_ARITH_CASE_SIGN(3, _ui, f, ui, sgn);
+    }
+    _re_canonicalize(dst);
+    return;
+  }
 
-  if (op2->type < dst->type)
-    nf = _re_promote(op2, dst->type, 0);
+  /* rational op integer */
+  if (dst->type == 2 && src->type == 1) {
+    switch (dst->type) {
+      MP_ARITH_RATIONAL_CASE(, *src->z);
+    }
+    _re_canonicalize(dst);
+    return;
+  }
+
+  /* others */
+  if (dst->type < src->type)
+    _re_promote(dst, src->type, 1);
+
+
+  if (src->type < dst->type) {
+    /* we can't promote src but only op2 */
+    need_free = _re_promote(op2, dst->type, 0);
+  }
 
   switch (dst->type) {
-    MP_ARITH_CASE(1, z);
-    MP_ARITH_CASE(2, q);
-    MP_ARITH_CASE(3, f);
+    MP_ARITH_CASE(1, , z, *op2->z);
+    MP_ARITH_CASE(2, , q, *op2->q);
+    MP_ARITH_CASE(3, , f, *op2->f);
   }
 
   _re_canonicalize(dst);
-  if (nf)
+  if (need_free)
     _re_clear(op2);
 }
 
 #undef MP_ARITH_CASE
+#undef MP_ARITH_CASE_SIGN
+#undef MP_ARITH_RATIONAL_CASE_SIGN
+#undef ls_mpz_div
+#undef ls_mpz_div_ui
+#undef ls_mpq_div
+#undef ls_mpf_div
+#undef ls_mpf_div_ui
 
 /*
  * duplicating instead of reference for better usability

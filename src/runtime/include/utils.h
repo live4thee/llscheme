@@ -37,6 +37,18 @@
 #define ls_malloc GC_malloc
 #define ls_free(x) do {} while(0)
 
+#ifdef __GNUC__
+#define likely(x)    __builtin_expect(!!(x), 1)
+#define unlikely(x)  __builtin_expect(!!(x), 0)
+#endif
+
+#ifndef likely
+# define likely(x)      x
+#endif
+#ifndef unlikely
+# define unlikely(x)    x
+#endif
+
 void lsrt_memory_init(void);
 
 struct ls_object *lsrt_new_object(int type);
