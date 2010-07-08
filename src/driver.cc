@@ -90,7 +90,7 @@ static void InitializeLSRTFunctions(void) {
   FunctionType *ftype;
 
   v.push_back(Type::getInt8Ty(context)->getPointerTo());
-  ftype = FunctionType::get(Type::getVoidTy(context), v, false);
+  ftype = FunctionType::get(Type::getVoidTy(context), v, true);
   Function::Create(ftype, Function::ExternalLinkage,
                    "lsrt_error", module);
 

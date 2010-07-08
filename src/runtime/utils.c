@@ -24,6 +24,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
+
 #include <gmp.h>
 
 #include "utils.h"
@@ -100,10 +102,14 @@ void lsrt_fill_freelist(struct ls_object* freelist[],
   freelist[i] = obj;
 }
 
-/* TODO: printf like parameter */
-void lsrt_error(const char *str)
+void lsrt_error(const char *fmt, ...)
 {
-  fprintf(stderr, "error: %s\n", str? str: "");
+  va_list ap;
+  va_start(ap, fmt);
+  vfprintf(stderr, fmt, ap);
+  va_end(ap);
+
+  fputc('\n', stderr);
   exit(1);
 }
 
@@ -112,7 +118,8 @@ void lsrt_check_args_count(int min, int max, int argc)
 {
   if ((min != 0 && min > argc) ||
       (max != 0 && max < argc)) {
-    lsrt_error("fucntion count mismatch");
+    lsrt_error("fucntion count mismatch: min=%d, max=%d, argc=%d",
+        min, max, argc);
   }
 
   return;
@@ -161,7 +168,7 @@ void lsrt_check_symbol_unbound(struct ls_object *arg)
     lsrt_error("internal error");
 
   if (lso_symbol_deref(arg) == NULL)
-    lsrt_error("unbounded variable");
+    lsrt_error("unbounded symbol: %s", lso_symbol_name(arg));
 }
 
 int lsrt_main_retval(struct ls_object *lso)

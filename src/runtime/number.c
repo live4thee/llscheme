@@ -158,7 +158,7 @@ _arith(const char op, int argc, struct ls_object *args[])
 
   /* '/' and '-' requires at least one operand */
   if ((op == '/' || op == '-') && (argc == 0))
-    lsrt_error("invalid number of operand");
+    lsrt_error("invalid number of operand (op=`%c', argc=%d)", op, argc);
 
   switch (op) {
     case '+': ret = lsrt_new_number(0); break;
@@ -182,7 +182,7 @@ _arith(const char op, int argc, struct ls_object *args[])
               }
               break;
     default:
-      lsrt_error("invalid operator");
+      lsrt_error("invalid operator: %c", op);
   }
 
   for (; i < argc; i++) {
@@ -450,7 +450,7 @@ void _lsrt_mpq_set_decimal(mpq_t q, const char *ptr, int radix)
   char ch = '+';
 
   if (radix != 10)
-    lsrt_error("exact decimal number not in base 10 not supported");
+    lsrt_error("unsupported radix for exact decimal number: %d", radix);
 
   mpz_init_set_ui(num, 0);
   mpz_init_set_ui(dec, 0);

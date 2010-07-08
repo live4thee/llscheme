@@ -57,7 +57,13 @@ struct ls_object *lsrt_duplicate_number(struct ls_object *num);
 struct ls_object **lsrt_new_freelist(int count);
 void lsrt_fill_freelist(struct ls_object* freelist[],
                         int i, struct ls_object* obj);
-void lsrt_error(const char *str);
+
+void lsrt_error(const char *fmt, ...)
+#ifdef __GNUC__
+__attribute__ ((format(printf, 1, 2))) __attribute__ ((noreturn))
+#endif
+  ;
+
 void lsrt_check_args_count(int min, int max, int argc);
 void lsrt_check_arg_type(struct ls_object *args[], int i, char c);
 void lsrt_check_symbol_unbound(struct ls_object *arg);
