@@ -22,7 +22,6 @@
 /* This file is part of the runtime */
 
 #include "utils.h"
-#include "runtime/object.h"
 
 /**********************************************************
  * Section 6.3.2 Pairs and Lists
@@ -65,6 +64,32 @@ struct ls_object *lsrt_builtin_cdr(int argc, struct ls_object *args[],
   return lso_pair_cdr(args[0]);
 }
 
+BUILTIN("null?", nullp);
+struct ls_object *lsrt_builtin_nullp(int argc, struct ls_object *args[],
+                                   struct ls_object *freelist[])
+{
+  struct ls_object* obj = NULL;
+  UNUSED_ARGUMENT(freelist);
+  lsrt_check_args_count(1, 1, argc);
+
+  obj = lsrt_new_object(ls_t_boolean);
+  lso_boolean(obj) = lso_is_nil(args[0]);
+  return obj;
+}
+
+BUILTIN("pair?", pairp);
+struct ls_object *lsrt_builtin_pairp(int argc, struct ls_object *args[],
+                                   struct ls_object *freelist[])
+{
+  struct ls_object* obj = NULL;
+  UNUSED_ARGUMENT(freelist);
+  lsrt_check_args_count(1, 1, argc);
+
+  obj = lsrt_new_object(ls_t_boolean);
+  lso_boolean(obj) = lso_is_pair(args[0]);
+  return obj;
+}
+
 BUILTIN_LIB("list", list);
 struct ls_object *lsrt_builtin_list(int argc, struct ls_object *args[],
                                     struct ls_object *freelist[])
@@ -85,6 +110,35 @@ struct ls_object *lsrt_builtin_list(int argc, struct ls_object *args[],
   return pair;
 }
 
+/* Return the length of a list and -1 if not a list. */
+static int _length(const struct ls_object* obj)
+{
+  int len = 0;
+  const struct ls_object* it = obj;
+
+  while (!lso_is_nil(it)) {
+    if (lso_is_pair(it)) {
+      it = lso_pair_cdr(it);
+      len++;
+    } else return -1;
+  }
+
+  return len;
+}
+
+BUILTIN("list?", listp);
+struct ls_object *lsrt_builtin_listp(int argc, struct ls_object *args[],
+                                   struct ls_object *freelist[])
+{
+  struct ls_object* obj = NULL;
+  UNUSED_ARGUMENT(freelist);
+  lsrt_check_args_count(1, 1, argc);
+
+  obj = lsrt_new_object(ls_t_boolean);
+  lso_boolean(obj) = (_length(args[0]) != -1);
+  return obj;
+}
+
 BUILTIN_LIB("length", length);
 struct ls_object *lsrt_builtin_length(int argc, struct ls_object *args[],
                                       struct ls_object *freelist[])
@@ -96,20 +150,11 @@ struct ls_object *lsrt_builtin_length(int argc, struct ls_object *args[],
   lsrt_check_args_count(1, 1, argc);
 
   obj = lsrt_new_object(ls_t_number);
+  n = _length(args[0]);
+  if (n == -1)
+    lsrt_error("length requires a list");
 
-  for (n = 0, it = args[0];;) {
-    if (lso_is_nil(it)) {
-      lso_number(obj) = n;
-      break;
-    }
-    else if (lso_is_pair(it)) {
-      it = lso_pair_cdr(it);
-      n++;
-    }
-    else
-      lsrt_error("length requires a list");
-  }
-
+  lso_number(obj) = n;
   return obj;
 }
 

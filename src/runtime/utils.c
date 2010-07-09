@@ -133,6 +133,7 @@ void lsrt_check_args_count(int min, int max, int argc)
  * `n' for number or bignum
  * `p' for pair
  * `f' for function
+ * `s' for string
  */
 void lsrt_check_arg_type(struct ls_object *args[], int i, char c)
 {
@@ -153,6 +154,10 @@ void lsrt_check_arg_type(struct ls_object *args[], int i, char c)
   case 's':
     if (!lso_is_string(args[i]) || lso_string_get(args[i]) == NULL)
       lsrt_error("expected string");
+    break;
+  case 'p':
+    if (!lso_is_pair(args[i]))
+      lsrt_error("expect pair");
     break;
   default:
     break;

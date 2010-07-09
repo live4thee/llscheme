@@ -32,7 +32,17 @@ b
 ; complex cases
 (cons () ''(a 'b #t '#t (a . b)))
 (length '())
-(length '(a . 'a))
-(length '(a. a))
-; should fail
-; (length '(a . a))
+(length '(a . 'a)) ; 3
+(length '(a . a)) ; should fail
+
+; type check
+(null? '())  ; #t
+(null? '(1)) ; #f
+(null? 1)    ; #f
+
+(pair? '())  ; #f
+(pair? '(1)) ; #t
+(pair? '(1 . 2)) ; #t
+
+(list? '())  ; #t
+(list? '(1 . 2)) ; #f

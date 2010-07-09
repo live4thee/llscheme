@@ -167,6 +167,9 @@ static const struct _builtin_proc {
   { "cdr", "" },
   { "list", "" },
   { "length", "" },
+  { "null?", "nullp" },
+  { "pair?", "pairp" },
+  { "list?", "listp" },
   { "string->number", "string2number" },
 };
 static const int num_builtin_proc =
