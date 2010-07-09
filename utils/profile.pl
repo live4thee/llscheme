@@ -55,6 +55,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-?-block$/)    { $ProfilePass = "-insert-block-profiling"; next; }
   if (/^-?-edge$/)     { $ProfilePass = "-insert-edge-profiling"; next; }
   if (/^-?-function$/) { $ProfilePass = "-insert-function-profiling"; next; }
+  if (/^-?-disopt$/)   { $ProfilePass = "-disable-opt"; next; }
   if (/^-?-load$/) {      # Read -load filename...
     die "-load option requires a plug-in filename!" if (!scalar(@ARGV));
     $LliLoadFiles .= " -load $ARGV[0]";
@@ -75,7 +76,8 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
     print "  -block       - Enable basic block profiling\n";
     print "  -edge        - Enable edge profiling\n";
     print "  -function    - Enable function profiling\n";
-    print "  -load <file> - Load a shared object for lli\n";
+    print "  -disopt      - Disable optimization for `opt'\n";
+    print "  -load <file> - Load a shared object for `lli'\n";
     print "  -o <file>    - Specify an output file other than llvm-prof.out.\n";
     print "  -help        - Print this usage information\n";
     print "\nAll other options are passed into llvm-prof.\n";
