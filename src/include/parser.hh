@@ -37,14 +37,6 @@ public:
   const Token& peekToken(int idx) const;
   int peekTokenType(int idx) const;
 
-  void form(void);
-  void ifexp(void);
-  void define(void);
-  void lambda(void);
-  void args(void);
-  void quote(void);
-  void apply(void);
-
   ASTNode *exp(void);
 
 private:
