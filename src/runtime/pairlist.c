@@ -126,6 +126,19 @@ static int _length(const struct ls_object* obj)
   return len;
 }
 
+static int _listp(const struct ls_object* obj)
+{
+  const struct ls_object* it = obj;
+
+  while (!lso_is_nil(it)) {
+    if (lso_is_pair(it)) {
+      it = lso_pair_cdr(it);
+    } else return 0;
+  }
+
+  return 1;
+}
+
 BUILTIN("list?", listp);
 struct ls_object *lsrt_builtin_listp(int argc, struct ls_object *args[],
                                    struct ls_object *freelist[])
@@ -135,7 +148,7 @@ struct ls_object *lsrt_builtin_listp(int argc, struct ls_object *args[],
   lsrt_check_args_count(1, 1, argc);
 
   obj = lsrt_new_object(ls_t_boolean);
-  lso_boolean(obj) = (_length(args[0]) != -1);
+  lso_boolean(obj) = _listp(args[0]);
   return obj;
 }
 
