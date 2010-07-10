@@ -110,7 +110,9 @@ struct ls_object *lsrt_builtin_list(int argc, struct ls_object *args[],
   return pair;
 }
 
-/* Return the length of a list and -1 if not a list. */
+/* Return the length of a list and -1 if not a list.
+ * potential bug if list length can't be held in an `int'.
+ */
 static int _length(const struct ls_object* obj)
 {
   int len = 0;
@@ -162,13 +164,40 @@ struct ls_object *lsrt_builtin_length(int argc, struct ls_object *args[],
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 1, argc);
 
-  obj = lsrt_new_object(ls_t_number);
-  n = _length(args[0]);
-  if (n == -1)
-    lsrt_error("length requires a list");
+  if (!_listp(args[0]))
+    lsrt_error("%s requires a list", __func__);
 
+  obj = lsrt_new_object(ls_t_number);
   lso_number(obj) = n;
   return obj;
+}
+
+BUILTIN_LIB("list-ref", listref);
+struct ls_object *lsrt_builtin_listref(int argc, struct ls_object *args[],
+                                      struct ls_object *freelist[])
+{
+  struct ls_object *it;
+  int len, idx;
+
+  UNUSED_ARGUMENT(freelist);
+  lsrt_check_args_count(2, 2, argc);
+
+  len = _length(args[0]);
+  if (len == -1)
+    lsrt_error("%s requires a list", __func__);
+
+  if (!lso_is_number(args[1]))
+    lsrt_error("(Argument 2) Exact INTEGER expected");
+
+  idx = lso_simplenumber_get(args[1]);
+  if (idx < 0 || idx >= len)
+    lsrt_error("(Argument 2) out of range: %d", idx);
+
+  for (it = args[0]; idx > 0; --idx) {
+    it = lso_pair_cdr(it);
+  }
+
+  return lso_pair_car(it);
 }
 
 /* vim: set et ts=2 sw=2 cin: */

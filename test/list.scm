@@ -46,3 +46,6 @@ b
 
 (list? '())  ; #t
 (list? '(1 . 2)) ; #f
+
+; list-ref
+(list-ref '(1 2 3) 1) ; 2

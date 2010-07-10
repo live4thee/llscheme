@@ -170,6 +170,7 @@ static const struct _builtin_proc {
   { "null?", "nullp" },
   { "pair?", "pairp" },
   { "list?", "listp" },
+  { "list-ref", "listref" },
   { "string->number", "string2number" },
 };
 static const int num_builtin_proc =
