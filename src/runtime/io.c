@@ -23,10 +23,8 @@
 /* This file is part of the runtime */
 
 #include <stdio.h>
-#include <gmp.h>
 
 #include "utils.h"
-#include "runtime/object.h"
 
 /**********************************************************
  * Section 6.6 Input and Output

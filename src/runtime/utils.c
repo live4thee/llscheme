@@ -29,7 +29,6 @@
 #include <gmp.h>
 
 #include "utils.h"
-#include "runtime/object.h"
 
 /*
  * We need:

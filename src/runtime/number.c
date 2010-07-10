@@ -21,15 +21,13 @@
 
 /* This file is part of the runtime */
 
-#include <gmp.h>
+#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include <malloc.h>
+#include <stdlib.h>
 
 #include "utils.h"
 #include "number.h"
-#include "runtime/object.h"
-
 /**********************************************************
  * Section 6.2. Numbers
  **********************************************************/

@@ -25,9 +25,8 @@
 #define RUNTIME_NUMBER_H_
 
 #include <stdbool.h>
-#include <stdlib.h>
 
-#include "utils.h"
+#include <gmp.h>
 
 /* lsrt's representation of real numbers */
 struct ls_real
