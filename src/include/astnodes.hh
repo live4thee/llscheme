@@ -185,11 +185,12 @@ public:
   }
 
   void setLast(ASTNode *r) {
-    if (last != NULL && last != r) {
+    if (last != NULL && last != r)
       PutASTNode(last);
-      last = r;
+    if (last != r)
       r->get();
-    }
+
+    last = r;
   }
 
   void finePrint(std::stringstream &ss) const;

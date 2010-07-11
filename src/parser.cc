@@ -97,8 +97,8 @@ ASTNode *Parser::exp(void)
       if (peekTokenType(1) == Lexer::PERIOD) {
         consume();
         sexpr->setLast(exp());
-	match(Lexer::RPAREN);
-	return sexpr;
+        match(Lexer::RPAREN);
+        return sexpr;
       }
 
       sexpr->addArgument(exp());
