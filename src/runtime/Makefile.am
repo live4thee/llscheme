@@ -4,6 +4,7 @@ liblsrt_la_CPPFLAGS = -W -Wall -Wstrict-prototypes -I$(top_srcdir)/src/include -
 liblsrt_la_LDFLAGS = -lgmp @TARGET_LIBS@
 liblsrt_la_SOURCES = utils.c \
                      number.c \
+                     strings.c \
                      pairlist.c \
                      io.c
 

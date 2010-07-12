@@ -151,6 +151,7 @@ struct ls_object * (*ls_func_type) (int argc, struct ls_object *args[],
 #define lso_set_type(x, t) do { (x)->type = t; } while(0)
 #define lso_number(x)   (x)->u1.val
 #define lso_boolean(x)  (x)->u1.val
+#define lso_string(x)   (x)->u1.ptr
 
 #endif /* _LLSCHEME_RUNTIME */
 #endif /* OBJECT_H_ */

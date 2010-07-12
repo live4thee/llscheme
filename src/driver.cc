@@ -172,7 +172,15 @@ static const struct _builtin_proc {
   { "null?", "nullp" },
   { "pair?", "pairp" },
   { "list?", "listp" },
+  { "string?", "strp" },
+  { "symbol?", "symp" },
+  { "string=?", "streq" },
+  { "string-ci=?", "strcaseeq" },
+  { "string-length", "strlen" },
+  { "substring", "" },
+  { "string-append", "strappend" },
   { "list-ref", "listref" },
+  { "symbol->string", "sym2str" },
   { "string->number", "string2number" },
 };
 static const int num_builtin_proc =
