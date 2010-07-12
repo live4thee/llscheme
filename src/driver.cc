@@ -123,12 +123,10 @@ static void InitializeLSRTFunctions(void) {
   Function::Create(ftype, Function::ExternalLinkage,
                    "lsrt_check_args_count", module);
   v.clear();
-  v.push_back(LSObjType->getPointerTo()->getPointerTo());
-  v.push_back(Type::getInt32Ty(context));
-  v.push_back(Type::getInt8Ty(context));
+  v.push_back(LSObjType->getPointerTo());
   ftype = FunctionType::get(Type::getVoidTy(context), v, false);
   Function::Create(ftype, Function::ExternalLinkage,
-                   "lsrt_check_arg_type", module);
+                   "lsrt_func_p", module);
   v.clear();
   v.push_back(LSObjType->getPointerTo());
   ftype = FunctionType::get(Type::getVoidTy(context), v, false);

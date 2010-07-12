@@ -298,14 +298,7 @@ Value *SExprASTNode::codeGenEval() {
   }
 
   // TODO: put things in one alloca
-  // func -> func_ptr, type safety check
-  addr = builder.CreateAlloca(LSObjType->getPointerTo(),
-                              ConstantInt::get(Type::getInt32Ty(context), 1));
-  builder.CreateStore(func, addr);
-  builder.CreateCall3(module->getFunction("lsrt_check_arg_type"),
-                      addr,
-                      ConstantInt::get(Type::getInt32Ty(context), 0),
-                      ConstantInt::get(Type::getInt8Ty(context), 'f'));
+  builder.CreateCall(module->getFunction("lsrt_func_p"), func);
   addr = LSObjGetPointerAddr(context, func, 0, 1);
   fptr = builder.CreateLoad(addr);
   free = builder.CreateLoad(LSObjGetPointerAddr(context, func, 0, 2));

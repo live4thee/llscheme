@@ -50,7 +50,7 @@ struct ls_object *lsrt_builtin_sym2str(int argc, struct ls_object *args[],
   struct ls_object* obj = NULL;
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 1, argc);
-  lsrt_check_arg_type(args, 0, 'S');
+  lsrt_symbol_p(args[0]);
 
   obj = lsrt_new_object(ls_t_string);
   // maybe we need to duplicate a copy?
@@ -83,7 +83,7 @@ struct ls_object *lsrt_builtin_strlen(int argc, struct ls_object *args[],
   struct ls_object* obj = NULL;
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 1, argc);
-  lsrt_check_arg_type(args, 0, 's');
+  lsrt_string_p(args[0]);
 
   obj = lsrt_new_object(ls_t_number);
   lso_number(obj) = strlen(lso_string_get(args[0]));
@@ -97,8 +97,8 @@ struct ls_object *lsrt_builtin_streq(int argc, struct ls_object *args[],
   struct ls_object* obj = NULL;
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(2, 2, argc);
-  lsrt_check_arg_type(args, 0, 's');
-  lsrt_check_arg_type(args, 1, 's');
+  lsrt_string_p(args[0]);
+  lsrt_string_p(args[1]);
 
   obj = lsrt_new_object(ls_t_boolean);
   lso_boolean(obj) = strcmp(lso_string_get(args[0]),
@@ -113,8 +113,8 @@ struct ls_object *lsrt_builtin_strcaseeq(int argc, struct ls_object *args[],
   struct ls_object* obj = NULL;
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(2, 2, argc);
-  lsrt_check_arg_type(args, 0, 's');
-  lsrt_check_arg_type(args, 1, 's');
+  lsrt_string_p(args[0]);
+  lsrt_string_p(args[1]);
 
   obj = lsrt_new_object(ls_t_boolean);
   lso_boolean(obj) = strcasecmp(lso_string_get(args[0]),
@@ -131,9 +131,9 @@ struct ls_object *lsrt_builtin_substring(int argc, struct ls_object *args[],
   char* str, *buf;
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(3, 3, argc);
-  lsrt_check_arg_type(args, 0, 's');
-  lsrt_check_arg_type(args, 1, 'n');
-  lsrt_check_arg_type(args, 2, 'n');
+  lsrt_string_p(args[0]);
+  lsrt_number_p(args[1]);
+  lsrt_number_p(args[2]);
 
   str = lso_string_get(args[0]);
   len = strlen(str);
@@ -164,7 +164,7 @@ struct ls_object *lsrt_builtin_strappend(int argc, struct ls_object *args[],
   lsrt_check_args_count(1, 0, argc);
 
   for (idx = 0; idx < argc; ++idx) {
-    lsrt_check_arg_type(args, idx, 's');
+    lsrt_string_p(args[idx]);
     total_len += strlen(lso_string_get(args[idx]));
   }
 

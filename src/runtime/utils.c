@@ -124,54 +124,46 @@ void lsrt_check_args_count(int min, int max, int argc)
   return;
 }
 
-/*
- * may be slow, but we get simplicity at this point
- * this needs to be moved to code generator
- *
- * `a' for any
- * `o' for any but void
- * `n' for number or bignum
- * `p' for pair
- * `f' for function
- * `s' for string
- * `S' for symbol
- */
-void lsrt_check_arg_type(struct ls_object *args[], int i, char c)
-{
-  switch (c) {
-  case 'a': break;
-  case 'o':
-    if (!lso_is_void(args[i]))
-      lsrt_error("fucntion argument type mismatch");
-    break;
-  case 'n':
-    if (!lso_is_number(args[i]))
-      lsrt_error("expected number");
-    break;
-  case 'f':
-    if (!lso_is_func(args[i]) || lso_func_get(args[i]) == NULL)
-      lsrt_error("expected function");
-    break;
-  case 's':
-    if (!lso_is_string(args[i]) || lso_string_get(args[i]) == NULL)
-      lsrt_error("expected string");
-    break;
-  case 'S':
-    if (!lso_is_symbol(args[i]))
-      lsrt_error("expected symbol");
-    break;
-  case 'p':
-    if (!lso_is_pair(args[i]))
-      lsrt_error("expect pair");
-    break;
-  default:
-    break;
-  }
+#define fail_on(cond, msg...) do {              \
+  if ((cond))                                   \
+    lsrt_error(msg);                            \
+} while(0)
 
-  return;
+void lsrt_func_p(const struct ls_object* obj)
+{
+  fail_on((!lso_is_func(obj) || lso_func_get(obj) == NULL),
+      "expected function");
 }
 
-void lsrt_check_symbol_unbound(struct ls_object *arg)
+void lsrt_void_p(const struct ls_object* obj)
+{
+  fail_on(!lso_is_void(obj), "fucntion argument type mismatch");
+}
+
+void lsrt_pair_p(const struct ls_object* obj)
+{
+  fail_on(!lso_is_pair(obj), "expected pair");
+}
+
+void lsrt_number_p(const struct ls_object *obj)
+{
+  fail_on(!lso_is_number(obj), "expected number");
+}
+
+void lsrt_string_p(const struct ls_object *obj)
+{
+  fail_on((!lso_is_string(obj) || lso_string_get(obj) == NULL),
+      "expected string");
+}
+
+void lsrt_symbol_p(const struct ls_object* obj)
+{
+  fail_on(!lso_is_symbol(obj), "expected symbol");
+}
+
+#undef fail_on
+
+void lsrt_check_symbol_unbound(const struct ls_object *arg)
 {
   if (!lso_is_symbol(arg))
     lsrt_error("internal error");
@@ -180,7 +172,7 @@ void lsrt_check_symbol_unbound(struct ls_object *arg)
     lsrt_error("unbounded symbol: %s", lso_symbol_name(arg));
 }
 
-int lsrt_main_retval(struct ls_object *lso)
+int lsrt_main_retval(const struct ls_object *lso)
 {
   if (lso_is_simplenumber(lso))
     return lso_simplenumber_get(lso);
@@ -191,7 +183,7 @@ int lsrt_main_retval(struct ls_object *lso)
   return 0;
 }
 
-int lsrt_test_expr(struct ls_object *lso)
+int lsrt_test_expr(const struct ls_object *lso)
 {
   if (lso_is_boolean(lso) && lso_boolean_get(lso) == 0)
     return 0;

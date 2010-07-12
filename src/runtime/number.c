@@ -165,7 +165,7 @@ _arith(const char op, int argc, struct ls_object *args[])
     case '-': if (argc == 1) {
                 ret = lsrt_new_number(0);
               } else {
-                lsrt_check_arg_type(args, 0, 'n');
+                lsrt_number_p(args[0]);
                 ret = lsrt_duplicate_number(args[0]);
                 i = 1;
               }
@@ -174,7 +174,7 @@ _arith(const char op, int argc, struct ls_object *args[])
     case '/': if (argc == 1) {
                 ret = lsrt_new_number(1);
               } else {
-                lsrt_check_arg_type(args, 0, 'n');
+                lsrt_number_p(args[0]);
                 ret = lsrt_duplicate_number(args[0]);
                 i = 1;
               }
@@ -184,7 +184,7 @@ _arith(const char op, int argc, struct ls_object *args[])
   }
 
   for (; i < argc; i++) {
-    lsrt_check_arg_type(args, i, 'n');
+    lsrt_number_p(args[i]);
     _arith2(op, ret, args[i]);
   }
 
@@ -239,11 +239,11 @@ _order(char op, int argc, struct ls_object *args[])
   if (argc == 0)
     return ret;
   else {
-    lsrt_check_arg_type(args, 0, 'n');
+    lsrt_number_p(args[0]);
     last = lso_simplenumber_get(args[0]);
 
     for (i = 1; i < argc; i++) {
-      lsrt_check_arg_type(args, i, 'n');
+      lsrt_number_p(args[i]);
       curr = lso_simplenumber_get(args[i]);
 
       switch (op) {
@@ -676,7 +676,7 @@ struct ls_object *lsrt_builtin_string2number(int argc, struct ls_object *args[],
 
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 2, argc);
-  lsrt_check_arg_type(args, 0, 's');
+  lsrt_string_p(args[0]);
 
   ret = lsrt_new_object(ls_t_number);
   if (argc == 2 && lso_is_simplenumber(args[1]))

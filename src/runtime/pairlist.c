@@ -48,7 +48,7 @@ struct ls_object *lsrt_builtin_car(int argc, struct ls_object *args[],
 {
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 1, argc);
-  lsrt_check_arg_type(args, 0, 'p');
+  lsrt_pair_p(args[0]);
 
   return lso_pair_car(args[0]);
 }
@@ -59,7 +59,7 @@ struct ls_object *lsrt_builtin_setcar(int argc, struct ls_object *args[],
 {
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(2, 2, argc);
-  lsrt_check_arg_type(args, 0, 'p');
+  lsrt_pair_p(args[0]);
 
   lso_set_car(args[0], args[1]);
   return lsrt_new_object(ls_t_unknown);
@@ -71,7 +71,7 @@ struct ls_object *lsrt_builtin_cdr(int argc, struct ls_object *args[],
 {
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 1, argc);
-  lsrt_check_arg_type(args, 0, 'p');
+  lsrt_pair_p(args[0]);
 
   return lso_pair_cdr(args[0]);
 }
@@ -82,7 +82,7 @@ struct ls_object *lsrt_builtin_setcdr(int argc, struct ls_object *args[],
 {
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(2, 2, argc);
-  lsrt_check_arg_type(args, 0, 'p');
+  lsrt_pair_p(args[0]);
 
   lso_set_cdr(args[0], args[1]);
   return lsrt_new_object(ls_t_unknown);

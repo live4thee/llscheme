@@ -65,10 +65,16 @@ __attribute__ ((format(printf, 1, 2))) __attribute__ ((noreturn))
   ;
 
 void lsrt_check_args_count(int min, int max, int argc);
-void lsrt_check_arg_type(struct ls_object *args[], int i, char c);
-void lsrt_check_symbol_unbound(struct ls_object *arg);
-int lsrt_main_retval(struct ls_object *lso);
-int lsrt_test_expr(struct ls_object *lso);
+void lsrt_check_symbol_unbound(const struct ls_object *arg);
+int lsrt_main_retval(const struct ls_object *lso);
+int lsrt_test_expr(const struct ls_object *lso);
+
+void lsrt_func_p(const struct ls_object *obj);
+void lsrt_void_p(const struct ls_object *obj);
+void lsrt_pair_p(const struct ls_object *obj);
+void lsrt_number_p(const struct ls_object *obj);
+void lsrt_string_p(const struct ls_object *obj);
+void lsrt_symbol_p(const struct ls_object *obj);
 
 /*
  * it doesn't do much at the moment, but in future, it can behave
