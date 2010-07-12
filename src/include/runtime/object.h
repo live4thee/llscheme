@@ -144,6 +144,8 @@ struct ls_object * (*ls_func_type) (int argc, struct ls_object *args[],
 #define lso_string_get(x)       ((char *) (x)->u1.ptr)
 #define lso_pair_car(x)         ((struct ls_object *) (x)->u1.ptr)
 #define lso_pair_cdr(x)         ((struct ls_object *) (x)->u2.ptr)
+#define lso_set_car(x, t)       do { (x)->u1.ptr = t; } while(0)
+#define lso_set_cdr(x, t)       do { (x)->u2.ptr = t; } while(0)
 #define lso_func_get(x)         ((ls_func_type) (x)->u1.ptr)
 
 #define lso_set_type(x, t) do { (x)->type = t; } while(0)

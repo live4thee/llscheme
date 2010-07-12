@@ -165,6 +165,8 @@ static const struct _builtin_proc {
   { "cons", "" },
   { "car", "" },
   { "cdr", "" },
+  { "set-car!", "setcar" },
+  { "set-cdr!", "setcdr" },
   { "list", "" },
   { "length", "" },
   { "null?", "nullp" },

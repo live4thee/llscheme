@@ -36,8 +36,8 @@ struct ls_object *lsrt_builtin_cons(int argc, struct ls_object *args[],
   lsrt_check_args_count(2, 2, argc);
 
   ret = lsrt_new_object(ls_t_pair);
-  ret->u1.ptr = args[0];
-  ret->u2.ptr = args[1];
+  lso_set_car(ret, args[0]);
+  lso_set_cdr(ret, args[1]);
 
   return ret;
 }
@@ -53,6 +53,18 @@ struct ls_object *lsrt_builtin_car(int argc, struct ls_object *args[],
   return lso_pair_car(args[0]);
 }
 
+BUILTIN("set-car!", setcar);
+struct ls_object *lsrt_builtin_setcar(int argc, struct ls_object *args[],
+                                   struct ls_object *freelist[])
+{
+  UNUSED_ARGUMENT(freelist);
+  lsrt_check_args_count(2, 2, argc);
+  lsrt_check_arg_type(args, 0, 'p');
+
+  lso_set_car(args[0], args[1]);
+  return lsrt_new_object(ls_t_unknown);
+}
+
 BUILTIN("cdr", cdr);
 struct ls_object *lsrt_builtin_cdr(int argc, struct ls_object *args[],
                                    struct ls_object *freelist[])
@@ -62,6 +74,18 @@ struct ls_object *lsrt_builtin_cdr(int argc, struct ls_object *args[],
   lsrt_check_arg_type(args, 0, 'p');
 
   return lso_pair_cdr(args[0]);
+}
+
+BUILTIN("set-cdr!", setcdr);
+struct ls_object *lsrt_builtin_setcdr(int argc, struct ls_object *args[],
+                                   struct ls_object *freelist[])
+{
+  UNUSED_ARGUMENT(freelist);
+  lsrt_check_args_count(2, 2, argc);
+  lsrt_check_arg_type(args, 0, 'p');
+
+  lso_set_cdr(args[0], args[1]);
+  return lsrt_new_object(ls_t_unknown);
 }
 
 BUILTIN("null?", nullp);
@@ -158,13 +182,14 @@ BUILTIN_LIB("length", length);
 struct ls_object *lsrt_builtin_length(int argc, struct ls_object *args[],
                                       struct ls_object *freelist[])
 {
-  struct ls_object *obj, *it;
+  struct ls_object *obj;
   int n;
 
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 1, argc);
 
-  if (!_listp(args[0]))
+  n = _length(args[0]);
+  if (n == -1)
     lsrt_error("%s requires a list", __func__);
 
   obj = lsrt_new_object(ls_t_number);

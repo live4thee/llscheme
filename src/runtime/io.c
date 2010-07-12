@@ -38,7 +38,8 @@ char *_ntos(struct ls_object *number);
 
 static void _display(struct ls_object *lso, int fp)
 {
-  switch (lso_type(lso)) {
+  int type = lso_type(lso);
+  switch (type) {
   case ls_t_void:
     printf("<void>");
     break;
@@ -85,8 +86,11 @@ static void _display(struct ls_object *lso, int fp)
   case ls_t_func:
     printf("<procedure %p>", lso_func_get(lso));
     break;
-  default:
+  case ls_t_unknown:
+    printf("#<unspecified>");
     break;
+  default:
+    lsrt_error("unknown type: %d", type);
   }
 }
 
