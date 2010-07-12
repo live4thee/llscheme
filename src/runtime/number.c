@@ -232,7 +232,7 @@ _order(char op, int argc, struct ls_object *args[])
 {
   struct ls_object *ret = lsrt_new_object(ls_t_boolean);
   int i;
-  int32_t n;
+  int32_t last, curr;
 
   lso_boolean(ret) = 1;
 
@@ -240,32 +240,39 @@ _order(char op, int argc, struct ls_object *args[])
     return ret;
   else {
     lsrt_check_arg_type(args, 0, 'n');
-    n = lso_simplenumber_get(args[0]);
+    last = lso_simplenumber_get(args[0]);
+
     for (i = 1; i < argc; i++) {
+      lsrt_check_arg_type(args, i, 'n');
+      curr = lso_simplenumber_get(args[i]);
+
       switch (op) {
       case '=':
-        if (lso_simplenumber_get(args[i]) != n)
+        if (last != curr)
           goto fail;
         break;
       case '<':
-        if (lso_simplenumber_get(args[i]) >= n)
+        if (last >= curr)
           goto fail;
         break;
       case '>':
-        if (lso_simplenumber_get(args[i]) <= n)
+        if (last <= curr)
           goto fail;
         break;
       case 'l':
-        if (lso_simplenumber_get(args[i]) > n)
+        if (last > curr)
           goto fail;
         break;
       case 'g':
-        if (lso_simplenumber_get(args[i]) < n)
+        if (last < curr)
           goto fail;
         break;
       default:
+        lsrt_error("unsupported op: %c", op);
         break;
       }
+
+      last = curr;
     }
   }
   return ret;
