@@ -5,6 +5,7 @@ Dependencies
 ------------
 1. LLVM C++ API and tools, http://llvm.org/
 2. BDW-GC library, http://www.hpl.hp.com/personal/Hans_Boehm/gc/
+3. GMP library, http://gmplib.org/
 
 llscheme is developed with LLVM 2.6 and 2.7, and we are not sure
 whether it will compile on other versions.
@@ -23,12 +24,29 @@ To build:
     make
     sudo make install
 
+Features:
+--------
+* Rudimentary support of special form: define, lambda, if, quote
+* Supported data types: integer, string, list
+
+A list of implemented built-in procedures:
+1. Arithmetic
+   +, -, *, /, =, <, >, <=, >=
+
+2. Pair and List
+   cons, car, cdr, set-car!, set-cdr!, list, length, list-ref
+   null?, pair?, list?
+
+3. String and Symbol
+   string?, symbol?, string=?, string-ci=?, string-length, substring,
+   string-append, string->number
+
+4. I/O
+   display
+
 TODO
 ----
-
-2. GMP library integration;
 3. Implement let/let*/letrec;
-4. Support String operation;
 5. Basic type inference system;
 6. Implement set!, I/O sub-routines;
 7. Continuations;

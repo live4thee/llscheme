@@ -152,6 +152,7 @@ static const struct _builtin_proc {
   const std::string proc;
   const std::string builtin;
 } builtin_proc[] = {
+  /* Arithmetic */
   { "+", "plus" },
   { "-", "minus" },
   { "*", "multiply" },
@@ -161,17 +162,24 @@ static const struct _builtin_proc {
   { ">", "gt"},
   { "<=", "le"},
   { ">=", "ge"},
+
+  /* I/O */
   { "display", "" },
+
+  /* Pair and List */
   { "cons", "" },
   { "car", "" },
   { "cdr", "" },
   { "set-car!", "setcar" },
   { "set-cdr!", "setcdr" },
   { "list", "" },
+  { "list-ref", "listref" },
   { "length", "" },
   { "null?", "nullp" },
   { "pair?", "pairp" },
   { "list?", "listp" },
+
+  /* String and Symbol */
   { "string?", "strp" },
   { "symbol?", "symp" },
   { "string=?", "streq" },
@@ -179,10 +187,10 @@ static const struct _builtin_proc {
   { "string-length", "strlen" },
   { "substring", "" },
   { "string-append", "strappend" },
-  { "list-ref", "listref" },
   { "symbol->string", "sym2str" },
   { "string->number", "string2number" },
 };
+
 static const int num_builtin_proc =
   sizeof(builtin_proc) / sizeof(_builtin_proc);
 
