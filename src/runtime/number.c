@@ -46,36 +46,142 @@ lsrt_duplicate_number(struct ls_object *num)
 /**********************************************************
  * Section 6.2.5 Numerical operations
  **********************************************************/
-/*
-static void
-lso_negative(struct ls_object* dstobj, const struct ls_object* srcobj)
+
+static int
+lso_is_real(struct ls_object *number)
 {
-  if (lso_is_number(srcobj)) {
-    lso_number(dstobj) = - (lso_number_get(srcobj));
-  } else if (lso_is_bignum(srcobj)) {
-    mpz_init(lso_bignum_get(dstobj));
-    mpz_neg(lso_bignum_get(dstobj), lso_bignum_get(srcobj));
-  } else {
-    lsrt_error("unsupported type detected");
+  int r = 1;
+
+  if (!lso_is_number(number))
+    r = 0;
+
+  if (lso_is_complex(number)) {
+    if (lso_number_type_im(number) == 3 &&  /* inexact */
+        mpf_cmp_ui(*(mpf_t *)number->u2.ptr, 0) == 0)
+      r = 1;
+    else
+      r = 0;
   }
+
+  return r;
 }
 
-static void
-lso_reciprocal(struct ls_object* dstobj, const struct ls_object* srcobj)
+static int
+lso_is_integer(struct ls_object *number)
 {
-  if (lso_is_number(srcobj)) {
-    lso_number(dstobj) = 1 / (lso_number_get(srcobj));
-  } else if (lso_is_bignum(srcobj)) {
-    mpz_t one;
-    mpz_init_set_str(one, "1", 10);
-    mpz_init(lso_bignum_get(dstobj));
-    mpz_tdiv_q(lso_bignum_get(dstobj), one, lso_bignum_get(srcobj));
-    mpz_clear(one);
-  } else {
-    lsrt_error("unsupported type detected");
-  }
+  int type = lso_number_type_re(number);
+
+  if (!lso_is_real(number) || type == 2)
+    return 0;
+
+  if (type == 3)
+    return mpf_integer_p(*(mpf_t *)number->u2.ptr);
+
+  return 1;
 }
-*/
+
+static int
+lso_is_exact(struct ls_object *number)
+{
+  if (lso_number_type_re(number) == 3 ||
+      (lso_is_complex(number) && lso_number_type_im(number) == 3))
+    return 0;
+
+  return 1;
+}
+
+BUILTIN("number?", numberp);
+struct ls_object *lsrt_builtin_numberp(int argc, struct ls_object *args[],
+                                       struct ls_object *freelist[])
+{
+  struct ls_object *lso = lsrt_new_object(ls_t_boolean);
+
+  UNUSED_ARGUMENT(freelist);
+  lsrt_check_args_count(1, 1, argc);
+  lso_boolean_set(lso, lso_is_number(args[0]));
+
+  return lso;
+}
+
+BUILTIN("complex?", complexp);
+struct ls_object *lsrt_builtin_complexp(int argc, struct ls_object *args[],
+                                        struct ls_object *freelist[])
+{
+  struct ls_object *lso = lsrt_new_object(ls_t_boolean);
+
+  UNUSED_ARGUMENT(freelist);
+  lsrt_check_args_count(1, 1, argc);
+  lso_boolean_set(lso, lso_is_number(args[0]));
+
+  return lso;
+}
+
+BUILTIN("real?", numberp);
+struct ls_object *lsrt_builtin_realp(int argc, struct ls_object *args[],
+                                     struct ls_object *freelist[])
+{
+  struct ls_object *lso = lsrt_new_object(ls_t_boolean);
+
+  UNUSED_ARGUMENT(freelist);
+  lsrt_check_args_count(1, 1, argc);
+  lso_boolean_set(lso, lso_is_real(args[0]));
+
+  return lso;
+}
+
+BUILTIN("rational?", rationalp);
+struct ls_object *lsrt_builtin_rationalp(int argc, struct ls_object *args[],
+                                         struct ls_object *freelist[])
+{
+  struct ls_object *lso = lsrt_new_object(ls_t_boolean);
+
+  UNUSED_ARGUMENT(freelist);
+  lsrt_check_args_count(1, 1, argc);
+  lso_boolean_set(lso, lso_is_real(args[0]));
+
+  return lso;
+}
+
+BUILTIN("integer?", integerp);
+struct ls_object *lsrt_builtin_integerp(int argc, struct ls_object *args[],
+                                        struct ls_object *freelist[])
+{
+  struct ls_object *lso = lsrt_new_object(ls_t_boolean);
+
+  UNUSED_ARGUMENT(freelist);
+  lsrt_check_args_count(1, 1, argc);
+  lso_boolean_set(lso, lso_is_integer(args[0]));
+
+  return lso;
+}
+
+BUILTIN("exact?", exactp);
+struct ls_object *lsrt_builtin_exactp(int argc, struct ls_object *args[],
+                                      struct ls_object *freelist[])
+{
+  struct ls_object *lso = lsrt_new_object(ls_t_boolean);
+
+  UNUSED_ARGUMENT(freelist);
+  lsrt_check_args_count(1, 1, argc);
+  lsrt_number_p(args[0]);
+  lso_boolean_set(lso, lso_is_exact(args[0]));
+
+  return lso;
+}
+
+BUILTIN("inexact?", inexactp);
+struct ls_object *lsrt_builtin_inexactp(int argc, struct ls_object *args[],
+                                        struct ls_object *freelist[])
+{
+  struct ls_object *lso = lsrt_new_object(ls_t_boolean);
+
+  UNUSED_ARGUMENT(freelist);
+  lsrt_check_args_count(1, 1, argc);
+  lsrt_number_p(args[0]);
+  lso_boolean_set(lso, !lso_is_exact(args[0]));
+
+  return lso;
+}
 
 static void
 _arith2(const char op, struct ls_object *dst, struct ls_object *src)
@@ -218,7 +324,7 @@ struct ls_object *lsrt_builtin_multiply(int argc, struct ls_object *args[],
   return _arith('*', argc, args);
 }
 
-BUILTIN("/", devide);
+BUILTIN("/", divide);
 struct ls_object *lsrt_builtin_divide(int argc, struct ls_object *args[],
                                       struct ls_object *freelist[])
 {
@@ -234,7 +340,7 @@ _order(char op, int argc, struct ls_object *args[])
   int i;
   int32_t last, curr;
 
-  lso_boolean(ret) = 1;
+  lso_boolean_set(ret, 1);
 
   if (argc == 0)
     return ret;
@@ -277,7 +383,7 @@ _order(char op, int argc, struct ls_object *args[])
   }
   return ret;
  fail:
-  lso_boolean(ret) = 0;
+  lso_boolean_set(ret, 0);
   return ret;
 }
 

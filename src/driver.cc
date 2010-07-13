@@ -150,6 +150,15 @@ static const struct _builtin_proc {
   const std::string proc;
   const std::string builtin;
 } builtin_proc[] = {
+  /* Numbers */
+  { "number?", "numberp" },
+  { "complex?", "complexp" },
+  { "real?", "realp" },
+  { "rational?", "rationalp" },
+  { "integer?", "integerp" },
+  { "exact?", "exactp" },
+  { "inexact?", "inexactp" },
+
   /* Arithmetic */
   { "+", "plus" },
   { "-", "minus" },

@@ -97,7 +97,7 @@ struct ls_object *lsrt_builtin_nullp(int argc, struct ls_object *args[],
   lsrt_check_args_count(1, 1, argc);
 
   obj = lsrt_new_object(ls_t_boolean);
-  lso_boolean(obj) = lso_is_nil(args[0]);
+  lso_boolean_set(obj, lso_is_nil(args[0]));
   return obj;
 }
 
@@ -110,7 +110,7 @@ struct ls_object *lsrt_builtin_pairp(int argc, struct ls_object *args[],
   lsrt_check_args_count(1, 1, argc);
 
   obj = lsrt_new_object(ls_t_boolean);
-  lso_boolean(obj) = lso_is_pair(args[0]);
+  lso_boolean_set(obj, lso_is_pair(args[0]));
   return obj;
 }
 
@@ -174,7 +174,7 @@ struct ls_object *lsrt_builtin_listp(int argc, struct ls_object *args[],
   lsrt_check_args_count(1, 1, argc);
 
   obj = lsrt_new_object(ls_t_boolean);
-  lso_boolean(obj) = _listp(args[0]);
+  lso_boolean_set(obj, _listp(args[0]));
   return obj;
 }
 
@@ -193,7 +193,7 @@ struct ls_object *lsrt_builtin_length(int argc, struct ls_object *args[],
     lsrt_error("%s requires a list", __func__);
 
   obj = lsrt_new_object(ls_t_number);
-  lso_number(obj) = n;
+  lso_number_set(obj, n);
   return obj;
 }
 

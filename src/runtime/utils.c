@@ -74,7 +74,7 @@ struct ls_object *lsrt_new_number(uint32_t num)
   ret = (struct ls_object *) ls_malloc(sizeof *ret);
   memset(ret, 0, sizeof *ret);
   lso_set_type(ret, ls_t_number);
-  lso_number(ret) = num;
+  lso_number_set(ret, num);
 
   return ret;
 }

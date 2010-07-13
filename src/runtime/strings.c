@@ -39,7 +39,7 @@ struct ls_object *lsrt_builtin_symp(int argc, struct ls_object *args[],
   lsrt_check_args_count(1, 1, argc);
 
   obj = lsrt_new_object(ls_t_boolean);
-  lso_boolean(obj) = lso_is_symbol(args[0]);
+  lso_boolean_set(obj, lso_is_symbol(args[0]));
   return obj;
 }
 
@@ -54,7 +54,7 @@ struct ls_object *lsrt_builtin_sym2str(int argc, struct ls_object *args[],
 
   obj = lsrt_new_object(ls_t_string);
   // maybe we need to duplicate a copy?
-  lso_string(obj) = lso_symbol_name(args[0]);
+  lso_string_set(obj, lso_symbol_name(args[0]));
   return obj;
 }
 
@@ -72,7 +72,7 @@ struct ls_object *lsrt_builtin_strp(int argc, struct ls_object *args[],
   lsrt_check_args_count(1, 1, argc);
 
   obj = lsrt_new_object(ls_t_boolean);
-  lso_boolean(obj) = lso_is_string(args[0]);
+  lso_boolean_set(obj, lso_is_string(args[0]));
   return obj;
 }
 
@@ -86,7 +86,7 @@ struct ls_object *lsrt_builtin_strlen(int argc, struct ls_object *args[],
   lsrt_string_p(args[0]);
 
   obj = lsrt_new_object(ls_t_number);
-  lso_number(obj) = strlen(lso_string_get(args[0]));
+  lso_number_set(obj, strlen(lso_string_get(args[0])));
   return obj;
 }
 
@@ -101,8 +101,8 @@ struct ls_object *lsrt_builtin_streq(int argc, struct ls_object *args[],
   lsrt_string_p(args[1]);
 
   obj = lsrt_new_object(ls_t_boolean);
-  lso_boolean(obj) = strcmp(lso_string_get(args[0]),
-      lso_string_get(args[1])) == 0;
+  lso_boolean_set(obj, strcmp(lso_string_get(args[0]),
+      lso_string_get(args[1])) == 0);
   return obj;
 }
 
@@ -117,8 +117,8 @@ struct ls_object *lsrt_builtin_strcaseeq(int argc, struct ls_object *args[],
   lsrt_string_p(args[1]);
 
   obj = lsrt_new_object(ls_t_boolean);
-  lso_boolean(obj) = strcasecmp(lso_string_get(args[0]),
-      lso_string_get(args[1])) == 0;
+  lso_boolean_set(obj, strcasecmp(lso_string_get(args[0]),
+      lso_string_get(args[1])) == 0);
   return obj;
 }
 
@@ -149,7 +149,7 @@ struct ls_object *lsrt_builtin_substring(int argc, struct ls_object *args[],
   buf[buflen] = '\0';
 
   obj = lsrt_new_object(ls_t_string);
-  lso_string(obj) = buf;
+  lso_string_set(obj, buf);
   return obj;
 }
 
@@ -176,7 +176,7 @@ struct ls_object *lsrt_builtin_strappend(int argc, struct ls_object *args[],
   }
 
   obj = lsrt_new_object(ls_t_string);
-  lso_string(obj) = buf;
+  lso_string_set(obj, buf);
   return obj;
 }
 
