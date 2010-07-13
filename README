@@ -26,12 +26,13 @@ To build:
 
 Features:
 --------
-* Rudimentary support of special form: define, lambda, if, quote
-* Supported data types: integer, string, list
+* Supported special form: define, lambda, if, quote, begin
+* Supported data types: number, string, list
 
 A list of implemented built-in procedures:
 1. Arithmetic
    +, -, *, /, =, <, >, <=, >=
+   number?, complex?, real?, rational?, integer?, exact?, inexact?
 
 2. Pair and List
    cons, car, cdr, set-car!, set-cdr!, list, length, list-ref

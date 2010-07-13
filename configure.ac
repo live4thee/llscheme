@@ -1,5 +1,5 @@
 AC_PREREQ(2.60)
-AC_INIT([llscheme],[0.1.0],[http://github.com/live4thee/llscheme],[llscheme])
+AC_INIT([llscheme],[0.2.0],[http://github.com/live4thee/llscheme],[llscheme])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADER([config.h])
