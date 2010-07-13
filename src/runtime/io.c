@@ -59,7 +59,7 @@ static void _display(struct ls_object *lso, int fp)
       printf("<anon symbol...>");
     break;
   case ls_t_string:
-    printf("\"%s\"", lso_string_get(lso));
+    printf("%s", lso_string_get(lso));
     break;
   case ls_t_pair:
     if (!fp)

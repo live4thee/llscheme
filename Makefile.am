@@ -14,7 +14,12 @@ test/define.scm \
 test/eager.scm \
 test/fib.scm \
 test/lexscope.scm \
-test/list.scm \
-test/math.scm \
-test/numbers.scm \
-test/sexp.scm
+test/list001.scm \
+test/math001.scm \
+test/number001.scm \
+test/run-with.sh \
+test/sexp.scm \
+test/string001.scm \
+test/string002.scm \
+test/string003.scm \
+test/string004.scm

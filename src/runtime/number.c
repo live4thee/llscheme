@@ -801,16 +801,24 @@ struct ls_object *lsrt_builtin_string2number(int argc, struct ls_object *args[],
 {
   struct ls_object *ret;
   int radix = 10;
+  const char* str;
 
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 2, argc);
   lsrt_string_p(args[0]);
 
+  str = lso_string_get(args[0]);
+  if (unlikely(strlen(str) == 0)) {
+    ret = lsrt_new_object(ls_t_boolean);
+    lso_boolean_set(ret, 0);
+    return ret;
+  }
+
   ret = lsrt_new_object(ls_t_number);
   if (argc == 2 && lso_is_simplenumber(args[1]))
     radix = lso_simplenumber_get(args[1]);
 
-  _ston(ret, lso_string_get(args[0]), radix);
+  _ston(ret, str, radix);
 
   return ret;
 }

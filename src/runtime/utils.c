@@ -67,7 +67,7 @@ struct ls_object *lsrt_new_object(int type)
   return ret;
 }
 
-struct ls_object *lsrt_new_number(uint32_t num)
+struct ls_object *lsrt_new_number(int32_t num)
 {
   struct ls_object *ret;
 
