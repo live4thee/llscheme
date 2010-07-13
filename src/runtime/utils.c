@@ -22,9 +22,6 @@
 /* This file is part of the runtime */
 
 #include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
 
 #include <gmp.h>
 
@@ -101,67 +98,11 @@ void lsrt_fill_freelist(struct ls_object* freelist[],
   freelist[i] = obj;
 }
 
-void lsrt_error(const char *fmt, ...)
+void lsrt_func_p(const struct ls_object *obj)
 {
-  va_list ap;
-  va_start(ap, fmt);
-  vfprintf(stderr, fmt, ap);
-  va_end(ap);
-
-  fputc('\n', stderr);
-  exit(1);
+  if (!lso_is_func(obj) || lso_func_get(obj) == NULL)
+      lsrt_error("expected function");
 }
-
-/* optional argument spec later */
-void lsrt_check_args_count(int min, int max, int argc)
-{
-  if ((min != 0 && min > argc) ||
-      (max != 0 && max < argc)) {
-    lsrt_error("fucntion count mismatch: min=%d, max=%d, argc=%d",
-        min, max, argc);
-  }
-
-  return;
-}
-
-#define fail_on(cond, msg...) do {              \
-  if ((cond))                                   \
-    lsrt_error(msg);                            \
-} while(0)
-
-void lsrt_func_p(const struct ls_object* obj)
-{
-  fail_on((!lso_is_func(obj) || lso_func_get(obj) == NULL),
-      "expected function");
-}
-
-void lsrt_void_p(const struct ls_object* obj)
-{
-  fail_on(!lso_is_void(obj), "fucntion argument type mismatch");
-}
-
-void lsrt_pair_p(const struct ls_object* obj)
-{
-  fail_on(!lso_is_pair(obj), "expected pair");
-}
-
-void lsrt_number_p(const struct ls_object *obj)
-{
-  fail_on(!lso_is_number(obj), "expected number");
-}
-
-void lsrt_string_p(const struct ls_object *obj)
-{
-  fail_on((!lso_is_string(obj) || lso_string_get(obj) == NULL),
-      "expected string");
-}
-
-void lsrt_symbol_p(const struct ls_object* obj)
-{
-  fail_on(!lso_is_symbol(obj), "expected symbol");
-}
-
-#undef fail_on
 
 void lsrt_check_symbol_unbound(const struct ls_object *arg)
 {
@@ -170,6 +111,15 @@ void lsrt_check_symbol_unbound(const struct ls_object *arg)
 
   if (lso_symbol_deref(arg) == NULL)
     lsrt_error("unbounded symbol: %s", lso_symbol_name(arg));
+}
+
+void lsrt_check_args_count(int min, int max, int argc)
+{
+  if ((min != 0 && min > argc) ||
+      (max != 0 && max < argc)) {
+    lsrt_error("fucntion count mismatch: min=%d, max=%d, argc=%d",
+        min, max, argc);
+  }
 }
 
 int lsrt_main_retval(const struct ls_object *lso)

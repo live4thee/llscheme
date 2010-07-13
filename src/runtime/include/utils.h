@@ -28,6 +28,10 @@
 #ifndef RUNTIME_UTILS_H_
 #define RUNTIME_UTILS_H_
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+
 /* The Boehm-Demers-Weiser conservative garbage collector */
 #include <gc/gc.h>
 
@@ -58,23 +62,71 @@ struct ls_object **lsrt_new_freelist(int count);
 void lsrt_fill_freelist(struct ls_object* freelist[],
                         int i, struct ls_object* obj);
 
+int lsrt_main_retval(const struct ls_object *lso);
+int lsrt_test_expr(const struct ls_object *lso);
+
+/* ------------------------------------------------------------------ */
+static inline
 void lsrt_error(const char *fmt, ...)
 #ifdef __GNUC__
 __attribute__ ((format(printf, 1, 2))) __attribute__ ((noreturn))
 #endif
   ;
 
+void lsrt_error(const char *fmt, ...)
+{
+  va_list ap;
+  va_start(ap, fmt);
+  vfprintf(stderr, fmt, ap);
+  va_end(ap);
+
+  fputc('\n', stderr);
+  exit(1);
+}
+
+/* TODO:
+ * These three functions are used by codegen.cc, hide them in future.
+ */
 void lsrt_check_args_count(int min, int max, int argc);
 void lsrt_check_symbol_unbound(const struct ls_object *arg);
-int lsrt_main_retval(const struct ls_object *lso);
-int lsrt_test_expr(const struct ls_object *lso);
-
 void lsrt_func_p(const struct ls_object *obj);
-void lsrt_void_p(const struct ls_object *obj);
-void lsrt_pair_p(const struct ls_object *obj);
-void lsrt_number_p(const struct ls_object *obj);
-void lsrt_string_p(const struct ls_object *obj);
-void lsrt_symbol_p(const struct ls_object *obj);
+
+#define fail_on(cond, msg...) do {              \
+  if ((cond)) lsrt_error(msg);                  \
+} while(0)
+
+static inline
+void lsrt_void_p(const struct ls_object *obj)
+{
+  fail_on(!lso_is_void(obj), "fucntion argument type mismatch");
+}
+
+static inline
+void lsrt_pair_p(const struct ls_object *obj)
+{
+  fail_on(!lso_is_pair(obj), "expected pair");
+}
+
+static inline
+void lsrt_number_p(const struct ls_object *obj)
+{
+  fail_on(!lso_is_number(obj), "expected number");
+}
+
+static inline
+void lsrt_string_p(const struct ls_object *obj)
+{
+  fail_on((!lso_is_string(obj) || lso_string_get(obj) == NULL),
+      "expected string");
+}
+
+static inline
+void lsrt_symbol_p(const struct ls_object *obj)
+{
+  fail_on(!lso_is_symbol(obj), "expected symbol");
+}
+
+#undef fail_on
 
 /*
  * it doesn't do much at the moment, but in future, it can behave
