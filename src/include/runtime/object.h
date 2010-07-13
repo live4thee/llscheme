@@ -36,7 +36,7 @@
 #define ls_tm_major    0xff
 #define ls_tm_sub      0xffffff00u
 
-#define ls_t_void      0
+#define ls_t_unspec    0  /* unspecified */
 #define ls_t_number    1
 
 #define ls_num_complex       0x10000
@@ -121,7 +121,7 @@ struct ls_object * (*ls_func_type) (int argc, struct ls_object *args[],
 #define lso_sub_type(x)       ((x)->type & ls_tm_sub)
 
 /* predicates */
-#define lso_is_void(x)    (lso_type(x) == ls_t_void)
+#define lso_is_unspec(x)    (lso_type(x) == ls_t_unspec)
 #define lso_is_number(x)  (lso_type(x) == ls_t_number)
 
 #define lso_is_simplenumber(x)  ((x)->type == ls_t_number)  /* used for simple parameters */

@@ -62,7 +62,7 @@ struct ls_object *lsrt_builtin_setcar(int argc, struct ls_object *args[],
   lsrt_pair_p(args[0]);
 
   lso_set_car(args[0], args[1]);
-  return lsrt_new_object(ls_t_unknown);
+  return lsrt_new_object(ls_t_unspec);
 }
 
 BUILTIN("cdr", cdr);
@@ -85,7 +85,7 @@ struct ls_object *lsrt_builtin_setcdr(int argc, struct ls_object *args[],
   lsrt_pair_p(args[0]);
 
   lso_set_cdr(args[0], args[1]);
-  return lsrt_new_object(ls_t_unknown);
+  return lsrt_new_object(ls_t_unspec);
 }
 
 BUILTIN("null?", nullp);

@@ -40,9 +40,6 @@ static void _display(struct ls_object *lso, int fp)
 {
   int type = lso_type(lso);
   switch (type) {
-  case ls_t_void:
-    printf("<void>");
-    break;
   case ls_t_number:
     if (lso_is_simplenumber(lso))
       printf("%d", lso_simplenumber_get(lso));
@@ -86,7 +83,7 @@ static void _display(struct ls_object *lso, int fp)
   case ls_t_func:
     printf("<procedure %p>", lso_func_get(lso));
     break;
-  case ls_t_unknown:
+  case ls_t_unspec:
     printf("#<unspecified>");
     break;
   default:
@@ -103,7 +100,7 @@ struct ls_object *lsrt_builtin_display(int argc, struct ls_object *args[],
   _display(args[0], 0);
   printf("\n");
 
-  return lsrt_new_object(ls_t_void);
+  return lsrt_new_object(ls_t_unspec);
 }
 
 /* vim: set et ts=2 sw=2 cin: */

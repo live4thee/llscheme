@@ -323,7 +323,7 @@ static Value *handleBegin(SExprASTNode *sexpr) {
   int i;
 
   if (sexpr->numArgument() == 1) // (begin)
-    v = LSObjNew(context, ls_t_void);
+    v = LSObjNew(context, ls_t_unspec);
 
   for (i = 1; i < sexpr->numArgument(); i++) {
     v = sexpr->getArgument(i)->codeGenEval();
@@ -500,7 +500,7 @@ static Value *handleDefine(SExprASTNode *sexpr) {
   else
     throw Error(std::string("bad syntax for define"));
 
-  return LSObjNew(context, ls_t_void);
+  return LSObjNew(context, ls_t_unspec);
 }
 
 static Value *handleLambda(SExprASTNode *sexpr) {
@@ -554,7 +554,7 @@ static Value *handleIf(SExprASTNode *sexpr) {
   if (sexpr->numArgument() == 4)
     elseval = sexpr->getArgument(3)->codeGenEval();
   else
-    elseval = LSObjNew(context, ls_t_void);
+    elseval = LSObjNew(context, ls_t_unspec);
 
   builder.CreateBr(mergebb);
   elsebb = builder.GetInsertBlock();

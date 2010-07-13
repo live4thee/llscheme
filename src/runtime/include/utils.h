@@ -96,12 +96,6 @@ void lsrt_func_p(const struct ls_object *obj);
 } while(0)
 
 static inline
-void lsrt_void_p(const struct ls_object *obj)
-{
-  fail_on(!lso_is_void(obj), "fucntion argument type mismatch");
-}
-
-static inline
 void lsrt_pair_p(const struct ls_object *obj)
 {
   fail_on(!lso_is_pair(obj), "expected pair");
