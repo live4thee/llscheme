@@ -47,6 +47,8 @@ lsrt_duplicate_number(struct ls_object *num)
  * Section 6.2.5 Numerical operations
  **********************************************************/
 
+/* predicates */
+
 static int
 lso_is_real(struct ls_object *number)
 {
@@ -182,6 +184,125 @@ struct ls_object *lsrt_builtin_inexactp(int argc, struct ls_object *args[],
 
   return lso;
 }
+
+/* ordering */
+
+static struct ls_object *
+_order(char op, int argc, struct ls_object *args[])
+{
+  struct ls_object *ret = lsrt_new_object(ls_t_boolean);
+  struct ls_real op1, op2;
+  int res;
+  int i;
+
+  lso_boolean_set(ret, 1);
+
+  if (argc == 0)
+    return ret;
+
+
+  if (op == '=')
+    lsrt_number_p(args[0]);
+  else if (!lso_is_real(args[0]))
+    lsrt_error("expected real number for ordering");
+
+  for (i = 1; i < argc; i++) {
+    if (op == '=')
+      lsrt_number_p(args[i]);
+    else if (!lso_is_real(args[i]))
+      lsrt_error("expected real number for ordering");
+
+    _re_get_lso_re_ref(&op1, args[i - 1]);
+    _re_get_lso_re_ref(&op2, args[i]);
+
+    res = _re_order2(&op1, &op2);
+
+    if (op == '=' && res == 0) {
+      _re_get_lso_im_ref(&op1, args[i - 1]);
+      _re_get_lso_im_ref(&op2, args[i]);
+
+      res = _re_order2(&op1, &op2);
+    }
+
+    switch (op) {
+    case '=':
+      if (res != 0)
+        goto fail;
+      break;
+    case '<':
+      if (res >= 0)
+        goto fail;
+      break;
+    case '>':
+      if (res <= 0)
+        goto fail;
+      break;
+    case 'l':
+      if (res > 0)
+        goto fail;
+      break;
+    case 'g':
+      if (res < 0)
+        goto fail;
+      break;
+    default:
+      lsrt_error("unsupported op: %c", op);
+      break;
+    }
+  }
+
+  return ret;
+ fail:
+  lso_boolean_set(ret, 0);
+  return ret;
+}
+
+BUILTIN("=", eq);
+struct ls_object *lsrt_builtin_eq(int argc, struct ls_object *args[],
+                                  struct ls_object *freelist[])
+{
+  UNUSED_ARGUMENT(freelist);
+
+  return _order('=', argc, args);
+}
+
+BUILTIN("<", lt);
+struct ls_object *lsrt_builtin_lt(int argc, struct ls_object *args[],
+                                  struct ls_object *freelist[])
+{
+  UNUSED_ARGUMENT(freelist);
+
+  return _order('<', argc, args);
+}
+
+BUILTIN(">", gt);
+struct ls_object *lsrt_builtin_gt(int argc, struct ls_object *args[],
+                                  struct ls_object *freelist[])
+{
+  UNUSED_ARGUMENT(freelist);
+
+  return _order('>', argc, args);
+}
+
+BUILTIN("<=", le);
+struct ls_object *lsrt_builtin_le(int argc, struct ls_object *args[],
+                                  struct ls_object *freelist[])
+{
+  UNUSED_ARGUMENT(freelist);
+
+  return _order('l', argc, args);
+}
+
+BUILTIN(">=", ge);
+struct ls_object *lsrt_builtin_ge(int argc, struct ls_object *args[],
+                                  struct ls_object *freelist[])
+{
+  UNUSED_ARGUMENT(freelist);
+
+  return _order('g', argc, args);
+}
+
+/* arithmetic */
 
 static void
 _arith2(const char op, struct ls_object *dst, struct ls_object *src)
@@ -331,105 +452,6 @@ struct ls_object *lsrt_builtin_divide(int argc, struct ls_object *args[],
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 0, argc);
   return _arith('/', argc, args);
-}
-
-static struct ls_object *
-_order(char op, int argc, struct ls_object *args[])
-{
-  struct ls_object *ret = lsrt_new_object(ls_t_boolean);
-  int i;
-  int32_t last, curr;
-
-  lso_boolean_set(ret, 1);
-
-  if (argc == 0)
-    return ret;
-  else {
-    lsrt_number_p(args[0]);
-    last = lso_simplenumber_get(args[0]);
-
-    for (i = 1; i < argc; i++) {
-      lsrt_number_p(args[i]);
-      curr = lso_simplenumber_get(args[i]);
-
-      switch (op) {
-      case '=':
-        if (last != curr)
-          goto fail;
-        break;
-      case '<':
-        if (last >= curr)
-          goto fail;
-        break;
-      case '>':
-        if (last <= curr)
-          goto fail;
-        break;
-      case 'l':
-        if (last > curr)
-          goto fail;
-        break;
-      case 'g':
-        if (last < curr)
-          goto fail;
-        break;
-      default:
-        lsrt_error("unsupported op: %c", op);
-        break;
-      }
-
-      last = curr;
-    }
-  }
-  return ret;
- fail:
-  lso_boolean_set(ret, 0);
-  return ret;
-}
-
-BUILTIN("=", eq);
-struct ls_object *lsrt_builtin_eq(int argc, struct ls_object *args[],
-                                  struct ls_object *freelist[])
-{
-  UNUSED_ARGUMENT(freelist);
-
-  return _order('=', argc, args);
-}
-
-BUILTIN("<", lt);
-struct ls_object *lsrt_builtin_lt(int argc, struct ls_object *args[],
-                                  struct ls_object *freelist[])
-{
-  UNUSED_ARGUMENT(freelist);
-
-  return _order('<', argc, args);
-}
-
-BUILTIN(">", gt);
-struct ls_object *lsrt_builtin_gt(int argc, struct ls_object *args[],
-                                  struct ls_object *freelist[])
-{
-  UNUSED_ARGUMENT(freelist);
-
-  return _order('>', argc, args);
-}
-
-BUILTIN("<=", le);
-struct ls_object *lsrt_builtin_le(int argc, struct ls_object *args[],
-                                  struct ls_object *freelist[])
-{
-  UNUSED_ARGUMENT(freelist);
-
-  return _order('l', argc, args);
-}
-
-BUILTIN(">=", ge);
-struct ls_object *lsrt_builtin_ge(int argc, struct ls_object *args[],
-                                  struct ls_object *freelist[])
-{
-  UNUSED_ARGUMENT(freelist);
-
-  return _order('g', argc, args);
 }
 
 /**********************************************************

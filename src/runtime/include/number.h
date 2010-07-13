@@ -441,18 +441,161 @@ _re_arith2(const char op, struct ls_real *dst, struct ls_real *src)
 #undef ls_mpf_div
 #undef ls_mpf_div_ui
 
+/* returns sgn(dst-src) */
+static int
+_re_order2(struct ls_real *dst, struct ls_real *src)
+{
+  int result = 0;
+
+  if (src->type == 0) {
+    switch(dst->type) {
+    case 0:
+#define _sgn(x) ((x) < 0)? -1: ((x) != 0)
+      result = _sgn(dst->v - src->v);
+#undef _sgn
+      break;
+    case 1:
+      result = mpz_cmp_si(*dst->z, src->v);
+      break;
+    case 2:
+      result = mpq_cmp_si(*dst->q, src->v, 1);
+      break;
+    case 3:
+      result = mpf_cmp_si(*dst->f, src->v);
+      break;
+    }
+  } else if (dst->type == 0) {
+    switch(src->type) {
+    case 1:
+      result = - mpz_cmp_si(*src->z, dst->v);
+      break;
+    case 2:
+      result = - mpq_cmp_si(*src->q, dst->v, 1);
+      break;
+    case 3:
+      result = - mpf_cmp_si(*src->f, dst->v);
+      break;
+    }
+  } else if (dst->type == 1 && src->type == 2) {
+    mpz_t tmp;
+    int s1, s2;
+
+    s1 = mpz_sgn(*dst->z);
+    s2 = mpq_sgn(*src->q);
+
+    if (s1 != s2)
+      result = (s1 > s2) ? 1: -1;
+    else {
+      mpz_init_set(tmp, *dst->z);
+      mpz_mul(tmp, tmp, mpq_denref(*src->q));
+      result = mpz_cmp(tmp, mpq_numref(*src->q));
+      mpz_clear(tmp);
+    }
+  } else if (dst->type == 2 && src->type == 1) {
+    mpz_t tmp;
+    int s1, s2;
+
+    s1 = mpq_sgn(*dst->q);
+    s2 = mpz_sgn(*src->z);
+
+    if (s1 != s2)
+      result = (s1 > s2) ? 1: -1;
+    else {
+      mpz_init_set(tmp, *src->z);
+      mpz_mul(tmp, tmp, mpq_denref(*dst->q));
+      result = mpz_cmp(mpq_numref(*dst->q), tmp);
+      mpz_clear(tmp);
+    }
+  } else if (dst->type == src->type) {
+    switch(dst->type) {
+    case 1:
+      result = mpz_cmp(*dst->z, *src->z);
+      break;
+    case 2:
+      result = mpq_cmp(*dst->q, *src->q);
+      break;
+    case 3:
+      result = mpf_cmp(*dst->f, *src->f);
+      break;
+    }
+  } else if (dst->type == 3) {
+    mpf_t tmp;
+    int s1, s2;
+
+    s1 = mpf_sgn(*dst->f);
+    if (src->type == 1)
+      s2 = mpz_sgn(*src->z);
+    else
+      s2 = mpq_sgn(*src->q);
+
+    if (s1 != s2)
+      result = (s1 > s2) ? 1: -1;
+    else {
+      mpf_init(tmp);
+      if (src->type == 1)
+        mpf_set_z(tmp, *src->z);
+      else
+        mpf_set_q(tmp, *src->q);
+
+      result = mpf_cmp(*dst->f, tmp);
+      mpf_clear(tmp);
+    }
+  } else if (src->type == 3) {
+    mpf_t tmp;
+    int s1, s2;
+
+    s2 = mpf_sgn(*src->f);
+    if (dst->type == 1)
+      s1 = mpz_sgn(*dst->z);
+    else
+      s1 = mpq_sgn(*dst->q);
+
+    if (s1 != s2)
+      result = (s1 > s2) ? 1: -1;
+    else {
+      mpf_init(tmp);
+      if (dst->type == 1)
+        mpf_set_z(tmp, *dst->z);
+      else
+        mpf_set_q(tmp, *dst->q);
+
+      result = mpf_cmp(tmp, *src->f);
+      mpf_clear(tmp);
+    }
+  }
+
+  return result;
+}
+
 /*
  * duplicating instead of reference for better usability
  */
+static void
+_re_get_lso_re_ref(struct ls_real *dst, struct ls_object *obj)
+{
+  dst->type = lso_number_type_re(obj);
+  dst->content = obj->u1.ptr;
+}
+
 static void
 _re_get_lso_re(struct ls_real *dst, struct ls_object *obj)
 {
   struct ls_real tmp;
 
-  tmp.type = lso_number_type_re(obj);
-  tmp.content = obj->u1.ptr;
-
+  _re_get_lso_re_ref(&tmp, obj);
   _re_duplicate(dst, &tmp);
+}
+
+static void
+_re_get_lso_im_ref(struct ls_real *dst, struct ls_object *obj)
+{
+  if (lso_is_complex(obj)) {
+    dst->type = lso_number_type_im(obj);
+    dst->content = obj->u2.ptr;
+  } else {
+    dst->type = 0;
+    dst->v = 0;
+  }
 }
 
 static void
@@ -460,14 +603,7 @@ _re_get_lso_im(struct ls_real *dst, struct ls_object *obj)
 {
   struct ls_real tmp;
 
-  if (lso_is_complex(obj)) {
-    tmp.type = lso_number_type_im(obj);
-    tmp.content = obj->u2.ptr;
-  } else {
-    tmp.type = 0;
-    tmp.v = 0;
-  }
-
+  _re_get_lso_im_ref(&tmp, obj);
   _re_duplicate(dst, &tmp);
 }
 
