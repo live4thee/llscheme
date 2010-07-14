@@ -56,10 +56,10 @@ static void _display(struct ls_object *lso, int fp)
     if (lso_symbol_name(lso))
       printf("%s", lso_symbol_name(lso));
     else
-      printf("<anon symbol...>");
+      printf("#<invalid symbol>");
     break;
   case ls_t_string:
-    printf("%s", lso_string_get(lso));
+    printf("\"%s\"", lso_string_get(lso));
     break;
   case ls_t_pair:
     if (!fp)
@@ -81,7 +81,7 @@ static void _display(struct ls_object *lso, int fp)
     printf("()");
     break;
   case ls_t_func:
-    printf("<procedure %p>", lso_func_get(lso));
+    printf("#<procedure %p>", lso_func_get(lso));
     break;
   case ls_t_unspec:
     printf("#<unspecified>");

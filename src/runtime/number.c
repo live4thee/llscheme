@@ -641,7 +641,7 @@ void _ston(struct ls_object *obj, const char *num, int defradix)
   char *end;
   char saved;
   int exactness = -1, radix = -1;
-  int flag, flag2, allowre = 1, allowim = 1;
+  int flag, flag2, type, allowre = 1, allowim = 1;
   struct ls_real re = { 0, { 0 } };
 
   /* prefix */
@@ -680,7 +680,7 @@ void _ston(struct ls_object *obj, const char *num, int defradix)
 
  restart:
   /* default to big integer */
-  re.type = 1;
+  type = 1;
 
   /* parsing */
   flag = _ston_parse_real(ptr, &end, radix);
@@ -688,7 +688,7 @@ void _ston(struct ls_object *obj, const char *num, int defradix)
     goto err;
 
   if (*end == '/') {
-    re.type = 2;
+    type = 2;
     flag2 = _ston_parse_real(end + 1, &end, radix);
     /* sanity for rational */
     if (!(flag2 & stonf_valid))
@@ -700,7 +700,7 @@ void _ston(struct ls_object *obj, const char *num, int defradix)
   }
 
   if (flag & stonf_decimal)
-    re.type = 3;
+    type = 3;
 
   if ((*end == 'i' && allowim == 0) ||
       (*end != 'i' && allowre == 0))
@@ -708,7 +708,7 @@ void _ston(struct ls_object *obj, const char *num, int defradix)
 
   /* generating initial result */
   if ((*end == 'i' && (flag & stonf_iunit))) {
-    re.type = 0;
+    type = 0;
     if (!(flag & stonf_signed))
       goto err;
     if (*ptr == '+')
@@ -717,9 +717,12 @@ void _ston(struct ls_object *obj, const char *num, int defradix)
       re.v = -1;
   }
 
+
   saved = *end;
   *end = '\0';
 
+  /* no _re_clear can be called from now until the content is fully set up */
+  re.type = type;
   if (*ptr == '+')  /* tackle around strange behavior of mpx_set_str */
       ptr++;
   switch (re.type) {
