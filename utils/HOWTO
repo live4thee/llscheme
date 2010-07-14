@@ -1,0 +1,11 @@
+How To Profile
+==============
+
+1. Generate a LLVM byte-code archieve (liblsrt.bca) of runtime
+   ./genbca.sh ../src/runtime/
+
+2. Generate LLVM byte-code of test Scheme code for profile.pl
+   ./genprof.sh liblsrt.bca test.scm
+
+3. Profile the LLVM byte-code with profile.pl
+   ./profile.pl -load /usr/lib/libgc.so /usr/lib/libgmp.so test.bc
