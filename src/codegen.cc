@@ -104,7 +104,7 @@ Value *SymbolASTNode::getGlobal() {
   //     change const string literals [ n x i8 ]* into i8*
   str = llvm::ConstantArray::get(context, symbol);
   s = new llvm::GlobalVariable(*module, str->getType(), true,
-                llvm::GlobalValue::PrivateLinkage, str, "_str_s_" + symbol);
+                llvm::GlobalValue::PrivateLinkage, str, ".numstr");
 
   v.push_back(ConstantInt::get(Type::getInt32Ty(context), ls_t_symbol));
   m.push_back(Constant::getNullValue(Type::getInt8Ty(context)->getPointerTo()));
@@ -120,7 +120,7 @@ Value *SymbolASTNode::getGlobal() {
 
   g = new llvm::GlobalVariable(*module, LSObjType, false,
                 llvm::GlobalValue::PrivateLinkage,
-                init, "_sym_" + symbol);
+                init, "_symobj_");
 
   eenv.addGlobalBinding(symbol, g);
 
@@ -139,18 +139,8 @@ Value *SymbolASTNode::codeGen() {
 
 Value *SymbolASTNode::codeGenNoBind() {
   Value *obj;
-  Constant *str, *s;
 
-  obj = LSObjNew(context, ls_t_symbol);
-  str = llvm::ConstantArray::get(context, symbol);
-  s = new llvm::GlobalVariable(*module, str->getType(), true,
-                               llvm::GlobalValue::PrivateLinkage, str, "_str_snb_" + symbol);
-
-  builder.CreateStore(Constant::getNullValue(Type::getInt8Ty(context)->getPointerTo()),
-                      LSObjGetPointerAddr(context, obj, 0, 1));
-  builder.CreateStore(builder.CreateBitCast(s,
-                                            Type::getInt8Ty(context)->getPointerTo()),
-                      LSObjGetPointerAddr(context, obj, 0, 2));
+  obj = LSObjSymbolInit(context, symbol);
 
   return obj;
 }

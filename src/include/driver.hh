@@ -188,6 +188,42 @@ LSObjStringInit(LLVMContext &context, std::string& str)
   return g;
 }
 
+static inline Value *
+LSObjSymbolInit(LLVMContext &context, std::string& str)
+{
+  Constant *c = ConstantArray::get(context, str.c_str(), true);
+  GlobalVariable *s = new GlobalVariable(*module,
+      ArrayType::get(IntegerType::get(context, 8), str.size()+1),
+      true, GlobalValue::PrivateLinkage, c, ".numstr");
+
+  std::vector<Constant*> indices;
+  Constant *idx = ConstantInt::get(Type::getInt32Ty(context), 0);
+  indices.push_back(idx);
+  indices.push_back(idx);
+
+  Constant *ptr = ConstantExpr::getGetElementPtr(s, &indices[0], indices.size());
+
+  std::vector<Constant *> v, m;
+
+  v.push_back(ConstantInt::get(Type::getInt32Ty(context), ls_t_symbol));
+
+  m.push_back(Constant::getNullValue(Type::getInt8Ty(context)->getPointerTo()));
+  v.push_back(ConstantStruct::get(context, m, false));
+
+  m.clear();
+  m.push_back(ptr);
+  v.push_back(ConstantStruct::get(context, m, false));
+
+  Constant *init = ConstantStruct::get(context, v, false);
+
+  // TODO: constant unbound symbol is weird, need a cleverer treatment
+  GlobalVariable *g = new GlobalVariable(*module, LSObjType, true,
+                                         GlobalValue::PrivateLinkage,
+                                         init, "_csymobj_");
+
+  return g;
+}
+
 // Create ls_t_func object and its initializer
 static inline Value *
 LSObjFunctionInit(LLVMContext &context,
