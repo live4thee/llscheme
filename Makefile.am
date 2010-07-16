@@ -17,7 +17,8 @@ test/lexscope.scm \
 test/list001.scm \
 test/math001.scm \
 test/number001.scm \
-test/run-with.sh \
+test/run-with-gsi.scm \
+test/run-with-guile.scm \
 test/sexp.scm \
 test/string001.scm \
 test/string002.scm \
