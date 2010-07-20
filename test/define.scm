@@ -2,6 +2,10 @@
 (define foo 4)
 foo
 
+(define (bar) 3)
+bar
+(bar)
+
 ;; function definition
 
 ;; dynamic

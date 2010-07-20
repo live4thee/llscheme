@@ -453,13 +453,12 @@ static Value *handleDefine(SExprASTNode *sexpr) {
   SExprASTNode *formals;
   SymbolASTNode *sym;
   Value *val;
-  int n;
 
   if (sexpr->numArgument() < 3)
     throw Error(std::string("too few arguments for define"));
 
   if (sexpr->getArgument(1)->getType() == SymbolAST) {
-    // define a symbol
+    // (define name value)
     if (sexpr->numArgument() != 3)
       throw Error(std::string("defining symbol takes 2 arguments"));
 
@@ -474,11 +473,13 @@ static Value *handleDefine(SExprASTNode *sexpr) {
                         LSObjGetPointerAddr(context, val, 0, 1));
   }
   else if (sexpr->getArgument(1)->getType() == SExprAST) {
-    // define a proc
+    // (define (proc ...) ...)
     formals = static_cast<SExprASTNode *> (sexpr->getArgument(1));
-    n = formals->numArgument();
-    if (n < 1 || formals->getArgument(1)->getType() != SymbolAST)
-      throw Error(std::string("bad syntax for define"));
+
+    for (int i = 0, n = formals->numArgument(); i < n; ++i) {
+      if (formals->getArgument(i)->getType() != SymbolAST)
+        throw Error(std::string("bad syntax for define"));
+    }
 
     sym = static_cast<SymbolASTNode *> (formals->getArgument(0));
     if (eenv.searchLocalBinding(sym->symbol))
