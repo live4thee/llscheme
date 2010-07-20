@@ -84,7 +84,7 @@ else
         RES=$TEMPFILE
 fi
 
-run_cmd $LLSCHEME_BIN $PASSED_ARGS $@ 2> "$RES"
+run_cmd $LLSCHEME_BIN $PASSED_ARGS $@ > "$RES"
 if [ x$ASSEMBLE = x0 ]; then
     exit 0
 fi

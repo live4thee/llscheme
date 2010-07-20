@@ -39,9 +39,6 @@ Parser::~Parser() {
 }
 
 void Parser::consume(void) {
-#ifdef DEBUG
-  std::cout << "consumed `" << lookahead[c_index].text << "'" << std::endl;
-#endif
   lookahead[c_index] = input->nextToken();
   c_index = (c_index + 1) % n_lookahead;
 }

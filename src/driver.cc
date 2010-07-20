@@ -22,6 +22,7 @@
 #include <llvm/Analysis/Verifier.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/JIT.h>
+#include <llvm/Support/raw_ostream.h>
 #include <llvm/Target/TargetSelect.h>
 #include <llvm/Target/TargetData.h>
 
@@ -284,7 +285,7 @@ static void codegenInitJIT(Module* mod) {
 
   JIT = llvm::EngineBuilder(mod).setErrorStr(&errmsg).create();
   if (!JIT) {
-    std::cout << "warning: " << errmsg << std::endl;
+    std::cerr << "warning: " << errmsg << std::endl;
     return;
   }
 
@@ -299,8 +300,9 @@ int codegen(ASTNode *ast) {
   codegenInitJIT(module);
   codegenFinish(ast->codeGenEval());
 
-  // dump to stderr
-  module->dump();
+  // dump to stdout
+  llvm::raw_fd_ostream fdos(1, false);
+  module->print(fdos, NULL);
 
   return 0;
 }

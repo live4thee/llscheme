@@ -37,7 +37,7 @@ static bool dumpASTNodes = false;
 
 static void usage(int exit_status)
 {
-  std::cout << "usage: " PROGRAM_NAME "[ OPTION ] \n"
+  std::cerr << "usage: " PROGRAM_NAME "[ OPTION ] \n"
             << " '-d': just dump the AST nodes and exit\n"
             << " '-p': print trace information when running executable\n"
             << std::endl;
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
   std::stringstream ss;
   if (dumpASTNodes) {
     ast->finePrint(ss);
-    std::cout << ss.rdbuf() << "\n";
+    std::cerr << ss.rdbuf() << "\n";
   } else {
     codegen(ast);
   }
