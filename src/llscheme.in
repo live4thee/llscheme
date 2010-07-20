@@ -21,7 +21,7 @@ EOF
 
 run_cmd() {
     [ x$VERBOSE = x1 ] && echo "$@"
-    "$@"
+    "$@" || exit -1
 }
 
 cleanup() {
