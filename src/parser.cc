@@ -20,6 +20,7 @@
 //
 
 #include <iostream>
+#include <stack>
 #include "parser.hh"
 #include "error.hh"
 #include "astnodes.hh"
@@ -64,56 +65,64 @@ void Parser::match(int tkType) {
 // display line/column number when parser failed.
 ASTNode *Parser::exp(void)
 {
-  int tk1 = peekTokenType(1);
-  ASTNode *ast;
+  int tktype;
+  std::stack<SExprASTNode *> stk;
 
-  switch (tk1) {
-  case Lexer::BOOL:
-    ast = new BooleanASTNode(peekToken(1).text);
-    consume();
-    return ast;
-  case Lexer::STRING:
-    ast = new StringASTNode(peekToken(1).text);
-    consume();
-    return ast;
-  case Lexer::NUMBER:
-    ast = new NumberASTNode(peekToken(1).text);
-    consume();
-    return ast;
-  case Lexer::ID:
-    ast = new SymbolASTNode(peekToken(1).text);
-    consume();
-    return ast;
-  }
+#define CONSUME_TOK(nodeType, tkString) do {            \
+  ASTNode* ast = new nodeType(tkString); consume();     \
+  if (stk.empty()) return ast;                          \
+  else stk.top()->addArgument(ast);                     \
+} while (0)
 
-  if (tk1 == Lexer::LPAREN) {
-    SExprASTNode *sexpr = new SExprASTNode();
-    consume();
+#define REDUCE_STK(stk) do {                                      \
+  if (stk.size() == 1) return stk.top();                          \
+  else {                                                          \
+    ASTNode* t = stk.top(); stk.pop(); stk.top()->addArgument(t); \
+  }                                                               \
+} while (0)
 
-    while (peekTokenType(1) != Lexer::RPAREN) {
-      if (peekTokenType(1) == Lexer::PERIOD) {
+  while ((tktype = peekTokenType(1)) != Lexer::EOF_TYPE) {
+    const std::string& tktext = peekToken(1).text;
+
+    switch (tktype) {
+      case Lexer::BOOL: CONSUME_TOK(BooleanASTNode, tktext); break;
+      case Lexer::STRING: CONSUME_TOK(StringASTNode, tktext); break;
+      case Lexer::NUMBER: CONSUME_TOK(NumberASTNode, tktext); break;
+      case Lexer::SYMBOL: CONSUME_TOK(SymbolASTNode, tktext); break;
+
+        // The form 'something will be expanded to (quote something)
+        // We manually reduce the stack here 'cause a RPAREN is omitted.
+      case Lexer::QUOTE:
+        stk.push(new SExprASTNode()); consume();
+        stk.top()->addArgument(new SymbolASTNode("quote"));
+        stk.top()->addArgument(this->exp());
+        REDUCE_STK(stk);
+        break;
+
+      case Lexer::LPAREN:
+        stk.push(new SExprASTNode()); consume();
+        break;
+
+      case Lexer::PERIOD:
         consume();
-        sexpr->setLast(exp());
-        match(Lexer::RPAREN);
-        return sexpr;
-      }
+        if (stk.empty()) throw Error(std::string("unexpected token: '.'"));
+        stk.top()->tagDotted()->addArgument(this->exp());
+        this->match(Lexer::RPAREN);
+        REDUCE_STK(stk);
+        break;
 
-      sexpr->addArgument(exp());
+      case Lexer::RPAREN:
+        consume();
+        switch (stk.size()) {
+          case 0: throw Error("unexpected token: ')'"); break;
+          default: REDUCE_STK(stk);
+        }
+        break;
+
+      default:
+        throw Error(std::string("unexpected token: '") + tktext + "'");
     }
-    match(Lexer::RPAREN);
-    return sexpr;
   }
-
-  if (tk1 == Lexer::QUOTE) {
-    SExprASTNode *sexpr = new SExprASTNode();
-    consume();
-    sexpr->addArgument(new SymbolASTNode("quote"));
-    sexpr->addArgument(exp());
-
-    return sexpr;
-  }
-
-  throw Error(std::string("unexpected token"));
 }
 
 /* vim: set et ts=2 sw=2 cin: */

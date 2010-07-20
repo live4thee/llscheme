@@ -30,7 +30,7 @@ typedef enum {RDX_DEC, RDX_HEX} radixType;
 
 class Lexer {
 public:
-  enum {EOF_TYPE = 1, LPAREN, ID, NUMBER, RPAREN,
+  enum {EOF_TYPE = 1, LPAREN, SYMBOL, NUMBER, RPAREN,
         PERIOD, STRING, BOOL, QUOTE};
 
   Lexer(CodeStream *s) { cs = s; }

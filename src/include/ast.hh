@@ -97,14 +97,6 @@ public:
     return type;
   }
 
-  ASTNode *getLastGen() const {
-    return lastGen;
-  }
-
-  void setLastGen(ASTNode *l) {
-    lastGen = l;
-  }
-
   virtual void accept(ASTVisitor &v) = 0;
   virtual ASTNode *acceptMutable(ASTVisitorMutable &v) = 0;
 

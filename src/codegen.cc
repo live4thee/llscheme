@@ -215,7 +215,7 @@ static const int num_builtin_syntax =
 // N.B. codeGen() and codeGenEval() of SExprAST are totally different
 Value *SExprASTNode::codeGen() {
   Value *head, *pair, *curr;
-  unsigned int i;
+  unsigned int i, len;
 
   if (args.size() == 0) {
     return LSObjNew(context, ls_t_nil);
@@ -226,7 +226,10 @@ Value *SExprASTNode::codeGen() {
                                             Type::getInt8Ty(context)->getPointerTo()),
                       LSObjGetPointerAddr(context, pair, 0, 1));
 
-  for (i = 1; i < args.size(); i++) {
+  if (!this->isDotted()) len = args.size();
+  else len = args.size() - 1;
+
+  for (i = 1; i < len; i++) {
     curr = LSObjNew(context, ls_t_pair);
     builder.CreateStore(builder.CreateBitCast(args[i]->codeGenNoBind(),
                                               Type::getInt8Ty(context)->getPointerTo()),
@@ -237,12 +240,12 @@ Value *SExprASTNode::codeGen() {
     pair = curr;
   }
 
-  if (last == NULL)
+  if (!this->isDotted())
     builder.CreateStore(builder.CreateBitCast(LSObjNew(context, ls_t_nil),
                                               Type::getInt8Ty(context)->getPointerTo()),
                         LSObjGetPointerAddr(context, pair, 0, 2));
   else
-    builder.CreateStore(builder.CreateBitCast(last->codeGenNoBind(),
+    builder.CreateStore(builder.CreateBitCast(args[i]->codeGenNoBind(),
                                               Type::getInt8Ty(context)->getPointerTo()),
                         LSObjGetPointerAddr(context, pair, 0, 2));
 
@@ -319,7 +322,7 @@ static Value *handleBegin(SExprASTNode *sexpr) {
     v = sexpr->getArgument(i)->codeGenEval();
   }
 
-  if (sexpr->hasLast())
+  if (sexpr->isDotted())
     throw Error(std::string("unexpected `.' in begin"));
 
   return v;

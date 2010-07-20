@@ -293,15 +293,14 @@ static void codegenInitJIT(Module* mod) {
 }
 
 /* mater driver function called by main() */
-int codegen(ASTNode *ast) {
+int codegen(ASTNode *ast, int fd) {
   module = new Module("lls", getGlobalContext());
 
   codegenInit();
   codegenInitJIT(module);
   codegenFinish(ast->codeGenEval());
 
-  // dump to stdout
-  llvm::raw_fd_ostream fdos(1, false);
+  llvm::raw_fd_ostream fdos(fd, false);
   module->print(fdos, NULL);
 
   return 0;

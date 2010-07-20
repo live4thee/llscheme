@@ -73,27 +73,27 @@ Token Lexer::nextToken(void) {
 }
 
 Token Lexer::getIdentifier(void) {
-  std::string id = "";
+  std::string sym = "";
   do {
-    id += curChar();
+    sym += curChar();
     consume();
   } while (isSubsequent());
   if (!isDelimiter())
     throw Error(std::string("invalid identifier syntax ") + curChar());
 
-  return Token(ID, id);
+  return Token(SYMBOL, sym);
 }
 
 Token Lexer::getPeculiarIdentifier(void) {
-  std::string id = "";
+  std::string sym = "";
   const char ch = curChar();
 
-  id += ch;
+  sym += ch;
   consume();
   if (!isDelimiter())
-    return getNumber(id);
+    return getNumber(sym);
 
-  return Token(ID, id);
+  return Token(SYMBOL, sym);
 }
 
 Token Lexer::getNumber(std::string number) {
@@ -116,7 +116,7 @@ Token Lexer::getDot(void) {
     if (curChar() == '.') {
       consume();
       if (isDelimiter())
-        return Token(ID, "...");
+        return Token(SYMBOL, "...");
     }
   }
   else
@@ -232,7 +232,7 @@ bool Lexer::isDigit(radixType rdx) {
 }
 
 const char* Lexer::tokenNames[] = {
-  "n/a", "<EOF>", "LPAREN", "ID", "NUMBER", "RPAREN",
+  "n/a", "<EOF>", "LPAREN", "SYMBOL", "NUMBER", "RPAREN",
   "PERIOD", "STRING", "BOOL", "QUOTE"
 };
 

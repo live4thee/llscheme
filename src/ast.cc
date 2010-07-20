@@ -50,15 +50,20 @@ void SExprASTNode::finePrint(std::stringstream &ss) const {
 
   if (size != 0) {
     args[0]->finePrint(ss);
-    for (i = 1; i < size; i++) {
-      ss << ' ';
+
+    if (!this->isDotted()) {
+      for (i = 1; i < size; i++) {
+        ss << ' ';
+        args[i]->finePrint(ss);
+      }
+    } else {
+      for (i = 1; i < size - 1; i++) {
+        ss << ' ';
+        args[i]->finePrint(ss);
+      }
+      ss << " . ";
       args[i]->finePrint(ss);
     }
-  }
-
-  if (last) {
-    ss << " . ";
-    last->finePrint(ss);
   }
 
   ss << ')';

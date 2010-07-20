@@ -113,14 +113,14 @@ public:
 
 class SExprASTNode :public ASTNode {
   std::vector<ASTNode *> args;
-  ASTNode *last;
+  bool is_dotted;
 public:
 
   typedef std::vector<ASTNode *>::iterator arg_iterator;
   typedef std::vector<ASTNode *>::const_iterator const_arg_iterator;
 
   SExprASTNode()
-    :ASTNode(SExprAST), last(NULL) {}
+    :ASTNode(SExprAST), is_dotted(false) {}
 
   SExprASTNode(SExprASTNode &n) :ASTNode(n) {
     arg_iterator i;
@@ -129,10 +129,7 @@ public:
       a->get();
       args.push_back(a);
     }
-    if (n.last) {
-      n.last->get();
-      last = n.last;
-    }
+    is_dotted = n.is_dotted;
   }
 
   arg_iterator arg_begin() {
@@ -176,21 +173,13 @@ public:
     return args[i];
   }
 
-  bool hasLast() const {
-    return last != NULL;
+  bool isDotted() const {
+    return is_dotted;
   }
 
-  ASTNode *getLast() {
-    return last;
-  }
-
-  void setLast(ASTNode *r) {
-    if (last != NULL && last != r)
-      PutASTNode(last);
-    if (last != r)
-      r->get();
-
-    last = r;
+  SExprASTNode* tagDotted() {
+    is_dotted = true;
+    return this;
   }
 
   void finePrint(std::stringstream &ss) const;

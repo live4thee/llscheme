@@ -27,8 +27,7 @@
 
 #include "parser.hh"
 #include "astnodes.hh"
-
-extern int codegen(ASTNode *);
+#include "driver.hh"
 
 #define PROGRAM_NAME "llscheme"
 
@@ -81,7 +80,8 @@ int main(int argc, char *argv[])
     ast->finePrint(ss);
     std::cerr << ss.rdbuf() << "\n";
   } else {
-    codegen(ast);
+    // dump to stdout
+    codegen(ast, STDOUT_FILENO);
   }
 
   delete ast;
