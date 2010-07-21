@@ -1,0 +1,19 @@
+0.2.0
+=====
+* Supported special form: define, lambda, if, quote, begin
+* Supported data types: number, string, list
+* A list of implemented built-in procedures:
+  a). Arithmetic
+   +, -, *, /, =, <, >, <=, >=
+   number?, complex?, real?, rational?, integer?, exact?, inexact?
+
+  b). Pair and List
+   cons, car, cdr, set-car!, set-cdr!, list, length, list-ref
+   null?, pair?, list?
+
+  c). String and Symbol
+   string?, symbol?, string=?, string-ci=?, string-length, substring,
+   string-append, string->number
+
+  d). I/O
+   display

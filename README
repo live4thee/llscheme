@@ -26,29 +26,14 @@ To build:
 
 Features:
 --------
-* Supported special form: define, lambda, if, quote, begin
-* Supported data types: number, string, list
-
-A list of implemented built-in procedures:
-1. Arithmetic
-   +, -, *, /, =, <, >, <=, >=
-   number?, complex?, real?, rational?, integer?, exact?, inexact?
-
-2. Pair and List
-   cons, car, cdr, set-car!, set-cdr!, list, length, list-ref
-   null?, pair?, list?
-
-3. String and Symbol
-   string?, symbol?, string=?, string-ci=?, string-length, substring,
-   string-append, string->number
-
-4. I/O
-   display
+See NEWS file.
 
 TODO
 ----
-3. Implement let/let*/letrec;
-5. Basic type inference system;
-6. Implement set!, I/O sub-routines;
-7. Continuations;
-8. Hygienic macro.
+* Function with va-args;
+* Interpreter interface;
+* Implement let/let*/letrec;
+* Basic type inference system;
+* Implement set!, I/O sub-routines;
+* Continuations;
+* Hygienic macro.

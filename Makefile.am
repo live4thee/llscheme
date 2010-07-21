@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = src
 
-EXTRA_DIST = \
+EXTRA_DIST = autogen.sh AUTHORS NEWS README \
 doc/closure.org \
 doc/ex_dynbind.c \
 doc/llscheme.org \
