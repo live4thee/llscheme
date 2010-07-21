@@ -253,7 +253,6 @@ Value *SExprASTNode::codeGen() {
 }
 
 Value *SExprASTNode::codeGenEval() {
-  int i;
   Value *func = NULL, *addr, *val, *fptr, *free;
   Constant *size;
 
@@ -264,22 +263,23 @@ Value *SExprASTNode::codeGenEval() {
   //   codegen: eval arg[0]
   // else
   //   error
+
   // codegen: runtime error situation if arg[0] isn't resolved to function
   // codegen: eval the remaining args
   // codegen: call function with arg count and vectors of args
-  // TODO: ( args . last)
+
   if (args.size() == 0)
     return codeGen();
 
   if (args[0]->getType() == SymbolAST) {
     SymbolASTNode *node = static_cast<SymbolASTNode *>(args[0]);
-    // syntax
-    for (i = 0; i < num_builtin_syntax; i++) {
+    // built-in syntax
+    for (int i = 0; i < num_builtin_syntax; i++) {
       if (node->symbol == builtin_syntax[i].key)
         return builtin_syntax[i].handler(this);
     }
 
-    // procs
+    // function application
     func = args[0]->codeGenEval();
   }
   else if (args[0]->getType() == SExprAST) {
@@ -299,7 +299,8 @@ Value *SExprASTNode::codeGenEval() {
   size = ConstantInt::get(Type::getInt32Ty(context), args.size() - 1);
   addr = builder.CreateAlloca(LSObjType->getPointerTo(), size);
 
-  for (i = 1; i < numArgument(); i++) {
+  // TODO: (args . last)
+  for (int i = 1; i < numArgument(); i++) {
     val = args[i]->codeGenEval();
     builder.CreateStore(val, GEP1(context, addr, i - 1));
   }
@@ -337,20 +338,16 @@ static Value *createFunction(SExprASTNode *def,
   BasicBlock::iterator previ;
   Value *obj, *argval, *free;
   std::string fname;
-  SymbolASTNode *arg;
+  SymbolASTNode *arg = NULL;
   std::vector<Constant *> idx;
   Binding *refs;
   Binding::iterator it;
-  int i, n;
+  int i, argc;
 
-  if (name == "")
-    fname = ".anon";
-  else
-    fname = name;
+  fname = (name == "") ? ".anon" : name;
+  argc = formals->numArgument() - start;
 
-  n = formals->numArgument() - start;
   f = Function::Create(LSFuncType, Function::PrivateLinkage, "_func_" + fname, module);
-
   obj = LSObjFunctionInit(context, f, fname);
 
   // need to bind it if defined a name
@@ -362,25 +359,30 @@ static Value *createFunction(SExprASTNode *def,
   previ = builder.GetInsertPoint();
   builder.SetInsertPoint(bb);
 
+  // struct ls_object (*)(int argc, struct ls_object *args[],
+  //                      struct ls_object *freelist[])
   ai = f->arg_begin();
   ai->setName("argc");
+
+  // insert sanity check code
   builder.CreateCall3(module->getFunction("lsrt_check_args_count"),
-                      llvm::ConstantInt::get(Type::getInt32Ty(context), n),
-                      llvm::ConstantInt::get(Type::getInt32Ty(context), n),
+                      llvm::ConstantInt::get(Type::getInt32Ty(context), argc),
+                      llvm::ConstantInt::get(Type::getInt32Ty(context), argc),
                       ai);
   ai++;
   ai->setName("args");
   argval = builder.CreateLoad(ai);
 
-  for (i = 0; i < n ; i++) {
+  /* type-checking parameter list */
+  for (i = 0; i < argc; ++i) {
     if (formals->getArgument(i + start)->getType() != SymbolAST)
-      throw Error(std::string("argument names need to be symbol"));
+      throw Error(std::string("constants found in parameter list"));
 
     arg = static_cast<SymbolASTNode *>(formals->getArgument(i + start));
-
     eenv.addBinding(arg->symbol, builder.CreateLoad(GEP1(context, ai, i)));
   }
 
+  // generate function body
   for (i = 2; i < def->numArgument(); i++)
     argval = def->getArgument(i)->codeGenEval();
 
@@ -449,8 +451,13 @@ static Value *createFunction(SExprASTNode *def,
   return obj;
 }
 
+static void checkSymbol(const std::string& symbol)
+{
+  if (eenv.searchLocalBinding(symbol))
+    throw Error(std::string("re-definition of symbol: ") + symbol);
+}
+
 static Value *handleDefine(SExprASTNode *sexpr) {
-  SExprASTNode *formals;
   SymbolASTNode *sym;
   Value *val;
 
@@ -464,8 +471,7 @@ static Value *handleDefine(SExprASTNode *sexpr) {
 
     // XXX: let's put define also in global scope
     sym = static_cast<SymbolASTNode *> (sexpr->getArgument(1));
-    if (eenv.searchLocalBinding(sym->symbol))
-      throw Error(std::string("can't define in this scope"));
+    checkSymbol(sym->symbol);
 
     val = sym->codeGen();
     builder.CreateStore(builder.CreateBitCast(sexpr->getArgument(2)->codeGenEval(),
@@ -474,16 +480,10 @@ static Value *handleDefine(SExprASTNode *sexpr) {
   }
   else if (sexpr->getArgument(1)->getType() == SExprAST) {
     // (define (proc ...) ...)
-    formals = static_cast<SExprASTNode *> (sexpr->getArgument(1));
-
-    for (int i = 0, n = formals->numArgument(); i < n; ++i) {
-      if (formals->getArgument(i)->getType() != SymbolAST)
-        throw Error(std::string("bad syntax for define"));
-    }
+    SExprASTNode* formals = static_cast<SExprASTNode *> (sexpr->getArgument(1));
 
     sym = static_cast<SymbolASTNode *> (formals->getArgument(0));
-    if (eenv.searchLocalBinding(sym->symbol))
-      throw Error(std::string("can't define in this scope"));
+    checkSymbol(sym->symbol);
 
     val = sym->codeGen();
     builder.CreateStore(builder.CreateBitCast(createFunction(sexpr, formals, 1,
