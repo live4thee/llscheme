@@ -27,6 +27,7 @@
 #include <llvm/Target/TargetData.h>
 
 #include <vector>
+#include <memory>
 #include <iostream>
 
 #include "astnodes.hh"
@@ -55,7 +56,7 @@ const Type *LSObjType;
 FunctionType *LSFuncType;
 const Type *LSFuncPtrType;
 
-static ExecutionEngine* JIT;
+static std::auto_ptr<ExecutionEngine> JIT;
 
 static void InitializeLSTypes(void) {
   std::vector<const Type*> v;
@@ -280,16 +281,18 @@ static void codegenFinish(Value *value) {
 
 static void codegenInitJIT(Module* mod) {
   std::string errmsg;
+  ExecutionEngine *ee;
 
   llvm::InitializeNativeTarget();
 
-  JIT = llvm::EngineBuilder(mod).setErrorStr(&errmsg).create();
-  if (!JIT) {
+  ee = llvm::EngineBuilder(mod).setErrorStr(&errmsg).create();
+  if (!ee) {
     std::cerr << "warning: " << errmsg << std::endl;
     return;
   }
 
-  mod->setDataLayout(JIT->getTargetData()->getStringRepresentation());
+  mod->setDataLayout(ee->getTargetData()->getStringRepresentation());
+  JIT.reset(ee);
 }
 
 /* mater driver function called by main() */

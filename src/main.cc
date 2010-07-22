@@ -65,9 +65,8 @@ int main(int argc, char *argv[])
 
   // parser a sexp
   while (parser.peekTokenType(1) != Lexer::EOF_TYPE) {
-    SExprASTNode *ast2;
     if (printTrace) {
-      ast2 = new SExprASTNode();
+      SExprASTNode *ast2 = new SExprASTNode();
       ast2->addArgument(new SymbolASTNode("display"));
       ast2->addArgument(parser.exp());
       ast->addArgument(ast2);

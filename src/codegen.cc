@@ -271,7 +271,7 @@ Value *SExprASTNode::codeGenEval() {
   if (args.size() == 0)
     return codeGen();
 
-  if (args[0]->getType() == SymbolAST) {
+  if (args[0]->getType() == ASTNode::SymbolAST) {
     SymbolASTNode *node = static_cast<SymbolASTNode *>(args[0]);
     // built-in syntax
     for (int i = 0; i < num_builtin_syntax; i++) {
@@ -282,7 +282,7 @@ Value *SExprASTNode::codeGenEval() {
     // function application
     func = args[0]->codeGenEval();
   }
-  else if (args[0]->getType() == SExprAST) {
+  else if (args[0]->getType() == ASTNode::SExprAST) {
     // possibly lambdas
     func = args[0]->codeGenEval();
   }
@@ -351,7 +351,7 @@ static void loadFuncArgs(SExprASTNode *formals,
 
   for (int i = start; i < formals->numArgument(); ++i) {
     /* type-checking parameter list */
-    if ((*formals)[i]->getType() != SymbolAST)
+    if ((*formals)[i]->getType() != ASTNode::SymbolAST)
       throw Error(std::string("constants found in parameter list"));
 
     arg = static_cast<SymbolASTNode *>((*formals)[i]);
@@ -485,7 +485,7 @@ static Value *handleDefine(SExprASTNode *sexpr) {
   if (sexpr->numArgument() < 3)
     throw Error(std::string("too few arguments for define"));
 
-  if ((*sexpr)[1]->getType() == SymbolAST) {
+  if ((*sexpr)[1]->getType() == ASTNode::SymbolAST) {
     // (define name value)
     if (sexpr->numArgument() != 3)
       throw Error(std::string("defining symbol takes 2 arguments"));
@@ -499,7 +499,7 @@ static Value *handleDefine(SExprASTNode *sexpr) {
                                               Type::getInt8Ty(context)->getPointerTo()),
                         LSObjGetPointerAddr(context, val, 0, 1));
   }
-  else if ((*sexpr)[1]->getType() == SExprAST) {
+  else if ((*sexpr)[1]->getType() == ASTNode::SExprAST) {
     // (define (proc ...) ...)
     SExprASTNode* formals = static_cast<SExprASTNode *> ((*sexpr)[1]);
 
@@ -525,7 +525,7 @@ static Value *handleLambda(SExprASTNode *sexpr) {
   if (sexpr->numArgument() < 3)
     throw Error(std::string("too few arguments for lambda"));
 
-  if ((*sexpr)[1]->getType() != SExprAST)
+  if ((*sexpr)[1]->getType() != ASTNode::SExprAST)
     throw Error(std::string("lambda expects argument list"));
 
   formals = static_cast<SExprASTNode *> ((*sexpr)[1]);

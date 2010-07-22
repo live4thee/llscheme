@@ -24,15 +24,6 @@
 
 #include <llvm/DerivedTypes.h>
 
-//--------------------------------------------------------------------
-// types
-//--------------------------------------------------------------------
-
-enum ASTType {
-  NumberAST, BooleanAST, SymbolAST, StringAST, SExprAST, VectorAST,
-  UnknownAST = 255,
-};
-
 class ASTNode;
 class NumberASTNode;
 class BooleanASTNode;
@@ -75,23 +66,25 @@ typedef _ASTVisitor<ASTNode *> ASTVisitorMutable;
 //--------------------------------------------------------------------
 
 class ASTNode {
+public:
+  //------------------------------------------------------------------
+  // types
+  //------------------------------------------------------------------
+  enum ASTType {
+    NumberAST, BooleanAST, SymbolAST, StringAST, SExprAST, VectorAST,
+    UnknownAST = 255,
+  };
+
 protected:
   const enum ASTType type;
-  int refcnt;
   ASTNode *lastGen;
 
 public:
-  ASTNode(enum ASTType _t = UnknownAST) :type(_t), lastGen(NULL), refcnt(0) {}
+  ASTNode(enum ASTType _t = UnknownAST) :type(_t), lastGen(NULL) {}
   virtual ~ASTNode() {}
 
   // lastGen never preserve during copy
-  ASTNode(ASTNode &n) :type(n.type), lastGen(NULL), refcnt(0) {}
-
-  void ref() { refcnt++; }
-  static void unref(ASTNode *n) {
-    if (--n->refcnt <= 0)
-      delete n;
-  }
+  ASTNode(ASTNode &n) :type(n.type), lastGen(NULL) {}
 
   enum ASTType getType() const {
     return type;
@@ -113,9 +106,6 @@ public:
   virtual llvm::Value *codeGenEval() { return codeGen(); }
 };
 
-static void PutASTNode(ASTNode *n) {
-  ASTNode::unref(n);
-}
 #endif
 
 /* vim: set et ts=2 sw=2 cin: */

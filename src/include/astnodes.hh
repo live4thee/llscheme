@@ -143,10 +143,16 @@ public:
     arg_iterator i;
     for (i = n.arg_begin(); i != n.arg_end(); i++) {
       ASTNode *a = *i;
-      a->ref();
       args.push_back(a);
     }
     is_dotted = n.is_dotted;
+  }
+
+  virtual ~SExprASTNode() {
+    arg_iterator i;
+    for (i = this->arg_begin(); i != this->arg_end(); i++) {
+      delete (*i);
+    }
   }
 
   arg_iterator arg_begin() {
@@ -178,7 +184,6 @@ public:
   }
 
   void addArgument(ASTNode *arg) {
-    arg->ref();
     args.push_back(arg);
   }
 
