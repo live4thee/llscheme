@@ -27,7 +27,7 @@ usage:
 $(basename "$0") <gsi|guile> <.scm>
 EOF
 
-    exit -1
+    exit 1
 }
 
 test $# -eq 2 || usage
@@ -49,7 +49,7 @@ TMP2=`mktemp -t compare-with.sh.2.XXXXXX`
 trap "rm -f $TMP1 $TMP2 $SCMOUT* 2>/dev/null" 0
 
 llscheme -p -o $SCMOUT < "$SCMFILE"
-test $? -eq 0 || exit -1
+test $? -eq 0 || exit 2
 
 $SCMOUT > $TMP1
 $CMP_SCRIPT "$SCMFILE" > $TMP2

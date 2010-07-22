@@ -253,7 +253,7 @@ Value *SExprASTNode::codeGen() {
 }
 
 Value *SExprASTNode::codeGenEval() {
-  Value *func = NULL, *addr, *val, *fptr, *free;
+  Value *func = NULL, *addr, *val, *fptr, *freelist;
   Constant *size;
 
   // if arg[0] is symbol:
@@ -294,7 +294,7 @@ Value *SExprASTNode::codeGenEval() {
   builder.CreateCall(module->getFunction("lsrt_func_p"), func);
   addr = LSObjGetPointerAddr(context, func, 0, 1);
   fptr = builder.CreateLoad(addr);
-  free = builder.CreateLoad(LSObjGetPointerAddr(context, func, 0, 2));
+  freelist = builder.CreateLoad(LSObjGetPointerAddr(context, func, 0, 2));
 
   size = ConstantInt::get(Type::getInt32Ty(context), args.size() - 1);
   addr = builder.CreateAlloca(LSObjType->getPointerTo(), size);
@@ -306,8 +306,8 @@ Value *SExprASTNode::codeGenEval() {
   }
 
   fptr = builder.CreateBitCast(fptr, LSFuncPtrType);
-  free = builder.CreateBitCast(free, LSObjType->getPointerTo()->getPointerTo());
-  return builder.CreateCall3(fptr, size, addr, free);
+  freelist = builder.CreateBitCast(freelist, LSObjType->getPointerTo()->getPointerTo());
+  return builder.CreateCall3(fptr, size, addr, freelist);
 }
 
 
@@ -320,13 +320,44 @@ static Value *handleBegin(SExprASTNode *sexpr) {
     v = LSObjNew(context, ls_t_unspec);
 
   for (i = 1; i < sexpr->numArgument(); i++) {
-    v = sexpr->getArgument(i)->codeGenEval();
+    v = (*sexpr)[i]->codeGenEval();
   }
 
   if (sexpr->isDotted())
     throw Error(std::string("unexpected `.' in begin"));
 
   return v;
+}
+
+static void generateFuncBody(SExprASTNode *def)
+{
+  Value * argval = NULL;
+
+  for (int i = 2; i < def->numArgument(); ++i) {
+    argval = (*def)[i]->codeGenEval();
+  }
+
+  // `argsval' must be non-NULL, since `(define foo ...)'
+  // has at least three elements.
+  assert(argsval != NULL);
+  builder.CreateRet(argval);
+}
+
+static void loadFuncArgs(SExprASTNode *formals,
+                         Function::arg_iterator &ai,
+                         int start)
+{
+  SymbolASTNode *arg = NULL;
+
+  for (int i = start; i < formals->numArgument(); ++i) {
+    /* type-checking parameter list */
+    if ((*formals)[i]->getType() != SymbolAST)
+      throw Error(std::string("constants found in parameter list"));
+
+    arg = static_cast<SymbolASTNode *>((*formals)[i]);
+    eenv.addBinding(arg->symbol,
+                    builder.CreateLoad(GEP1(context, ai, i - start)));
+  }
 }
 
 static Value *createFunction(SExprASTNode *def,
@@ -336,9 +367,8 @@ static Value *createFunction(SExprASTNode *def,
   Function::arg_iterator ai;
   BasicBlock *bb, *prevb, *bbprolog;
   BasicBlock::iterator previ;
-  Value *obj, *argval, *free;
+  Value *obj;
   std::string fname;
-  SymbolASTNode *arg = NULL;
   std::vector<Constant *> idx;
   Binding *refs;
   Binding::iterator it;
@@ -371,22 +401,13 @@ static Value *createFunction(SExprASTNode *def,
                       ai);
   ai++;
   ai->setName("args");
-  argval = builder.CreateLoad(ai);
+  builder.CreateLoad(ai);
 
-  /* type-checking parameter list */
-  for (i = 0; i < argc; ++i) {
-    if (formals->getArgument(i + start)->getType() != SymbolAST)
-      throw Error(std::string("constants found in parameter list"));
-
-    arg = static_cast<SymbolASTNode *>(formals->getArgument(i + start));
-    eenv.addBinding(arg->symbol, builder.CreateLoad(GEP1(context, ai, i)));
-  }
+  // load function args
+  loadFuncArgs(formals, ai, start);
 
   // generate function body
-  for (i = 2; i < def->numArgument(); i++)
-    argval = def->getArgument(i)->codeGenEval();
-
-  builder.CreateRet(argval);
+  generateFuncBody(def);
 
   // By now, we know what free args the function uses
   refs = eenv.getCurrentRefs();
@@ -399,9 +420,9 @@ static Value *createFunction(SExprASTNode *def,
     builder.SetInsertPoint(bbprolog);
 
     for(it = refs->begin(), i = 0; it != refs->end(); it++, i++) {
-      argval = eenv.searchLocalBinding(it->first);
+      Value* argval = eenv.searchLocalBinding(it->first);
       if (argval == NULL)
-        throw Error(std::string("internal closure error"));
+        throw Error(std::string("symbol not found: ") + it->first);
 
       argval->replaceAllUsesWith(builder.CreateLoad(GEP1(context, ai, i)));
       delete argval;
@@ -419,7 +440,7 @@ static Value *createFunction(SExprASTNode *def,
                         LSObjGetPointerAddr(context, obj, 0, 2));
   }
   else {
-    Value *newobj;
+    Value *newobj, *freelist;;
 
     newobj = LSObjNew(context, ls_t_func);
     obj->replaceAllUsesWith(newobj);
@@ -430,15 +451,15 @@ static Value *createFunction(SExprASTNode *def,
                         LSObjGetPointerAddr(context, obj, 0, 1));
 
 
-    free = builder.CreateCall(module->getFunction("lsrt_new_freelist"),
+    freelist = builder.CreateCall(module->getFunction("lsrt_new_freelist"),
                               ConstantInt::get(Type::getInt32Ty(context), refs->size()));
     for(it = refs->begin(), i = 0; it != refs->end(); it++, i++) {
       builder.CreateCall3(module->getFunction("lsrt_fill_freelist"),
-                          free,
+                          freelist,
                           ConstantInt::get(Type::getInt32Ty(context), i),
                           it->second);
     }
-    builder.CreateStore(builder.CreateBitCast(free,
+    builder.CreateStore(builder.CreateBitCast(freelist,
                                               Type::getInt8Ty(context)->getPointerTo()),
                         LSObjGetPointerAddr(context, obj, 0, 2));
   }
@@ -464,25 +485,25 @@ static Value *handleDefine(SExprASTNode *sexpr) {
   if (sexpr->numArgument() < 3)
     throw Error(std::string("too few arguments for define"));
 
-  if (sexpr->getArgument(1)->getType() == SymbolAST) {
+  if ((*sexpr)[1]->getType() == SymbolAST) {
     // (define name value)
     if (sexpr->numArgument() != 3)
       throw Error(std::string("defining symbol takes 2 arguments"));
 
     // XXX: let's put define also in global scope
-    sym = static_cast<SymbolASTNode *> (sexpr->getArgument(1));
+    sym = static_cast<SymbolASTNode *> ((*sexpr)[1]);
     checkSymbol(sym->symbol);
 
     val = sym->codeGen();
-    builder.CreateStore(builder.CreateBitCast(sexpr->getArgument(2)->codeGenEval(),
+    builder.CreateStore(builder.CreateBitCast((*sexpr)[2]->codeGenEval(),
                                               Type::getInt8Ty(context)->getPointerTo()),
                         LSObjGetPointerAddr(context, val, 0, 1));
   }
-  else if (sexpr->getArgument(1)->getType() == SExprAST) {
+  else if ((*sexpr)[1]->getType() == SExprAST) {
     // (define (proc ...) ...)
-    SExprASTNode* formals = static_cast<SExprASTNode *> (sexpr->getArgument(1));
+    SExprASTNode* formals = static_cast<SExprASTNode *> ((*sexpr)[1]);
 
-    sym = static_cast<SymbolASTNode *> (formals->getArgument(0));
+    sym = static_cast<SymbolASTNode *> ((*formals)[0]);
     checkSymbol(sym->symbol);
 
     val = sym->codeGen();
@@ -504,10 +525,10 @@ static Value *handleLambda(SExprASTNode *sexpr) {
   if (sexpr->numArgument() < 3)
     throw Error(std::string("too few arguments for lambda"));
 
-  if (sexpr->getArgument(1)->getType() != SExprAST)
+  if ((*sexpr)[1]->getType() != SExprAST)
     throw Error(std::string("lambda expects argument list"));
 
-  formals = static_cast<SExprASTNode *> (sexpr->getArgument(1));
+  formals = static_cast<SExprASTNode *> ((*sexpr)[1]);
   return createFunction(sexpr, formals, 0, "");
 }
 
@@ -515,7 +536,7 @@ static Value *handleQuote(SExprASTNode *sexpr) {
   if (sexpr->numArgument() != 2)
     throw Error(std::string("quote takes only one argument"));
 
-  return sexpr->getArgument(1)->codeGenNoBind();
+  return (*sexpr)[1]->codeGenNoBind();
 }
 
 static Value *handleIf(SExprASTNode *sexpr) {
@@ -524,7 +545,7 @@ static Value *handleIf(SExprASTNode *sexpr) {
 
   // lsrt_test_exp takes any objects and returns a boolean
   Value *test = builder.CreateCall(module->getFunction("lsrt_test_expr"),
-                                   sexpr->getArgument(1)->codeGenEval());
+                                   (*sexpr)[1]->codeGenEval());
   test = builder.CreateICmpNE(test,
                               ConstantInt::get(Type::getInt32Ty(context), 0));
 
@@ -537,7 +558,7 @@ static Value *handleIf(SExprASTNode *sexpr) {
   builder.CreateCondBr(test, thenbb, elsebb);
 
   builder.SetInsertPoint(thenbb);
-  Value *thenval = sexpr->getArgument(2)->codeGenEval();
+  Value *thenval = (*sexpr)[2]->codeGenEval();
   builder.CreateBr(mergebb);
   thenbb = builder.GetInsertBlock();
 
@@ -546,7 +567,7 @@ static Value *handleIf(SExprASTNode *sexpr) {
   func->getBasicBlockList().push_back(elsebb);
   builder.SetInsertPoint(elsebb);
   if (sexpr->numArgument() == 4)
-    elseval = sexpr->getArgument(3)->codeGenEval();
+    elseval = (*sexpr)[3]->codeGenEval();
   else
     elseval = LSObjNew(context, ls_t_unspec);
 

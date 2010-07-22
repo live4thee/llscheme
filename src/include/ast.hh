@@ -87,8 +87,8 @@ public:
   // lastGen never preserve during copy
   ASTNode(ASTNode &n) :type(n.type), lastGen(NULL), refcnt(0) {}
 
-  void get() { refcnt++; }
-  static void unLink(ASTNode *n) {
+  void ref() { refcnt++; }
+  static void unref(ASTNode *n) {
     if (--n->refcnt <= 0)
       delete n;
   }
@@ -114,7 +114,7 @@ public:
 };
 
 static void PutASTNode(ASTNode *n) {
-  ASTNode::unLink(n);
+  ASTNode::unref(n);
 }
 #endif
 

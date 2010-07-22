@@ -7,8 +7,7 @@ bin_PROGRAMS = llscheme.bin
 llscheme_bin_CXXFLAGS = -I$(srcdir)/include $(LLVM_CPPFLAGS)
 llscheme_bin_LDADD = $(LLVM_LIBS)
 
-llscheme_bin_SOURCES = ast.cc \
-		       codegen.cc \
+llscheme_bin_SOURCES = codegen.cc \
 		       driver.cc \
 		       env.cc \
 		       error.cc \

@@ -155,7 +155,7 @@ LSObjSimpleNumberInit(LLVMContext &context, int val)
 }
 
 static inline Value *
-LSObjStringInit(LLVMContext &context, std::string& str)
+LSObjStringInit(LLVMContext &context, const std::string& str)
 {
   Constant *c = ConstantArray::get(context, str.c_str(), true);
   GlobalVariable *s = new GlobalVariable(*module,
@@ -189,7 +189,7 @@ LSObjStringInit(LLVMContext &context, std::string& str)
 }
 
 static inline Value *
-LSObjSymbolInit(LLVMContext &context, std::string& str)
+LSObjSymbolInit(LLVMContext &context, const std::string& str)
 {
   Constant *c = ConstantArray::get(context, str.c_str(), true);
   GlobalVariable *s = new GlobalVariable(*module,
