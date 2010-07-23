@@ -218,8 +218,9 @@ public:
       }
 
       if (this->isDotted())
-        ss << " . ";
+        ss << " .";
 
+      ss << ' ';
       args[i]->finePrint(ss);
     }
 
