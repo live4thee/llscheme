@@ -382,8 +382,4 @@ int InterpreterRun(ASTNode *ast) {
   JITRunFunc(func);
 }
 
-extern "C" void lsrt_exit_hook()
-{
-  throw Error("");
-}
 /* vim: set et ts=2 sw=2 cin: */
