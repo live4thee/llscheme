@@ -42,7 +42,7 @@ public:
   void addGlobalBinding(const std::string &name, llvm::Value *val);
 
   void newScope();
-  void lastScope();
+  void exitLastScope();
 
   llvm::Value *searchBinding(const std::string &name);
   llvm::Value *searchGlobalBinding(const std::string &name);

@@ -25,33 +25,23 @@
 
 #include <llvm/Instructions.h>
 
-static void clearBinding(Binding *b) {
-  b->clear();
+static inline void freeLastBinding(std::deque<Binding *> &bq) {
+  Binding *last = bq.back();
+  last->clear();
+  bq.pop_back();
+  delete last;
 }
 
 
 ExecutionEnv::ExecutionEnv() {
-  Binding *tmp;
-
   global = new Binding;
-  tmp = new Binding;
-  lexical.push_back(tmp);
-  tmp = new Binding;
-  refs.push_back(tmp);
+  lexical.push_back(new Binding);
+  refs.push_back(new Binding);
 }
 
 ExecutionEnv::~ExecutionEnv() {
-  while (!lexical.empty()) {
-    Binding *b = lexical.back();
-    clearBinding(b);
-    lexical.pop_back();
-    delete b;
-    b = refs.back();
-    clearBinding(b);
-    refs.pop_back();
-    delete b;
-  }
-
+  while (!lexical.empty()) { freeLastBinding(lexical); }
+  while (!refs.empty()) { freeLastBinding(refs); }
   delete global;
 }
 
@@ -68,34 +58,19 @@ void ExecutionEnv::newScope() {
   refs.push_back(new Binding);
 }
 
-void ExecutionEnv::lastScope() {
+void ExecutionEnv::exitLastScope() {
   if (lexical.empty())
     throw Error(std::string("Scope error"));
 
-  Binding *b = lexical.back();
-
-  clearBinding(b);
-  lexical.pop_back();
-  delete b;
-  b = refs.back();
-  clearBinding(b);
-  refs.pop_back();
-  delete b;
+  freeLastBinding(lexical);
+  freeLastBinding(refs);
 }
 
 llvm::Value *ExecutionEnv::searchBinding(const std::string &name) {
-  Binding::iterator i;
   llvm::Value *val;
 
   val = searchLocalBinding(name);
-  if (val)
-    return val;
-
-  val = searchGlobalBinding(name);
-  if (val)
-    return val;
-
-  return NULL;
+  return (val != NULL) ? val : searchGlobalBinding(name);
 }
 
 llvm::Value *ExecutionEnv::searchGlobalBinding(const std::string &name) {
@@ -120,16 +95,15 @@ llvm::Value *ExecutionEnv::searchLocalBinding(const std::string &name) {
     i = b->find(name);
     if (i != b->end()) {
       if (p != lexical.rbegin())
-        goto makeref;
-      else
-        return i->second;
+        break;  /* jump to makeref */
+      return i->second;
     }
   }
 
-  return NULL;
+  if (p == lexical.rend())
+    return NULL;
 
- makeref:
-  // we have a match, but not in our scope...
+  // makeref.  we have a match, but not in our scope...
   // make a temporary value (and not insert) and insert it in the current
   // scope, it will later be replaced with actual load instruction, and we
   // need to take care of the temporary alloca there

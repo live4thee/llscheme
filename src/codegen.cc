@@ -465,7 +465,7 @@ static Value *createFunction(SExprASTNode *def,
   }
 
   // it is now safe to exit the scope and discard the env lists
-  eenv.lastScope();
+  eenv.exitLastScope();
 
   llvm::verifyFunction(*f);
 
