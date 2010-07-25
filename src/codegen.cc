@@ -280,7 +280,7 @@ Value *SExprASTNode::codeGenEval() {
     }
 
     // function application
-    func = args[0]->codeGenEval();
+    func = node->codeGenEval();
   }
   else if (args[0]->getType() == ASTNode::SExprAST) {
     // possibly lambdas

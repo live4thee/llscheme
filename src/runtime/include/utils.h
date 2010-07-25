@@ -66,23 +66,13 @@ int lsrt_main_retval(const struct ls_object *lso);
 int lsrt_test_expr(const struct ls_object *lso);
 
 /* ------------------------------------------------------------------ */
-static inline
-void lsrt_error(const char *fmt, ...)
-#ifdef __GNUC__
-__attribute__ ((format(printf, 1, 2))) __attribute__ ((noreturn))
-#endif
-  ;
 
-void lsrt_error(const char *fmt, ...)
-{
-  va_list ap;
-  va_start(ap, fmt);
-  vfprintf(stderr, fmt, ap);
-  va_end(ap);
-
-  fputc('\n', stderr);
-  exit(1);
-}
+#define lsrt_error(fmt...) do {                             \
+    fprintf(stderr, "%s:%d: error: ", __FILE__, __LINE__);  \
+    fprintf(stderr, fmt);                                   \
+    fputc('\n', stderr);                                    \
+    exit(1);                                                \
+  } while (0)
 
 /* TODO:
  * These three functions are used by codegen.cc, hide them in future.
