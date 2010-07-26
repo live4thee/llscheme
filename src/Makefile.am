@@ -6,6 +6,7 @@ bin_PROGRAMS = llscheme.bin
 
 llscheme_bin_CXXFLAGS = -I$(srcdir)/include $(LLVM_CPPFLAGS)
 llscheme_bin_LDADD = $(LLVM_LIBS) -lltdl
+llscheme_bin_LDFLAGS = -dlopen self
 
 llscheme_bin_SOURCES = codegen.cc \
 		       driver.cc \

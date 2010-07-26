@@ -33,6 +33,7 @@
 #include "astnodes.hh"
 #include "driver.hh"
 #include "env.hh"
+#include "error.hh"
 
 using llvm::StructType;
 using llvm::BasicBlock;
@@ -379,4 +380,8 @@ int InterpreterRun(ASTNode *ast) {
   fptr();
 }
 
+extern "C" void lsrt_exit_hook()
+{
+  throw Error("");
+}
 /* vim: set et ts=2 sw=2 cin: */

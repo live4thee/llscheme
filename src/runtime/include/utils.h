@@ -64,6 +64,7 @@ void lsrt_fill_freelist(struct ls_object* freelist[],
 
 int lsrt_main_retval(const struct ls_object *lso);
 int lsrt_test_expr(const struct ls_object *lso);
+void lsrt_exit_hook(void) __attribute__ ((weak));
 
 /* ------------------------------------------------------------------ */
 static inline
@@ -81,6 +82,7 @@ void lsrt_error(const char *fmt, ...)
   va_end(ap);
 
   fputc('\n', stderr);
+  lsrt_exit_hook();
   exit(1);
 }
 
