@@ -53,11 +53,12 @@ OUTPUT=
 VERBOSE=
 SEARCHDIR=
 NATIVE=
+INTERACTIVE=
 
 while [ $# -gt 0 ]; do
     case $1 in
         -h | --help) usage; exit 0 ;;
-        -i) PASSED_ARGS="$PASSED_ARGS -i" ;;
+        -i) INTERACTIVE=1; PASSED_ARGS="$PASSED_ARGS -i" ;;
         -d) FINEPRINT=1; PASSED_ARGS="$PASSED_ARGS -d" ;;
         -S) ASSEMBLE=0 ;;
         -c) LINK=0 ;;
@@ -72,6 +73,11 @@ while [ $# -gt 0 ]; do
 done
 
 if [ x$FINEPRINT = x1 ]; then
+    run_cmd $LLSCHEME_BIN $PASSED_ARGS
+    exit 0
+fi
+
+if [ x$INTERACTIVE = x1 ]; then
     run_cmd $LLSCHEME_BIN $PASSED_ARGS
     exit 0
 fi

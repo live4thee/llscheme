@@ -51,6 +51,7 @@ using llvm::verifyFunction;
 Module *module;
 IRBuilder<> builder(context);
 ExecutionEnv eenv;
+ExecutionEngine *ee;
 
 const Type *LSObjType;
 FunctionType *LSFuncType;
@@ -216,6 +217,10 @@ static void CheckBuiltinProcs(void) {
       if (fname == "")
         fname = builtin_proc[i].proc;
 
+      func = module->getFunction("lsrt_builtin_" + fname);
+      if (func)
+        continue;
+
       func = Function::Create(LSFuncType, Function::ExternalLinkage,
                               "lsrt_builtin_" + fname, module);
       // obj(sym).u1.ptr -> obj(func).u1.ptr -> func_ptr
@@ -281,7 +286,6 @@ static void codegenFinish(Value *value) {
 
 static void codegenInitJIT(Module* mod) {
   std::string errmsg;
-  ExecutionEngine *ee;
 
   llvm::InitializeNativeTarget();
 
@@ -307,6 +311,72 @@ int codegen(ASTNode *ast, int fd) {
   module->print(fdos, NULL);
 
   return 0;
+}
+
+// TODO: restructuring compiler and interpreter
+
+static void InterpreterProlog(void) {
+  std::vector<const Type*> v;
+  FunctionType *ftype;
+  Function *func;
+  BasicBlock *bb;
+
+  InitializeLSTypes();
+  InitializeLSRTFunctions();
+
+  v.push_back(Type::getVoidTy(context));
+  ftype = FunctionType::get(Type::getVoidTy(context), v, false);
+
+  func = Function::Create(ftype, Function::PrivateLinkage,
+                           "", module);
+  bb = BasicBlock::Create(context, "", func);
+  builder.SetInsertPoint(bb);
+
+  /* Init llscheme memory allocator */
+  ftype = FunctionType::get(Type::getVoidTy(context), false);
+  Function* gc_init_func = Function::Create(ftype, Function::ExternalLinkage,
+      "lsrt_memory_init", module);
+  builder.CreateCall(gc_init_func, "");
+  builder.CreateRetVoid();
+
+  void *f = ee->getPointerToFunction(func);
+  void (*fptr)() = (void (*)()) (intptr_t) f;
+  fptr();
+}
+
+int InterpreterInit() {
+  module = new Module("lls", getGlobalContext());
+
+  codegenInitJIT(module);
+  InterpreterProlog();
+}
+
+int InterpreterRun(ASTNode *ast) {
+  std::vector<const Type*> v;
+  FunctionType *ftype;
+  Function *func;
+  BasicBlock *funcbb, *bb;
+
+  v.push_back(Type::getVoidTy(context));
+  ftype = FunctionType::get(Type::getVoidTy(context), v, false);
+
+  func = Function::Create(ftype, Function::PrivateLinkage,
+                           "", module);
+  funcbb = BasicBlock::Create(context, "", func);
+  builder.SetInsertPoint(funcbb);
+  ast->codeGenEval();
+  builder.CreateRetVoid();
+
+  bb = BasicBlock::Create(context, "");
+  func->getBasicBlockList().push_front(bb);
+  builder.SetInsertPoint(bb);
+
+  CheckBuiltinProcs();
+  builder.CreateBr(funcbb);
+
+  void *f = ee->getPointerToFunction(func);
+  void (*fptr)() = (void (*)()) (intptr_t) f;
+  fptr();
 }
 
 /* vim: set et ts=2 sw=2 cin: */

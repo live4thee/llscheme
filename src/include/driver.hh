@@ -58,6 +58,8 @@ extern FunctionType *LSFuncType;
 extern const Type *LSFuncPtrType;
 
 extern int codegen(ASTNode *, int fd);
+int InterpreterInit();
+int InterpreterRun(ASTNode *ast);
 
 // Create a ls_object of TYPE defined in runtime/object.h Return the
 // pointer to the allocated memory.  Since the ls_object is an

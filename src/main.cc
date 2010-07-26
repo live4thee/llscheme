@@ -64,18 +64,23 @@ int main(int argc, char *argv[])
   }
 
   if (interactive) {
-    int r;
-    r = lt_dlinit();
-    if (r) {
+    lt_dladvise advise;
+
+    if (lt_dlinit() || lt_dladvise_init(&advise) ||
+        lt_dladvise_ext(&advise) || lt_dladvise_global(&advise)) {
       std::cerr << "can't initilize dynamic loading, exiting...\n";
       std::exit(1);
     }
-    ltbi = lt_dlopenext("liblsrt");
+    ltbi = lt_dlopenadvise("liblsrt", advise);
     if (!ltbi) {
       std::cerr << "can't load runtime for interpreter, exiting...\n";
       lt_dlexit();
       std::exit(1);
     }
+    lt_dladvise_destroy(&advise);
+    InterpreterInit();
+
+    std::cout << "> " << std::flush;
   }
 
   std::auto_ptr<CodeStream> cs(new CodeStreamStream(&std::cin));
@@ -92,6 +97,10 @@ int main(int argc, char *argv[])
       ast2->addArgument(new SymbolASTNode("display"));
       ast2->addArgument(parser.exp());
       ast->addArgument(ast2);
+      if (interactive) {
+        InterpreterRun(ast2);
+        std::cout << "\n> " << std::flush;
+      }
     }
     else
       ast->addArgument(parser.exp());
