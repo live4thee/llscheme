@@ -35,7 +35,7 @@ class CodeStream {
 public:
   virtual ~CodeStream() {};
 
-  virtual char getchar(void) const = 0;
+  virtual char getchar(void) = 0;
   virtual const Cursor& cursor(void) const = 0;
 
   virtual void consume(void) = 0;
@@ -46,14 +46,17 @@ class CodeStreamStream: public CodeStream {
 public:
   CodeStreamStream(std::istream* ins);
 
-  char getchar(void) const;
+  char getchar(void);
   virtual const Cursor& cursor(void) const;
   void consume(void);
 
 private:
+  void fillchar(void);
+
   std::istream* m_is;
   Cursor m_cursor;
   char m_ch;
+  int avail;
 };
 
 #endif

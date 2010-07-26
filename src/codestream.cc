@@ -25,14 +25,22 @@ CodeStreamStream::CodeStreamStream(std::istream* is)
 : m_is(is) {
   m_cursor.cur_line = 1;
   m_cursor.cur_column = 1;
-  m_ch = m_is->get();
+  avail = 0;
 }
 
-char CodeStreamStream::getchar(void) const {
+void CodeStreamStream::fillchar(void) {
+  if (!avail) {
+    m_ch = m_is->get();
+    avail = 1;
+  }
+}
+char CodeStreamStream::getchar(void) {
+  fillchar();
   return m_ch;
 }
 
 void CodeStreamStream::consume(void) {
+  fillchar();
   if (!m_is->eof()) {
     if (m_ch == '\n') {
       m_cursor.cur_line++;
@@ -41,12 +49,10 @@ void CodeStreamStream::consume(void) {
       m_cursor.cur_column++;
     }
 
-    m_ch = m_is->get();
+    avail = 0;
   }
 }
 
-const Cursor& CodeStreamStream::cursor(void) const {
-  return m_cursor;
-}
+const Cursor& CodeStreamStream::cursor(void) const { return m_cursor; }
 
 /* vim: set et ts=2 sw=2 cin: */
