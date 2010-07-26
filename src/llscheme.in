@@ -8,6 +8,7 @@ usage: cat <.scm> | llscheme -[cdhopsvL]
 
 options:
     -h             Show this message
+    -i             Invoke interpreter
     -c             Compile and assemble, but do not link
     -S             Compile only; do not assemble or link
     -v             Verbose
@@ -56,6 +57,7 @@ NATIVE=
 while [ $# -gt 0 ]; do
     case $1 in
         -h | --help) usage; exit 0 ;;
+        -i) PASSED_ARGS="$PASSED_ARGS -i" ;;
         -d) FINEPRINT=1; PASSED_ARGS="$PASSED_ARGS -d" ;;
         -S) ASSEMBLE=0 ;;
         -c) LINK=0 ;;

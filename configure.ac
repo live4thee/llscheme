@@ -7,7 +7,7 @@ AM_INIT_AUTOMAKE([dist-bzip2 foreign])
 AM_MAINTAINER_MODE
 
 AC_PROG_CXX
-AM_PROG_LIBTOOL
+AM_PROG_LIBTOOL([dlopen])
 
 # check for clang and llvm tools
 AC_CHECK_PROG(LLVM_AS, llvm-as, llvm-as)

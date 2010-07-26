@@ -25,6 +25,7 @@
 #include <cstdlib>
 
 #include <unistd.h>
+#include <ltdl.h>
 
 #include "parser.hh"
 #include "astnodes.hh"
@@ -40,6 +41,7 @@ static void usage(int exit_status)
   std::cerr << "usage: " PROGRAM_NAME "[ OPTION ] \n"
             << " '-d': just dump the AST nodes and exit\n"
             << " '-p': print trace information when running executable\n"
+            << " '-i': interactive, implies -p\n"
             << std::endl;
   std::exit(exit_status);
 }
@@ -47,12 +49,32 @@ static void usage(int exit_status)
 int main(int argc, char *argv[])
 {
   int opt = -1;
-  while ((opt = getopt(argc, argv, "dp")) != -1) {
+  bool interactive = false;
+  lt_dlhandle ltbi;
+  std::stringstream ss;
+
+  while ((opt = getopt(argc, argv, "dpi")) != -1) {
     switch (opt) {
     case 'd': dumpASTNodes = true; break;
+    case 'i': interactive = true; // FALLTHROUGH
     case 'p': printTrace = true; break;
     default:
       usage(EXIT_FAILURE);
+    }
+  }
+
+  if (interactive) {
+    int r;
+    r = lt_dlinit();
+    if (r) {
+      std::cerr << "can't initilize dynamic loading, exiting...\n";
+      std::exit(1);
+    }
+    ltbi = lt_dlopenext("liblsrt");
+    if (!ltbi) {
+      std::cerr << "can't load runtime for interpreter, exiting...\n";
+      lt_dlexit();
+      std::exit(1);
     }
   }
 
@@ -75,7 +97,12 @@ int main(int argc, char *argv[])
       ast->addArgument(parser.exp());
   }
 
-  std::stringstream ss;
+  if (interactive) {
+    lt_dlclose(ltbi);
+    lt_dlexit();
+    goto end;
+  }
+
   if (dumpASTNodes) {
     ast->finePrint(ss);
     std::cerr << ss.rdbuf() << "\n";
@@ -84,6 +111,7 @@ int main(int argc, char *argv[])
     codegen(ast.get(), STDOUT_FILENO);
   }
 
+ end:
   return 0;
 }
 
