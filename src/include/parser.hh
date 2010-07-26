@@ -22,28 +22,27 @@
 #ifndef PARSER_HH_
 #define PARSER_HH_
 
-#include <vector>
+#include <deque>
 #include "lexer.hh"
 #include "astnodes.hh"
 
 class Parser {
 public:
-  Parser(Lexer* input, int k);
+  Parser(Lexer* input);
   ~Parser();
 
   void consume(void);
   void match(int tkType);
 
-  const Token& peekToken(int idx) const;
-  int peekTokenType(int idx) const;
+  const Token& peekToken(int idx);
+  void fillToken(int idx);
+  int peekTokenType(int idx);
 
   ASTNode *exp(void);
 
 private:
   Lexer* input;
-  std::vector<Token> lookahead;
-  int n_lookahead;
-  int c_index;
+  std::deque<Token> lookahead;
 };
 
 #endif

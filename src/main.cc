@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
 
   std::auto_ptr<CodeStream> cs(new CodeStreamStream(&std::cin));
   std::auto_ptr<Lexer> lexer(new Lexer(cs.get()));
-  Parser parser(lexer.get(), 4);
+  Parser parser(lexer.get());
 
   std::auto_ptr<SExprASTNode> ast(new SExprASTNode());
   ast->addArgument(new SymbolASTNode("begin"));

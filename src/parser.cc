@@ -25,32 +25,34 @@
 #include "error.hh"
 #include "astnodes.hh"
 
-Parser::Parser(Lexer* input, int k) {
+Parser::Parser(Lexer* input) {
   this->input = input;
-  n_lookahead = k;
-  c_index = 0;      // circular index of next token position to fill
-
-  // fill in the circular lookahead token buffer
-  for (int i = 0; i < k; ++i) {
-    lookahead.push_back(input->nextToken());
-  }
 }
 
 Parser::~Parser() {
 }
 
+void Parser::fillToken(int count) {
+  for (int i = 0; i < count; i++) {
+    lookahead.push_back(input->nextToken());
+  }
+}
+
 void Parser::consume(void) {
-  lookahead[c_index] = input->nextToken();
-  c_index = (c_index + 1) % n_lookahead;
+  if (lookahead.empty())
+    fillToken(1);
+
+  lookahead.pop_front();
 }
 
-// 1 <= idx <= k
-const Token& Parser::peekToken(int idx) const {
-  int t = (c_index + idx - 1) % n_lookahead;
-  return lookahead[t];
+const Token& Parser::peekToken(int idx) {
+  if (lookahead.size() < idx)
+    fillToken(idx - lookahead.size());
+
+  return lookahead[idx - 1];
 }
 
-int Parser::peekTokenType(int idx) const {
+int Parser::peekTokenType(int idx) {
   return peekToken(idx).type;
 }
 
