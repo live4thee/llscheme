@@ -315,6 +315,12 @@ int codegen(ASTNode *ast, int fd) {
 }
 
 // TODO: restructuring compiler and interpreter
+static inline void JITRunFunc(Function* func)
+{
+  void *f = JIT.get()->getPointerToFunction(func);
+  void (*fptr)() = (void (*)()) (intptr_t) f;
+  fptr();
+}
 
 static void InterpreterProlog(void) {
   std::vector<const Type*> v;
@@ -340,9 +346,7 @@ static void InterpreterProlog(void) {
   builder.CreateCall(gc_init_func, "");
   builder.CreateRetVoid();
 
-  void *f = JIT.get()->getPointerToFunction(func);
-  void (*fptr)() = (void (*)()) (intptr_t) f;
-  fptr();
+  JITRunFunc(func);
 }
 
 int InterpreterInit() {
@@ -375,9 +379,7 @@ int InterpreterRun(ASTNode *ast) {
   CheckBuiltinProcs();
   builder.CreateBr(funcbb);
 
-  void *f = JIT.get()->getPointerToFunction(func);
-  void (*fptr)() = (void (*)()) (intptr_t) f;
-  fptr();
+  JITRunFunc(func);
 }
 
 extern "C" void lsrt_exit_hook()

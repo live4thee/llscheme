@@ -56,7 +56,7 @@ private:
   std::istream* m_is;
   Cursor m_cursor;
   char m_ch;
-  int avail;
+  bool avail;
 };
 
 #endif

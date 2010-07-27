@@ -65,7 +65,7 @@ void Parser::match(int tkType) {
 
 // TODO:
 // display line/column number when parser failed.
-ASTNode *Parser::exp(void)
+ASTNode *Parser::parseSExp(void)
 {
   int tktype;
   std::stack<SExprASTNode *> stk;
@@ -97,7 +97,7 @@ ASTNode *Parser::exp(void)
       case Lexer::QUOTE:
         stk.push(new SExprASTNode()); consume();
         stk.top()->addArgument(new SymbolASTNode("quote"));
-        stk.top()->addArgument(this->exp());
+        stk.top()->addArgument(this->parseSExp());
         REDUCE_STK(stk);
         break;
 
@@ -108,7 +108,7 @@ ASTNode *Parser::exp(void)
       case Lexer::PERIOD:
         consume();
         if (stk.empty()) throw Error(std::string("unexpected token: '.'"));
-        stk.top()->tagDotted()->addArgument(this->exp());
+        stk.top()->tagDotted()->addArgument(this->parseSExp());
         this->match(Lexer::RPAREN);
         REDUCE_STK(stk);
         break;

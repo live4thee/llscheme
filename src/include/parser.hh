@@ -38,7 +38,7 @@ public:
   void fillToken(int idx);
   int peekTokenType(int idx);
 
-  ASTNode *exp(void);
+  ASTNode *parseSExp(void);
 
 private:
   Lexer* input;

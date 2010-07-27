@@ -25,13 +25,13 @@ CodeStreamStream::CodeStreamStream(std::istream* is)
 : m_is(is) {
   m_cursor.cur_line = 1;
   m_cursor.cur_column = 1;
-  avail = 0;
+  avail = false;
 }
 
 void CodeStreamStream::fillchar(void) {
   if (!avail) {
     m_ch = m_is->get();
-    avail = 1;
+    avail = true;
   }
 }
 char CodeStreamStream::getchar(void) {
@@ -49,7 +49,7 @@ void CodeStreamStream::consume(void) {
       m_cursor.cur_column++;
     }
 
-    avail = 0;
+    avail = false;
   }
 }
 

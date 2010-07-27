@@ -46,6 +46,14 @@ static void usage(int exit_status)
   std::exit(exit_status);
 }
 
+static inline SExprASTNode* createDisplaySexp(ASTNode* node)
+{
+  SExprASTNode* n = new SExprASTNode();
+  n->addArgument(new SymbolASTNode("display"));
+  n->addArgument(node);
+  return n;
+}
+
 int main(int argc, char *argv[])
 {
   int opt = -1;
@@ -93,23 +101,24 @@ int main(int argc, char *argv[])
   // parser a sexp
   while (parser.peekTokenType(1) != Lexer::EOF_TYPE) {
     if (printTrace) {
-      SExprASTNode *ast2 = new SExprASTNode();
-      ast2->addArgument(new SymbolASTNode("display"));
-      ast2->addArgument(parser.exp());
-      ast->addArgument(ast2);
+      ASTNode* n = createDisplaySexp(parser.parseSExp());
       if (interactive) {
-        InterpreterRun(ast2);
+        InterpreterRun(n);
         std::cout << "\n> " << std::flush;
+        delete n;
+      }
+      else {
+        ast->addArgument(n);
       }
     }
     else
-      ast->addArgument(parser.exp());
+      ast->addArgument(parser.parseSExp());
   }
 
   if (interactive) {
     lt_dlclose(ltbi);
     lt_dlexit();
-    goto end;
+    return 0;
   }
 
   if (dumpASTNodes) {
@@ -120,7 +129,6 @@ int main(int argc, char *argv[])
     codegen(ast.get(), STDOUT_FILENO);
   }
 
- end:
   return 0;
 }
 
