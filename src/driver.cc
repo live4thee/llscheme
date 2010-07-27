@@ -52,7 +52,6 @@ using llvm::verifyFunction;
 Module *module;
 IRBuilder<> builder(context);
 ExecutionEnv eenv;
-ExecutionEngine *ee;
 
 const Type *LSObjType;
 FunctionType *LSFuncType;
@@ -287,6 +286,7 @@ static void codegenFinish(Value *value) {
 
 static void codegenInitJIT(Module* mod) {
   std::string errmsg;
+  ExecutionEngine *ee;
 
   llvm::InitializeNativeTarget();
 
@@ -340,7 +340,7 @@ static void InterpreterProlog(void) {
   builder.CreateCall(gc_init_func, "");
   builder.CreateRetVoid();
 
-  void *f = ee->getPointerToFunction(func);
+  void *f = JIT.get()->getPointerToFunction(func);
   void (*fptr)() = (void (*)()) (intptr_t) f;
   fptr();
 }
@@ -375,7 +375,7 @@ int InterpreterRun(ASTNode *ast) {
   CheckBuiltinProcs();
   builder.CreateBr(funcbb);
 
-  void *f = ee->getPointerToFunction(func);
+  void *f = JIT.get()->getPointerToFunction(func);
   void (*fptr)() = (void (*)()) (intptr_t) f;
   fptr();
 }
