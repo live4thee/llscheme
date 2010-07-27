@@ -81,7 +81,7 @@ static void _display(struct ls_object *lso, int fp)
     printf("()");
     break;
   case ls_t_func:
-    printf("#<procedure %p>", lso_func_get(lso));
+    printf("#<procedure %p>", lso);
     break;
   case ls_t_unspec:
     printf("#<unspecified>");
