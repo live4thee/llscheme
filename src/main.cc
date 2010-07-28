@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <ltdl.h>
 
+#include "error.hh"
 #include "parser.hh"
 #include "astnodes.hh"
 #include "driver.hh"
@@ -103,7 +104,11 @@ int main(int argc, char *argv[])
     if (printTrace) {
       ASTNode* n = createDisplaySexp(parser.parseSExp());
       if (interactive) {
-        InterpreterRun(n);
+        try {
+          InterpreterRun(n);
+        } catch (const Error& e) {
+          std::cerr << e.what();
+        }
         std::cout << "\n> " << std::flush;
         delete n;
       }

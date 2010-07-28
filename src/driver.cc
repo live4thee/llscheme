@@ -315,13 +315,9 @@ int codegen(ASTNode *ast, int fd) {
 // TODO: restructuring compiler and interpreter
 static inline void JITRunFunc(Function* func)
 {
-  try {
-    void *f = JIT.get()->getPointerToFunction(func);
-    void (*fptr)() = (void (*)()) (intptr_t) f;
-    fptr();
-  } catch (const std::exception& ex) {
-    /* Ignored. c.f. lsrt_exit_hook */
-  }
+  void *f = JIT.get()->getPointerToFunction(func);
+  void (*fptr)() = (void (*)()) (intptr_t) f;
+  fptr();
 }
 
 static void InterpreterProlog(void) {
