@@ -65,12 +65,16 @@ void lsrt_fill_freelist(struct ls_object* freelist[],
 int lsrt_main_retval(const struct ls_object *lso);
 int lsrt_test_expr(const struct ls_object *lso);
 
+/* Its value will be zero if no definition found by loader. */
+void lsrt_exit_hook(void) __attribute__ ((weak));
+
 /* ------------------------------------------------------------------ */
 
 #define lsrt_error(fmt...) do {                             \
     fprintf(stderr, "%s:%d: error: ", __FILE__, __LINE__);  \
     fprintf(stderr, fmt);                                   \
     fputc('\n', stderr);                                    \
+    if (lsrt_exit_hook) lsrt_exit_hook();                   \
     exit(1);                                                \
   } while (0)
 

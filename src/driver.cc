@@ -22,6 +22,7 @@
 #include <llvm/Analysis/Verifier.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/JIT.h>
+#include <llvm/Target/TargetOptions.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Target/TargetSelect.h>
 #include <llvm/Target/TargetData.h>
@@ -282,6 +283,9 @@ static void codegenInitJIT(Module* mod) {
   std::string errmsg;
   ExecutionEngine *ee;
 
+  // If not set, exception handling will not be turned on
+  llvm::DwarfExceptionHandling = true;
+
   llvm::InitializeNativeTarget();
 
   ee = llvm::EngineBuilder(mod).setErrorStr(&errmsg).create();
@@ -311,9 +315,13 @@ int codegen(ASTNode *ast, int fd) {
 // TODO: restructuring compiler and interpreter
 static inline void JITRunFunc(Function* func)
 {
-  void *f = JIT.get()->getPointerToFunction(func);
-  void (*fptr)() = (void (*)()) (intptr_t) f;
-  fptr();
+  try {
+    void *f = JIT.get()->getPointerToFunction(func);
+    void (*fptr)() = (void (*)()) (intptr_t) f;
+    fptr();
+  } catch (const std::exception& ex) {
+    /* Ignored. c.f. lsrt_exit_hook */
+  }
 }
 
 static void InterpreterProlog(void) {
@@ -374,6 +382,14 @@ int InterpreterRun(ASTNode *ast) {
   builder.CreateBr(funcbb);
 
   JITRunFunc(func);
+}
+
+/* Throw an exception and return the control to the caller,
+ * so that lsrt_exit() will not terminate the interpreter.
+ */
+extern "C" void lsrt_exit_hook()
+{
+  throw Error("");
 }
 
 /* vim: set et ts=2 sw=2 cin: */
