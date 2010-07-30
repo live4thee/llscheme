@@ -206,13 +206,11 @@ struct ls_object *lsrt_builtin_listref(int argc, struct ls_object *args[],
 
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(2, 2, argc);
+  lsrt_number_p(args[1]);
 
   len = _length(args[0]);
   if (len == -1)
     lsrt_error("%s requires a list", __func__);
-
-  if (!lso_is_number(args[1]))
-    lsrt_error("(Argument 2) Exact INTEGER expected");
 
   idx = lso_simplenumber_get(args[1]);
   if (idx < 0 || idx >= len)

@@ -34,9 +34,9 @@
  * Section 6.6.3 Output
  **********************************************************/
 
-char *_ntos(struct ls_object *number);
+char *_ntos(const struct ls_object *number);
 
-static void _display(struct ls_object *lso, int fp)
+static void _display(const struct ls_object *lso, int fp)
 {
   int type = lso_type(lso);
   switch (type) {
@@ -82,6 +82,19 @@ static void _display(struct ls_object *lso, int fp)
     break;
   case ls_t_func:
     printf("#<procedure %p>", lso);
+    break;
+  case ls_t_vector:
+    do {
+      struct ls_object* const* addr0 = lso_vector_addr0(lso);
+      int32_t idx, len = lso_vector_length(lso);
+      printf("#(");
+      for (idx = 0; idx < len - 1; ++idx) {
+        _display(addr0[idx], 0);
+        putchar(' ');
+      }
+      if (len > 0) _display(addr0[idx], 0);
+      putchar(')');
+    } while (0);
     break;
   case ls_t_unspec:
     printf("#<unspecified>");

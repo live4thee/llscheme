@@ -54,6 +54,7 @@
 #define ls_num_im_inexact    0x3000
 
 #define ls_t_boolean   2
+#define ls_t_vector    3
 #define ls_t_symbol    4
 #define ls_t_string    5
 #define ls_t_pair      6
@@ -111,6 +112,7 @@ struct ls_object * (*ls_func_type) (int argc, struct ls_object *args[],
  *     inexact is float u{1,2}.ptr -> mpf_t
  *
  * boolean: u1.val <= boolean, u2 undefined
+ * vector: u1.val <= length, u2.ptr <= address of first element
  * symbol: u1.ptr <= the object pointing to, u2.ptr <= symbol
  * string: u1.ptr <= string, u2 undefined
  * pair: u1.ptr <= car object,  u2.ptr <= cdr object
@@ -130,6 +132,7 @@ struct ls_object * (*ls_func_type) (int argc, struct ls_object *args[],
 #define lso_number_type_im(x)   (((x)->type >> 12) & 0xf)
 
 #define lso_is_boolean(x) (lso_type(x) == ls_t_boolean)
+#define lso_is_vector(x)  (lso_type(x) == ls_t_vector)
 #define lso_is_symbol(x)  (lso_type(x) == ls_t_symbol)
 #define lso_is_string(x)  (lso_type(x) == ls_t_string)
 #define lso_is_pair(x)    (lso_type(x) == ls_t_pair)
@@ -139,6 +142,8 @@ struct ls_object * (*ls_func_type) (int argc, struct ls_object *args[],
 /* accessors */
 #define lso_simplenumber_get(x) ((x)->u1.val)
 #define lso_boolean_get(x)      ((x)->u1.val)
+#define lso_vector_length(x)    ((x)->u1.val)
+#define lso_vector_addr0(x)     ((struct ls_object**) (&(x)->u2.ptr))
 #define lso_symbol_deref(x)     ((struct ls_object *) (x)->u1.ptr)
 #define lso_symbol_name(x)      ((char *) (x)->u2.ptr)
 #define lso_string_get(x)       ((char *) (x)->u1.ptr)
@@ -148,7 +153,7 @@ struct ls_object * (*ls_func_type) (int argc, struct ls_object *args[],
 #define lso_set_cdr(x, t)       do { (x)->u2.ptr = t; } while(0)
 #define lso_func_get(x)         ((ls_func_type) (x)->u1.ptr)
 
-#define lso_set_type(x, t) do { (x)->type = t; } while(0)
+#define lso_set_type(x, t)      do { (x)->type = t; } while(0)
 #define lso_number_set(x, b)   (x)->u1.val = b
 #define lso_boolean_set(x, n)  (x)->u1.val = n
 #define lso_string_set(x, p)   (x)->u1.ptr = p

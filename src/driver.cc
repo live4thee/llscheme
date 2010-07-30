@@ -184,6 +184,13 @@ static const struct _builtin_proc {
   { "pair?", "pairp" },
   { "list?", "listp" },
 
+  /* vector */
+  { "vector?", "vectorp" },
+  { "vector-length", "vlength" },
+  { "make-vector", "mkvector" },
+  { "vector", "" },
+  { "vector-ref", "vecref" },
+
   /* String and Symbol */
   { "string?", "strp" },
   { "symbol?", "symp" },

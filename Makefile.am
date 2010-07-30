@@ -21,6 +21,8 @@ test/compare-with.sh \
 test/run-with-gsi.scm \
 test/run-with-guile.scm \
 test/sexp.scm \
+test/vector001.scm \
+test/vector002.scm \
 test/string001.scm \
 test/string002.scm \
 test/string003.scm \

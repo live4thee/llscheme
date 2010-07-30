@@ -89,32 +89,11 @@ void lsrt_func_p(const struct ls_object *obj);
   if ((cond)) lsrt_error(msg);                  \
 } while(0)
 
-static inline
-void lsrt_pair_p(const struct ls_object *obj)
-{
-  fail_on(!lso_is_pair(obj), "expected pair");
-}
-
-static inline
-void lsrt_number_p(const struct ls_object *obj)
-{
-  fail_on(!lso_is_number(obj), "expected number");
-}
-
-static inline
-void lsrt_string_p(const struct ls_object *obj)
-{
-  fail_on((!lso_is_string(obj) || lso_string_get(obj) == NULL),
-      "expected string");
-}
-
-static inline
-void lsrt_symbol_p(const struct ls_object *obj)
-{
-  fail_on(!lso_is_symbol(obj), "expected symbol");
-}
-
-#undef fail_on
+#define lsrt_pair_p(obj) fail_on(!lso_is_pair(obj), "expected pair")
+#define lsrt_number_p(obj) fail_on(!lso_is_number(obj), "expected number")
+#define lsrt_vector_p(obj) fail_on(!lso_is_vector(obj), "expected vector")
+#define lsrt_string_p(obj) fail_on(!lso_is_string(obj), "expected string")
+#define lsrt_symbol_p(obj) fail_on(!lso_is_symbol(obj), "expected symbol")
 
 /*
  * it doesn't do much at the moment, but in future, it can behave

@@ -423,7 +423,6 @@ struct ls_object *lsrt_builtin_plus(int argc, struct ls_object *args[],
                                     struct ls_object *freelist[])
 {
   UNUSED_ARGUMENT(freelist);
-  lsrt_check_args_count(0, 0, argc);
   return _arith('+', argc, args);
 }
 
@@ -441,7 +440,6 @@ struct ls_object *lsrt_builtin_multiply(int argc, struct ls_object *args[],
                                         struct ls_object *freelist[])
 {
   UNUSED_ARGUMENT(freelist);
-  lsrt_check_args_count(0, 0, argc);
   return _arith('*', argc, args);
 }
 
@@ -826,7 +824,7 @@ struct ls_object *lsrt_builtin_string2number(int argc, struct ls_object *args[],
   return ret;
 }
 
-char *_ntos(struct ls_object *number, int radix)
+char *_ntos(const struct ls_object *number, int radix)
 {
   int is_complex, type_re, type_im;
   char fmt[20];
