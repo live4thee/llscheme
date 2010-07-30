@@ -55,6 +55,11 @@
 
 void lsrt_memory_init(void);
 
+/* These objects are made globally unique */
+extern struct ls_object global_true_obj;
+extern struct ls_object global_false_obj;
+extern struct ls_object global_unspec_obj;
+
 struct ls_object *lsrt_new_object(int type);
 struct ls_object *lsrt_new_number(int32_t num);
 struct ls_object *lsrt_duplicate_number(struct ls_object *num);

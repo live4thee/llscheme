@@ -96,93 +96,67 @@ BUILTIN("number?", numberp);
 struct ls_object *lsrt_builtin_numberp(int argc, struct ls_object *args[],
                                        struct ls_object *freelist[])
 {
-  struct ls_object *lso = lsrt_new_object(ls_t_boolean);
-
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 1, argc);
-  lso_boolean_set(lso, lso_is_number(args[0]));
-
-  return lso;
+  return lso_is_number(args[0]) ? &global_true_obj : &global_false_obj;
 }
 
 BUILTIN("complex?", complexp);
 struct ls_object *lsrt_builtin_complexp(int argc, struct ls_object *args[],
                                         struct ls_object *freelist[])
 {
-  struct ls_object *lso = lsrt_new_object(ls_t_boolean);
-
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 1, argc);
-  lso_boolean_set(lso, lso_is_number(args[0]));
-
-  return lso;
+  return lso_is_complex(args[0]) ? &global_true_obj : &global_false_obj;
 }
 
-BUILTIN("real?", numberp);
+BUILTIN("real?", realp);
 struct ls_object *lsrt_builtin_realp(int argc, struct ls_object *args[],
                                      struct ls_object *freelist[])
 {
-  struct ls_object *lso = lsrt_new_object(ls_t_boolean);
-
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 1, argc);
-  lso_boolean_set(lso, lso_is_real(args[0]));
-
-  return lso;
+  return lso_is_real(args[0]) ? &global_true_obj : &global_false_obj;
 }
 
 BUILTIN("rational?", rationalp);
 struct ls_object *lsrt_builtin_rationalp(int argc, struct ls_object *args[],
                                          struct ls_object *freelist[])
 {
-  struct ls_object *lso = lsrt_new_object(ls_t_boolean);
-
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 1, argc);
-  lso_boolean_set(lso, lso_is_real(args[0]));
 
-  return lso;
+  /* we need a lso_is_rational() */
+  return lso_is_real(args[0]) ? &global_true_obj : &global_false_obj;
 }
 
 BUILTIN("integer?", integerp);
 struct ls_object *lsrt_builtin_integerp(int argc, struct ls_object *args[],
                                         struct ls_object *freelist[])
 {
-  struct ls_object *lso = lsrt_new_object(ls_t_boolean);
-
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 1, argc);
-  lso_boolean_set(lso, lso_is_integer(args[0]));
-
-  return lso;
+  return lso_is_integer(args[0]) ? &global_true_obj : &global_false_obj;
 }
 
 BUILTIN("exact?", exactp);
 struct ls_object *lsrt_builtin_exactp(int argc, struct ls_object *args[],
                                       struct ls_object *freelist[])
 {
-  struct ls_object *lso = lsrt_new_object(ls_t_boolean);
-
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 1, argc);
   lsrt_number_p(args[0]);
-  lso_boolean_set(lso, lso_is_exact(args[0]));
-
-  return lso;
+  return lso_is_exact(args[0]) ? &global_true_obj : &global_false_obj;
 }
 
 BUILTIN("inexact?", inexactp);
 struct ls_object *lsrt_builtin_inexactp(int argc, struct ls_object *args[],
                                         struct ls_object *freelist[])
 {
-  struct ls_object *lso = lsrt_new_object(ls_t_boolean);
-
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 1, argc);
   lsrt_number_p(args[0]);
-  lso_boolean_set(lso, !lso_is_exact(args[0]));
-
-  return lso;
+  return lso_is_exact(args[0]) ? &global_false_obj : &global_true_obj;
 }
 
 /* ordering */
@@ -190,16 +164,12 @@ struct ls_object *lsrt_builtin_inexactp(int argc, struct ls_object *args[],
 static struct ls_object *
 _order(char op, int argc, struct ls_object *args[])
 {
-  struct ls_object *ret = lsrt_new_object(ls_t_boolean);
   struct ls_real op1, op2;
   int res;
   int i;
 
-  lso_boolean_set(ret, 1);
-
   if (argc == 0)
-    return ret;
-
+    return &global_true_obj;
 
   if (op == '=')
     lsrt_number_p(args[0]);
@@ -227,23 +197,23 @@ _order(char op, int argc, struct ls_object *args[])
     switch (op) {
     case '=':
       if (res != 0)
-        goto fail;
+        return &global_false_obj;
       break;
     case '<':
       if (res >= 0)
-        goto fail;
+        return &global_false_obj;
       break;
     case '>':
       if (res <= 0)
-        goto fail;
+        return &global_false_obj;
       break;
     case 'l':
       if (res > 0)
-        goto fail;
+        return &global_false_obj;
       break;
     case 'g':
       if (res < 0)
-        goto fail;
+        return &global_false_obj;
       break;
     default:
       lsrt_error("unsupported op: %c", op);
@@ -251,10 +221,7 @@ _order(char op, int argc, struct ls_object *args[])
     }
   }
 
-  return ret;
- fail:
-  lso_boolean_set(ret, 0);
-  return ret;
+  return &global_true_obj;
 }
 
 BUILTIN("=", eq);
@@ -810,9 +777,7 @@ struct ls_object *lsrt_builtin_string2number(int argc, struct ls_object *args[],
 
   str = lso_string_get(args[0]);
   if (unlikely(strlen(str) == 0)) {
-    ret = lsrt_new_object(ls_t_boolean);
-    lso_boolean_set(ret, 0);
-    return ret;
+    return &global_false_obj;
   }
 
   ret = lsrt_new_object(ls_t_number);

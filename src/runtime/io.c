@@ -113,7 +113,7 @@ struct ls_object *lsrt_builtin_display(int argc, struct ls_object *args[],
   _display(args[0], 0);
   printf("\n");
 
-  return lsrt_new_object(ls_t_unspec);
+  return &global_unspec_obj;
 }
 
 /* vim: set et ts=2 sw=2 cin: */

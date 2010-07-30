@@ -62,7 +62,7 @@ struct ls_object *lsrt_builtin_setcar(int argc, struct ls_object *args[],
   lsrt_pair_p(args[0]);
 
   lso_set_car(args[0], args[1]);
-  return lsrt_new_object(ls_t_unspec);
+  return &global_unspec_obj;
 }
 
 BUILTIN("cdr", cdr);
@@ -85,33 +85,25 @@ struct ls_object *lsrt_builtin_setcdr(int argc, struct ls_object *args[],
   lsrt_pair_p(args[0]);
 
   lso_set_cdr(args[0], args[1]);
-  return lsrt_new_object(ls_t_unspec);
+  return &global_unspec_obj;
 }
 
 BUILTIN("null?", nullp);
 struct ls_object *lsrt_builtin_nullp(int argc, struct ls_object *args[],
                                    struct ls_object *freelist[])
 {
-  struct ls_object* obj = NULL;
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 1, argc);
-
-  obj = lsrt_new_object(ls_t_boolean);
-  lso_boolean_set(obj, lso_is_nil(args[0]));
-  return obj;
+  return lso_is_nil(args[0]) ? &global_true_obj : &global_false_obj;
 }
 
 BUILTIN("pair?", pairp);
 struct ls_object *lsrt_builtin_pairp(int argc, struct ls_object *args[],
                                    struct ls_object *freelist[])
 {
-  struct ls_object* obj = NULL;
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 1, argc);
-
-  obj = lsrt_new_object(ls_t_boolean);
-  lso_boolean_set(obj, lso_is_pair(args[0]));
-  return obj;
+  return lso_is_pair(args[0]) ? &global_true_obj : &global_false_obj;
 }
 
 BUILTIN_LIB("list", list);
@@ -169,13 +161,9 @@ BUILTIN("list?", listp);
 struct ls_object *lsrt_builtin_listp(int argc, struct ls_object *args[],
                                    struct ls_object *freelist[])
 {
-  struct ls_object* obj = NULL;
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 1, argc);
-
-  obj = lsrt_new_object(ls_t_boolean);
-  lso_boolean_set(obj, _listp(args[0]));
-  return obj;
+  return _listp(args[0]) ? &global_true_obj : &global_false_obj;
 }
 
 BUILTIN_LIB("length", length);

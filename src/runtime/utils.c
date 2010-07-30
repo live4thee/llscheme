@@ -27,6 +27,10 @@
 
 #include "utils.h"
 
+struct ls_object global_true_obj = { ls_t_boolean, {(void*)1}, {0} };
+struct ls_object global_false_obj = { ls_t_boolean, {0}, {0} };
+struct ls_object global_unspec_obj = { ls_t_unspec, {0}, {0} };
+
 /*
  * We need:
  *  - a memory mangement system (or malloc is llvm builtin?)

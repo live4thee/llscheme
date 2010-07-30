@@ -34,13 +34,9 @@ BUILTIN("symbol?", symp);
 struct ls_object *lsrt_builtin_symp(int argc, struct ls_object *args[],
                                    struct ls_object *freelist[])
 {
-  struct ls_object* obj = NULL;
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 1, argc);
-
-  obj = lsrt_new_object(ls_t_boolean);
-  lso_boolean_set(obj, lso_is_symbol(args[0]));
-  return obj;
+  return lso_is_symbol(args[0]) ? &global_true_obj : &global_false_obj;
 }
 
 BUILTIN("symbol->string", sym2str);
@@ -67,13 +63,9 @@ BUILTIN("string?", strp);
 struct ls_object *lsrt_builtin_strp(int argc, struct ls_object *args[],
                                     struct ls_object *freelist[])
 {
-  struct ls_object* obj = NULL;
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(1, 1, argc);
-
-  obj = lsrt_new_object(ls_t_boolean);
-  lso_boolean_set(obj, lso_is_string(args[0]));
-  return obj;
+  return lso_is_string(args[0]) ? &global_true_obj : &global_false_obj;
 }
 
 BUILTIN("string-length", strlen);
@@ -94,32 +86,28 @@ BUILTIN("string=?", streq);
 struct ls_object *lsrt_builtin_streq(int argc, struct ls_object *args[],
                                     struct ls_object *freelist[])
 {
-  struct ls_object* obj = NULL;
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(2, 2, argc);
   lsrt_string_p(args[0]);
   lsrt_string_p(args[1]);
 
-  obj = lsrt_new_object(ls_t_boolean);
-  lso_boolean_set(obj, strcmp(lso_string_get(args[0]),
-      lso_string_get(args[1])) == 0);
-  return obj;
+  if (strcmp(lso_string_get(args[0]), lso_string_get(args[1])) == 0)
+    return &global_true_obj;
+  return &global_false_obj;
 }
 
 BUILTIN("string-ci=?", strcaseeq);
 struct ls_object *lsrt_builtin_strcaseeq(int argc, struct ls_object *args[],
                                     struct ls_object *freelist[])
 {
-  struct ls_object* obj = NULL;
   UNUSED_ARGUMENT(freelist);
   lsrt_check_args_count(2, 2, argc);
   lsrt_string_p(args[0]);
   lsrt_string_p(args[1]);
 
-  obj = lsrt_new_object(ls_t_boolean);
-  lso_boolean_set(obj, strcasecmp(lso_string_get(args[0]),
-      lso_string_get(args[1])) == 0);
-  return obj;
+  if (strcasecmp(lso_string_get(args[0]), lso_string_get(args[1])) == 0)
+    return &global_true_obj;
+  return &global_false_obj;
 }
 
 BUILTIN("substring", substring);

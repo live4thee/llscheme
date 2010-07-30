@@ -88,7 +88,7 @@ struct ls_object *lsrt_builtin_mkvector(int argc, struct ls_object *args[],
 
   if (argc == 1) {
     for (idx = 0; idx < len; ++idx) {
-      addr0[idx] = lsrt_new_object(ls_t_unspec);
+      addr0[idx] = &global_unspec_obj;
     }
   } else {
     for (idx = 0; idx < len; ++idx) {
