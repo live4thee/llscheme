@@ -116,6 +116,9 @@ struct ls_object *lsrt_builtin_list(int argc, struct ls_object *args[],
 
   last = lsrt_new_object(ls_t_nil);
 
+  if (unlikely(argc == 0))
+    return last;
+
   for (i = argc - 1; i >= 0; i--) {
     pair = lsrt_new_object(ls_t_pair);
     pair->u1.ptr = args[i];
