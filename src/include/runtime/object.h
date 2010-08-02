@@ -154,6 +154,7 @@ struct ls_object * (*ls_func_type) (int argc, struct ls_object *args[],
 #define lso_func_get(x)         ((ls_func_type) (x)->u1.ptr)
 
 #define lso_set_type(x, t)      do { (x)->type = t; } while(0)
+#define lso_set_vec_addr0(x, a) do { (x)->u2.ptr = a; } while(0)
 #define lso_number_set(x, b)   (x)->u1.val = b
 #define lso_boolean_set(x, n)  (x)->u1.val = n
 #define lso_string_set(x, p)   (x)->u1.ptr = p

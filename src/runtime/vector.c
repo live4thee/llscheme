@@ -60,9 +60,9 @@ static struct ls_object* vector_new(int32_t len)
   struct ls_object* obj = lsrt_new_object(ls_t_vector);
 
   if (len > 0) {
-    struct ls_object* arr = ls_malloc(len * (sizeof arr));
+    struct ls_object** arr = ls_malloc(len * (sizeof(struct ls_object*)));
     /* member is not initialized */
-    *lso_vector_addr0(obj) = arr;
+    lso_set_vec_addr0(obj, arr);
   }
 
   lso_vector_length(obj) = len;
