@@ -143,7 +143,7 @@ struct ls_object * (*ls_func_type) (int argc, struct ls_object *args[],
 #define lso_simplenumber_get(x) ((x)->u1.val)
 #define lso_boolean_get(x)      ((x)->u1.val)
 #define lso_vector_length(x)    ((x)->u1.val)
-#define lso_vector_addr0(x)     ((struct ls_object**) (&(x)->u2.ptr))
+#define lso_vector_addr0(x)     ((struct ls_object**) ((x)->u2.ptr))
 #define lso_symbol_deref(x)     ((struct ls_object *) (x)->u1.ptr)
 #define lso_symbol_name(x)      ((char *) (x)->u2.ptr)
 #define lso_string_get(x)       ((char *) (x)->u1.ptr)
