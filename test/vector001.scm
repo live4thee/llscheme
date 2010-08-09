@@ -28,3 +28,8 @@
 (vector-length (vector 1 'a #f "string" v))
 
 (vector-ref v 0)
+
+(vector->list v)
+(vector->list (vector))
+(vector->list (vector 'symbol '(a list)))
+(vector->list (vector 'symbol '(a list) "string" 123 (vector)))

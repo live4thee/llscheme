@@ -190,6 +190,7 @@ static const struct _builtin_proc {
   { "make-vector", "mkvector" },
   { "vector", "" },
   { "vector-ref", "vecref" },
+  { "vector->list", "vec2lst" },
 
   /* String and Symbol */
   { "string?", "strp" },

@@ -136,4 +136,18 @@ struct ls_object *lsrt_builtin_vecref(int argc, struct ls_object *args[],
   return lso_vector_addr0(args[0])[idx];
 }
 
+struct ls_object *lsrt_builtin_list(int, struct ls_object**,
+                                    struct ls_object**);
+BUILTIN_LIB("vector->list", vec2lst);
+struct ls_object *lsrt_builtin_vec2lst(int argc, struct ls_object *args[],
+                                       struct ls_object *freelist[])
+{
+  UNUSED_ARGUMENT(freelist);
+  lsrt_check_args_count(1, 1, argc);
+  lsrt_vector_p(args[0]);
+
+  return lsrt_builtin_list(lso_vector_length(args[0]),
+                           lso_vector_addr0(args[0]), NULL);
+}
+
 /* vim: set et ts=2 sw=2 cin: */
