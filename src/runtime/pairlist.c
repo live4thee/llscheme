@@ -181,7 +181,7 @@ struct ls_object *lsrt_builtin_length(int argc, struct ls_object *args[],
 
   n = _length(args[0]);
   if (n == -1)
-    lsrt_error("%s requires a list", __func__);
+    lsrt_error("(Argument 1) LIST expected");
 
   obj = lsrt_new_object(ls_t_number);
   lso_number_set(obj, n);
@@ -201,7 +201,7 @@ struct ls_object *lsrt_builtin_listref(int argc, struct ls_object *args[],
 
   len = _length(args[0]);
   if (len == -1)
-    lsrt_error("%s requires a list", __func__);
+    lsrt_error("(Argument 1) LIST expected");
 
   idx = lso_simplenumber_get(args[1]);
   if (idx < 0 || idx >= len)
